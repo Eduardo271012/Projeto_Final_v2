@@ -28,4 +28,5 @@ def setor():
 
 @app.route('/funcionario', methods=['GET', 'POST'])
 def funcionario():
+    teste = ""
     return render_template('funcionario.html')

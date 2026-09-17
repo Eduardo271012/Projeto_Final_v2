@@ -26,5 +26,7 @@ def acesso():
 def setor():
     return render_template('setor.html')
 
+@app.route('/funcionario', methods=['GET', 'POST'])
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,26 +1,68 @@
 {% extends 'base.html' %}
+
+/* Injeta os textos das manutenções no painel do cabeçalho */
+{% block painel_dropdown %}
+<div class="dropdown-conteudo">
+    <div class="dropdown-coluna-texto">
+        <h2>Manutenção Preventiva</h2>
+        <p>Atuamos fortemente na prevenção de falhas antes que elas aconteçam. O novo sistema web da Quarks permite agendar revisões periódicas e acompanhar o histórico completo, garantindo maior produtividade, confiabilidade das informações e eliminando os formulários impressos.</p>
+    </div>
+    <div class="dropdown-coluna-texto">
+        <h2>Manutenção Corretiva</h2>
+        <p>Quando a indústria precisa de respostas rápidas, nosso registro de Ordens de Serviço garante agilidade no atendimento de quebras. Tenha controle total dos chamados em andamento e gerencie as necessidades dos técnicos, atendentes e gestores em uma plataforma moderna.</p>
+    </div>
+</div>
+{% endblock %}
+
+/* Injeta o carrossel de fundo no corpo da página */
 {% block conteudo %}
+<div class="container-carrossel-fundo">
 
-<div class="barra-titulo-linha">
-    <span>BEM-VINDO</span>
+    <!-- PRIMEIRO PAR DE IMAGENS (Aparece junto na tela) -->
+    <div class="slidefade par-de-imagens active">
+        <div class="coluna-foto">
+            <img src="{{ url_for('static', filename='imagem/foto1.png') }}" alt="Técnico realizando manutenção">
+        </div>
+        <div class="coluna-foto">
+            <img src="{{ url_for('static', filename='imagem/foto2.png') }}" alt="Mecânica industrial detalhada">
+        </div>
+    </div>
+
+    <!-- SEGUNDO PAR DE IMAGENS (Ativa após a transição) -->
+    <div class="slidefade par-de-imagens">
+        <div class="coluna-foto">
+            <!-- Aqui você pode repetir a foto1 ou colocar uma nova foto3.jpg futuramente -->
+            <img src="{{ url_for('static', filename='imagem/foto3.png') }}" alt="Indústria automação">
+        </div>
+        <div class="coluna-foto">
+            <!-- Aqui você pode repetir a foto2 ou colocar uma nova foto4.jpg futuramente -->
+            <img src="{{ url_for('static', filename='imagem/foto4.png') }}" alt="Painel elétrico industrial">
+        </div>
+    </div>
+
+    <!-- TERCEIRO PAR DE IMAGENS (Ativa após a transição) -->
+    <div class="slidefade par-de-imagens">
+        <div class="coluna-foto">
+            <!-- Aqui você pode repetir a foto1 ou colocar uma nova foto3.jpg futuramente -->
+            <img src="{{ url_for('static', filename='imagem/foto5.png') }}" alt="Indústria automação">
+        </div>
+        <div class="coluna-foto">
+            <!-- Aqui você pode repetir a foto2 ou colocar uma nova foto4.jpg futuramente -->
+            <img src="{{ url_for('static', filename='imagem/foto6.png') }}" alt="Painel elétrico industrial">
+        </div>
+    </div>
+
 </div>
 
-<div class="container-imagem">
+<script>
+    let indexSlide = 0;
+    const slides = document.querySelectorAll('.par-de-imagens'); // Alvo alterado para o par de imagens
 
-    <div class="imagem-1">
-        <img scr="">
-    </div>
-
-
-    <div class="imagem-2">
-        <img scr="">
-    </div>
-
-
-    <div class="imagem-3">
-        <img scr="">
-    </div>
-
-</div>
-
+    function alternarImagens() {
+        slides[indexSlide].classList.remove('active');
+        indexSlide = (indexSlide + 1) % slides.length;
+        slides[indexSlide].classList.add('active');
+    }
+    setInterval(alternarImagens, 6000); // Altera a dupla de fotos a cada 6 segundos
+</script>
 {% endblock %}

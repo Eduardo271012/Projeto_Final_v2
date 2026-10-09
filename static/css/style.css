@@ -1,3 +1,6 @@
+/* ==========================================================================
+   1. RESET E ESTILOS GERAIS
+   ========================================================================== */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -5,109 +8,200 @@
 }
 
 body {
-    background-color: white;
     margin: 0;
-    font-family: Century, sans-serif;
+    font-family: 'Inter', "Segoe UI", sans-serif;
+    background-color: #ffffff;
+    overflow: hidden;
 }
 
-/* ORGANIZANDO O BASE (MENU) */
+/* ==========================================================================
+   2. ESTRUTURA DO CABEÇALHO (MOLDE BRANCO)
+   ========================================================================== */
+.cabecalho-sistema {
+    position: relative;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    z-index: 100;
+    padding: 20px 40px 12px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
 
-/* h1 - Titulo do Projeto*/
-/* menu - Container das Rotas do Projeto*/
+/* PRIMEIRA LINHA: Joga o H1 para a extrema esquerda e as URLs para a extrema direita (onde estava azul) */
+.cabecalho-sistema .bloco-topo-esquerdo:first-of-type {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between; /* Move os links para o canto direito superior */
+    width: 100%;
+}
+
+/* SEGUNDA LINHA: Mantém o botão de Temas isolado abaixo na esquerda */
+.cabecalho-sistema .bloco-topo-esquerdo:last-of-type {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
 
 h1 {
-    color: #ffffff;
-    background-color: gray;
-    text-align: center;
-    font-family: Inter, "Segoe UI", sans-serif;
-    border: 5px solid #484747;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
     margin: 0;
-    padding: 10px 0;
-
+    padding: 0;
+    white-space: nowrap;
 }
 
-h1:hover {
-    color: white;
-
-
-}
-
-
+/* Links do Menu Principal */
 .menu {
     display: flex;
     flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-    padding: 10px;
-    gap: 10px
+    align-items: center;
+    gap: 24px;
 }
 
-.menu a {
+.link-principal {
     text-decoration: none;
-    text-align: center;
-    color: gray;
-    font-family: fantasy;
-    font-size: 24px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-    border: 5px solid #484747;
-    margin: 10px;
-    background-color: #ffffff;
-    border-radius: 6px;
-    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
-    min-width: 120px;
-    min-height: 55px;
-
+    color: #475569;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 0;
+    display: inline-block;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
 }
 
-.menu a:hover {
-    color: #ffffff;
-    background-color: #484747;
-    transform: translateY(-7px);
-
+.link-principal:hover {
+    color: #0284c7;
 }
 
-/* active - Faz ele vibrar quando clicar com o cursor*/
-.menu a:active {
-    transform: translateY(5px);
+/* Destaca visualmente o botão que abre os temas */
+.destaque-temas {
+    color: #0284c7;
+    font-weight: 600;
 }
 
-
-/* Cria a barra de título com "BEM-VINDO" */
-.barra-titulo-linha {
-    background-color: gray;
-    text-align: center;
-    padding: 15px 0;
-    margin: 0;
-    border-bottom: 5px solid #484747;
-    position: relative; /* Necessário para posicionar a linha por baixo */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Cria a linha branca bem fina dos lados de "BEM-VINDO" */
-.barra-titulo-linha::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: 2px;
-    background-color: #ffffff;
-    z-index: 1;
-}
-
-/* Coloca o "BEM-VINDO" por cima da linha com um fundo cinza para tampar a linha atrás dele */
-.barra-titulo-linha span {
-    color: white;
-    font-family:Inter, "Segoe UI", sans-serif;
-    font-size: 20px;
-    background-color: gray;
-    padding: 0 15px;
+/* ==========================================================================
+   3. DROPDOWN FLUTUANTE (PAINEL DE TEMAS)
+   ========================================================================== */
+.menu-item-dropdown {
     position: relative;
-    z-index: 2;
-    text-transform: uppercase;
+}
+
+.dropdown-conteudo {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 112px; /* Encaixe milimétrico sob a nova altura da barra branca */
+    width: 100vw;
+    height: 380px;
+    background-color: rgba(11, 57, 84, 0.96);
+    backdrop-filter: blur(8px);
+    padding: 50px 60px;
+    z-index: 99;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    animation: fadeInMenu 0.2s ease-out;
+}
+
+.menu-item-dropdown:hover .dropdown-conteudo {
+    display: flex;
+    gap: 60px;
+}
+
+.menu-item-dropdown:hover .destaque-temas {
+    border-bottom: 2px solid #0284c7;
+}
+
+.dropdown-coluna-texto {
+    flex: 1;
+    max-width: 500px;
+}
+
+.dropdown-coluna-texto:first-child {
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    padding-right: 60px;
+}
+
+.dropdown-coluna-texto h2 {
+    color: #ffffff;
+    font-size: 22px;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.dropdown-coluna-texto p {
+    color: #cbd5e1;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ==========================================================================
+   4. CARROSSEL DE IMAGENS (MOLDURA FIXADA CORRIGIDA)
+   ========================================================================== */
+.container-carrossel-fundo {
+    position: absolute;
+    top: 114px; /* Ajustado milimetricamente para colar abaixo do menu */
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 114px);
+    z-index: 1;
+    background-color: #ffffff; /* Cor da moldura externa (Branca) */
+
+    /* O padding aqui no container já cria a moldura perfeita de forma segura */
+    padding: 30px 40px;
+}
+
+.par-de-imagens {
+    position: relative; /* Mudado de absolute para relative para respeitar o padding do pai */
+    width: 100%;
+    height: 100%;
+
+    /* Remove os deslocamentos manuais que quebravam o layout */
+    top: 0;
+    left: 0;
+
+    /* Controla a exibição em duas colunas */
+    display: none;
+    gap: 20px; /* Cria uma linha divisória branca sutil e muito elegante entre as duas fotos */
+    opacity: 0;
+    transition: opacity 1.5s ease-in-out;
+}
+
+/* Quando o par ganha a classe active do JavaScript, ele se exibe como Flexbox */
+.par-de-imagens.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* Foto da Esquerda (Maior: aproximadamente 70% de espaço na tela) */
+.coluna-foto:first-child {
+    flex: 3.5;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 4px; /* Deixa os cantos das imagens sutilmente arredondados, estilo Bunge */
+}
+
+/* Foto da Direita (Menor: aproximadamente 30% de espaço na tela) */
+.coluna-foto:last-child {
+    flex: 1.5;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+/* Garante o preenchimento total e perfeito de cada imagem na tela */
+.coluna-foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+
+@keyframes fadeInMenu {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }

@@ -1,29 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Quarks Soluções - Projeto Final</title>
+<header class="cabecalho-sistema">
+    <!-- Linha Superior: Contém o Título na esquerda e as URLs na direita -->
+    <div class="bloco-topo-esquerdo">
+        <h1>QUARKS SOLUÇÕES - ORDENS DE SERVIÇO</h1>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-<h1>  QUARKS SOLUÇÕES - ORDENS DE SERVIÇO  </h1>
+        <nav class="menu">
+            <a href="{{ url_for('index') }}" class="link-principal">Início</a>
+            <a href="{{ url_for('cadastro_cliente') }}" class="link-principal">Cliente</a>
+            <a href="{{ url_for('setor') }}" class="link-principal">Setores</a>
+            <a href="{{ url_for('ordens_servico') }}" class="link-principal">Ordens de Serviço</a>
+            <a href="{{ url_for('cadastro_equipamento') }}" class="link-principal">Equipamentos</a>
+            <a href="{{ url_for('acesso') }}" class="link-principal">Tipos de Acessos</a>
+            <a href="{{ url_for('cadastro_funcionario') }}" class="link-principal">Funcionário</a>
+        </nav>
+    </div>
 
+    <!-- Linha Inferior: Mantém o Temas de Atuação isolado abaixo -->
+    <div class="bloco-topo-esquerdo">
+        <nav class="menu">
+            <div class="menu-item-dropdown">
+                <a href="#" class="link-principal destaque-temas">Temas de Atuação ▾</a>
 
-<div class="menu">
-    <a href="{{url_for('index')}}">Início</a><br>
-    <a href="{{url_for('cadastro_cliente')}}">Cliente</a><br>
-    <a href="{{url_for('setor')}}">Setores</a><br>
-    <a href="{{url_for('ordens_servico')}}">Ordens de Serviço</a>
-    <a href="{{ url_for('cadastro_equipamento') }}">Equipamentos</a>
-    <a href="{{ url_for('acesso') }}">Tipos de Acessos</a>
-    <a href="{{ url_for('cadastro_funcionario') }}">Funcionário</a>
-
-
-
-
-</div>
-{% block conteudo %}
-{% endblock conteudo%}
-</body>
-</html>
+                <!-- O painel de texto estruturado que puxamos dinamicamente -->
+                {% block painel_dropdown %}
+                {% endblock painel_dropdown %}
+            </div>
+        </nav>
+    </div>
+</header>

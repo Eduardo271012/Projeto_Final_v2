@@ -89,8 +89,36 @@ def acesso():
 def setor():
     return render_template('setor.html')
 
+@app.route('/funcionarios')
+def funcionarios():
+    return render_template('funcionario.html')
+
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
 def cadastro_funcionario():
+    if request.method == "POST":
+        nome = request.form.get("nome").strip()
+        cpf = request.form.get("cpf").strip()
+        email = request.form.get("email").strip()
+        setor = request.form.get("setor").strip()
+        funcao = request.form.get("funcao").strip()
+
+        if not nome:
+            flash("Preencha o nome", "error")
+            return redirect(url_for("cadastro_funcionarios"))
+        if not email:
+            flash("Preencha o email", "error")
+            return redirect(url_for("cadastro_funcionarios"))
+        if not cpf:
+            flash("Preencha o CPF", "error")
+            return redirect(url_for("cadastro_funcionarios"))
+        if not setor:
+            flash("Selecione o setor", "error")
+            return redirect(url_for("cadastro_funcionarios"))
+        if not funcao:
+            flash("Selecione a função", "error")
+            return redirect(url_for("cadastro_funcionarios"))
+
+        return redirect(url_for('funcionarios'))
     return render_template('funcionario.html')
 
 

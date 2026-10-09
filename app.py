@@ -64,3 +64,9 @@ def setor():
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
 def cadastro_funcionario():
     return render_template('funcionario.html')
+
+
+# Iniciar aplicação web
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5001)
+# Nada deve ser colocado abaixo

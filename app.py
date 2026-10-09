@@ -1,17 +1,20 @@
-
 from flask import Flask, render_template, redirect, url_for, flash, request
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-#from banco import
+
+# from banco import
 app = Flask(__name__)
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
 @app.route('/clientes')
 def clientes():
     return render_template('cliente.html')
+
 
 @app.route('/clientes/cadastro', methods=['GET', 'POST'])
 def cadastro_cliente():
@@ -47,12 +50,14 @@ def cadastro_cliente():
         return redirect(url_for('clientes'))
 
         # 3 - Salvar no banco
-       # tabela_time.salvar(nome=nome, numero_camisa=numero_camisa, posicao=posicao, time_id=time_id)
+    # tabela_time.salvar(nome=nome, numero_camisa=numero_camisa, posicao=posicao, time_id=time_id)
     return render_template('cliente.html')
+
 
 @app.route('/equipamentos')
 def equipamentos():
     return render_template('equipamento.html')
+
 
 @app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
 def cadastro_equipamento():
@@ -77,17 +82,56 @@ def cadastro_equipamento():
 
     return render_template('equipamento.html')
 
-@app.route('/servico/ordens', methods=['GET', 'POST'])
-def ordens_servico():
+
+@app.route('/ordens', methods=['GET', 'POST'])
+def ordem():
     return render_template('ordens_servico.html')
+
+@app.route('/os/cadastro', methods=['GET', 'POST'])
+def cadastro_ordem():
+    if request.method == "POST":
+        titulo_os = request.form.get("titulo_os").strip()
+        cliente = request.form.get("cliente").strip()
+        descricao = request.form.get("descricao").strip()
+        status = request.form.get("status").strip()
+        prioridade = request.form.get("prioridade").strip()
+        data_solicitacao = request.form.get("data_solicitacao").strip()
+        data_entrega = request.form.get("data_entrega").strip()
+
+        if not titulo_os:
+            flash("Preencha o título da OS", "error")
+            return redirect(url_for("cadastro_os"))
+        if not cliente:
+            flash("Preencha o nome do cliente", "error")
+            return redirect(url_for("cadastro_os"))
+        if not descricao:
+            flash("Descreva a OS", "error")
+            return redirect(url_for("cadastro_os"))
+        if not status:
+            flash("Preencha o status da OS", "error")
+            return redirect(url_for("cadastro_os"))
+        if not prioridade:
+            flash("Preencha a prioridade da OS", "error")
+            return redirect(url_for("cadastro_os"))
+        if not data_solicitacao:
+            flash("Preencha a data da solicitação", "error")
+            return redirect(url_for("cadastro_os"))
+        if not data_entrega:
+            flash("Preencha a data da entrega", "error")
+            return redirect(url_for("cadastro_os"))
+
+    return render_template('ordens_servico.html')
+
 
 @app.route('/acesso', methods=['GET', 'POST'])
 def acesso():
     return render_template('acesso.html')
 
+
 @app.route('/setor', methods=['GET', 'POST'])
 def setor():
     return render_template('setor.html')
+
 
 @app.route('/setores/cadastro', methods=['GET', 'POST'])
 def cadastro_setor():
@@ -102,13 +146,13 @@ def cadastro_setor():
             flash("Adicione a descrição", "error")
             return redirect(url_for("cadastro_setores"))
 
-        return redirect(url_for('setor'))
     return render_template('setor.html')
 
 
 @app.route('/funcionarios')
 def funcionarios():
     return render_template('funcionario.html')
+
 
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
 def cadastro_funcionario():
@@ -135,9 +179,7 @@ def cadastro_funcionario():
             flash("Selecione a função", "error")
             return redirect(url_for("cadastro_funcionarios"))
 
-        return redirect(url_for('funcionarios'))
     return render_template('funcionario.html')
-
 
 
 # Iniciar aplicação web

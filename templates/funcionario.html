@@ -6,11 +6,11 @@
             <p class="subtitulo">Cadastro dos funcionários Quarks</p>
         </div>
         {% if not editar %}
-            <a href="{{ url_for('funcionarios') }}" class="botao">Novo funcionário</a>
+            <a href="{{ url_for('cadastro_funcionario') }}" class="botao">Cadastrar funcionário</a>
         {% endif %}
     </div>
 
-    {% if request.endpoint == 'funcionarios' %}
+    {% if request.endpoint == 'cadastro_funcionario' %}
         <section class="painel formulario">
             <h2>Novo funcionário</h2>
             <form method="POST" action="{{ url_for('cadastro_funcionario') }}">

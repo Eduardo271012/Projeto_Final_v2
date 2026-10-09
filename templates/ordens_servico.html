@@ -1,4 +1,60 @@
 {% extends 'base.html' %}
 {% block conteudo %}
+    <div class="cabecalho-pagina">
+        <div>
+            <h1>Ordens de serviço</h1>
+            <p class="subtitulo">Cadastro das OS's Quarks</p>
+        </div>
+        {% if not editar %}
+            <a href="{{ url_for('cadastro_ordem') }}" class="botao">Cadastrar OS</a>
+        {% endif %}
+    </div>
 
+    {% if request.endpoint == 'cadastro_ordem' %}
+        <section class="painel formulario">
+            <h2>Nova ordem de serviço</h2>
+            <form method="POST" action="{{ url_for('cadastro_ordem') }}">
+                <div class="campo">
+                    <label for="titulo_os">Título OS</label>
+                    <input type="text" id="titulo_os" name="titulo_os" required placeholder="Ex: Crie projeto 1">
+                </div>
+                <div class="campo">
+                    <label for="cliente">Cliente</label>
+                    <input type="text" id="cliente" name="cliente" required placeholder="Ex: João">
+                </div>
+                <div class="campo">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" name="descricao" required placeholder="Ex: A OS precisa de 1 técnico"></textarea>
+                </div>
+                <div class="campo">
+                    <label for="status">Status</label>
+                    <select id="status" name="status">
+                        <option value="concluida">Concluída</option>
+                        <option value="aberta">Aberta: Aguardando técnico</option>
+                        <option value="andamento">Em andamento: Técnico trabalhando</option>
+                        <option value="pausada">Pausada: Aguardando peça chegar do estoque</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="prioridade">Prioridade</label>
+                    <select id="prioridade" name="prioridade">
+                        <option value="baixa">Baixa</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="datasolicitacao">Data da solicitação</label>
+                    <input type="date" id="datasolicitacao" name="datasolicitacao">
+                </div>
+                <div class="campo">
+                    <label for="dataentrega">Data da entrega</label>
+                    <input type="date" id="dataentrega" name="dataentrega">
+                </div>
+                <div class="acoes-formulario">
+                    <button type="submit" class="botao">Salvar</button>
+                </div>
+            </form>
+        </section>
+    {% endif %}
 {% endblock %}

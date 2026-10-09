@@ -1,5 +1,113 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     background-color: white;
     margin: 0;
     font-family: Century, sans-serif;
+}
+
+/* ORGANIZANDO O BASE (MENU) */
+
+/* h1 - Titulo do Projeto*/
+/* menu - Container das Rotas do Projeto*/
+
+h1 {
+    color: #ffffff;
+    background-color: gray;
+    text-align: center;
+    font-family: Inter, "Segoe UI", sans-serif;
+    border: 5px solid #484747;
+    margin: 0;
+    padding: 10px 0;
+
+}
+
+h1:hover {
+    color: white;
+
+
+}
+
+
+.menu {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 10px;
+    gap: 10px
+}
+
+.menu a {
+    text-decoration: none;
+    text-align: center;
+    color: gray;
+    font-family: fantasy;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border: 5px solid #484747;
+    margin: 10px;
+    background-color: #ffffff;
+    border-radius: 6px;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    min-width: 120px;
+    min-height: 55px;
+
+}
+
+.menu a:hover {
+    color: #ffffff;
+    background-color: #484747;
+    transform: translateY(-7px);
+
+}
+
+/* active - Faz ele vibrar quando clicar com o cursor*/
+.menu a:active {
+    transform: translateY(5px);
+}
+
+
+/* Cria a barra de título com "BEM-VINDO" */
+.barra-titulo-linha {
+    background-color: gray;
+    text-align: center;
+    padding: 15px 0;
+    margin: 0;
+    border-bottom: 5px solid #484747;
+    position: relative; /* Necessário para posicionar a linha por baixo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Cria a linha branca bem fina dos lados de "BEM-VINDO" */
+.barra-titulo-linha::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    background-color: #ffffff;
+    z-index: 1;
+}
+
+/* Coloca o "BEM-VINDO" por cima da linha com um fundo cinza para tampar a linha atrás dele */
+.barra-titulo-linha span {
+    color: white;
+    font-family:Inter, "Segoe UI", sans-serif;
+    font-size: 20px;
+    background-color: gray;
+    padding: 0 15px;
+    position: relative;
+    z-index: 2;
+    text-transform: uppercase;
 }

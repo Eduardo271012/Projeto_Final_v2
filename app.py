@@ -89,6 +89,23 @@ def acesso():
 def setor():
     return render_template('setor.html')
 
+@app.route('/setores/cadastro', methods=['GET', 'POST'])
+def cadastro_setor():
+    if request.method == "POST":
+        nome = request.form.get("nome").strip()
+        descricao = request.form.get("descricao").strip()
+
+        if not nome:
+            flash("Preencha o nome", "error")
+            return redirect(url_for("cadastro_setores"))
+        if not descricao:
+            flash("Adicione a descrição", "error")
+            return redirect(url_for("cadastro_setores"))
+
+        return redirect(url_for('setor'))
+    return render_template('setor.html')
+
+
 @app.route('/funcionarios')
 def funcionarios():
     return render_template('funcionario.html')

@@ -1,4 +1,33 @@
 {% extends 'base.html' %}
 {% block conteudo %}
+  <div class="cabecalho-pagina">
+        <div>
+            <h1>Setores</h1>
+            <p class="subtitulo">Cadastro dos setores Quarks</p>
+        </div>
+        {% if not editar %}
+            <a href="{{ url_for('setor') }}" class="botao">Novo setor</a>
+        {% endif %}
+    </div>
 
+    {% if request.endpoint == 'setor' %}
+        <section class="painel formulario">
+            <h2>Novo setor</h2>
+            <form method="POST" action="{{ url_for('cadastro_setor') }}">
+                <div class="campo">
+                    <label for="nome">Nome</label>
+                    <input type="text" id="nome" name="nome" required placeholder="Ex: Gestão">
+                </div>
+                 <div class="campo">
+                    <label for="descricao">Descrição</label>
+                    <input type="textarea" id="descricao" name="descricao" required placeholder="Ex: Área gestão fica no prédio 1">
+                </div>
+
+
+                <div class="acoes-formulario">
+                    <button type="submit" class="botao">Salvar</button>
+                </div>
+            </form>
+        </section>
+    {% endif %}
 {% endblock %}

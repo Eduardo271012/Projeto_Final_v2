@@ -6,34 +6,34 @@
             <p class="subtitulo">Cadastro dos clientes Quarks</p>
         </div>
         {% if not editar %}
-            <a href="{{ url_for('cadastro_clientes') }}" class="botao">Novo cliente</a>
+            <a href="{{ url_for('clientes') }}" class="botao">Novo cliente</a>
         {% endif %}
     </div>
 
-    {% if request.endpoint == 'cadastro_clientes' %}
+    {% if request.endpoint == 'clientes' %}
         <section class="painel formulario">
             <h2>Novo cliente</h2>
-            <form method="POST" action="{{ url_for('cadastro_clientes') }}">
+            <form method="POST" action="{{ url_for('cadastro_cliente') }}">
                 <div class="campo">
                     <label for="nome">Nome</label>
-                    <input type="text" id="nome" name="nome">
+                    <input type="text" id="nome" name="nome" required placeholder="Ex: João">
                 </div>
                 <div class="linha-campos">
                     <div class="campo">
-                        <label for="">Data de nascimento</label>
-                        <input type="number" id="datanascimento" name="datanascimento" min="00/00/0000">
+                        <label for="datanascimento">Data de nascimento</label>
+                        <input type="date" id="datanascimento" name="datanascimento" placeholder="Ex: 00/00/0000">
                     </div>
                     <div class="campo">
-                        <label for="">Telefone</label>
-                        <input type="number" id="telefone" name="telefone" min="(00)00000-0000">
+                        <label for="telefone">Telefone</label>
+                        <input type="tel" id="telefone" name="telefone" placeholder="(00) 00000-0000">
                     </div>
                     <div class="campo">
                         <label for="email">Email</label>
-                        <input type="text" id="email" name="email">
+                        <input type="email" id="email" name="email">
                     </div>
                     <div class="campo">
-                        <label for="">CPF/CNPJ</label>
-                        <input type="number" id="cpfcnpj" name="cpfcnpj" min="00000000000">
+                        <label for="cpfcnpj">CPF/CNPJ</label>
+                        <input type="text" id="cpfcnpj" name="cpfcnpj" placeholder="000.000.000-00">
                     </div>
                     <div class="campo">
                         <label for="departamento">Departamento</label>
@@ -41,17 +41,14 @@
                             <option value="opcao1">Opção 1</option>
                             <option value="opcao2">Opção 2</option>
                             <option value="opcao3">Opção 3</option>
-                            <option value="opcao4">Opção 4</option>
-                            <option value="opcao5">Opção 5</option>
                         </select>
                     </div>
                 </div>
-                <div class="acoes-form">
-                    <button type="submit" class="botao">Cadastrar</button>
-                    <a href="{{ url_for('cadastro_clientes') }}" class="botao botao-secundario">Cancelar</a>
+                <!-- Adicionado botão de envio dentro do formulário -->
+                <div class="acoes-formulario">
+                    <button type="submit" class="botao">Salvar</button>
                 </div>
             </form>
         </section>
-        {% endif %}
-    </section>
+    {% endif %}
 {% endblock %}

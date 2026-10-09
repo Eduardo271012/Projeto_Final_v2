@@ -9,6 +9,10 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/clientes')
+def clientes():
+    return render_template('cliente.html')
+
 @app.route('/clientes/cadastro', methods=['GET', 'POST'])
 def cadastro_cliente():
     if request.method == "POST":
@@ -40,12 +44,37 @@ def cadastro_cliente():
             flash("Selecione o departamento", "error")
             return redirect(url_for("cadastro_clientes"))
 
+        return redirect(url_for('clientes'))
+
         # 3 - Salvar no banco
        # tabela_time.salvar(nome=nome, numero_camisa=numero_camisa, posicao=posicao, time_id=time_id)
     return render_template('cliente.html')
 
+@app.route('/equipamentos')
+def equipamentos():
+    return render_template('equipamento.html')
+
 @app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
 def cadastro_equipamento():
+    if request.method == "POST":
+        nome_equipamento = request.form.get("nome_equipamento").strip()
+        quantidade_estoque = request.form.get("quantidade_estoque").strip()
+        modelo = request.form.get("modelo").strip()
+        numero_serie = request.form.get("numero_serie").strip()
+
+        if not nome_equipamento:
+            flash("Preencha o nome", "error")
+            return redirect(url_for("cadastro_equipamentos"))
+        if not quantidade_estoque:
+            flash("Preencha a quantidade", "error")
+            return redirect(url_for("cadastro_equipamentos"))
+        if not modelo:
+            flash("Preencha o modelo", "error")
+            return redirect(url_for("cadastro_equipamentos"))
+        if not numero_serie:
+            flash("Preencha o número de série", "error")
+            return redirect(url_for("cadastro_equipamentos"))
+
     return render_template('equipamento.html')
 
 @app.route('/servico/ordens', methods=['GET', 'POST'])

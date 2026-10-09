@@ -9,19 +9,15 @@
 <body>
 <h1>  QUARKS SOLUÇÕES - ORDENS DE SERVIÇO  </h1>
 
-<div class="barra-acesso">
-    <a href="{{ url_for('cadastrar') }}" class="btn-aces btn-cadas">Cadastrar</a>
-    <a href="{{ url_for('login') }}" class="btn-aces btn-login">Entrar</a>
-</div>
 
 <div class="menu">
     <a href="{{url_for('index')}}">Início</a><br>
-    <a href="{{url_for('cliente')}}">Cliente</a><br>
+    <a href="{{url_for('cadastro_cliente')}}">Cliente</a><br>
     <a href="{{url_for('setor')}}">Setores</a><br>
     <a href="{{url_for('ordens_servico')}}">Ordens de Serviço</a>
-    <a href="{{ url_for('equipamento') }}">Equipamentos</a>
+    <a href="{{ url_for('cadastro_equipamento') }}">Equipamentos</a>
     <a href="{{ url_for('acesso') }}">Tipos de Acessos</a>
-    <a href="{{ url_for('funcionario') }}">Funcionário</a>
+    <a href="{{ url_for('cadastro_funcionario') }}">Funcionário</a>
 
 
 

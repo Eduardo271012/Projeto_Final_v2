@@ -1,6 +1,5 @@
-from urllib import request
 
-from flask import Flask, render_template, redirect, url_for, flash
+from flask import Flask, render_template, redirect, url_for, flash, request
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 #from banco import

@@ -1,4 +1,57 @@
 {% extends 'base.html' %}
 {% block conteudo %}
+    <div class="cabecalho-pagina">
+        <div>
+            <h1>Clientes</h1>
+            <p class="subtitulo">Cadastro dos clientes Quarks</p>
+        </div>
+        {% if not editar %}
+            <a href="{{ url_for('cadastro_clientes') }}" class="botao">Novo cliente</a>
+        {% endif %}
+    </div>
 
+    {% if request.endpoint == 'cadastro_clientes' %}
+        <section class="painel formulario">
+            <h2>Novo cliente</h2>
+            <form method="POST" action="{{ url_for('cadastro_clientes') }}">
+                <div class="campo">
+                    <label for="nome">Nome</label>
+                    <input type="text" id="nome" name="nome">
+                </div>
+                <div class="linha-campos">
+                    <div class="campo">
+                        <label for="">Data de nascimento</label>
+                        <input type="number" id="datanascimento" name="datanascimento" min="00/00/0000">
+                    </div>
+                    <div class="campo">
+                        <label for="">Telefone</label>
+                        <input type="number" id="telefone" name="telefone" min="(00)00000-0000">
+                    </div>
+                    <div class="campo">
+                        <label for="email">Email</label>
+                        <input type="text" id="email" name="email">
+                    </div>
+                    <div class="campo">
+                        <label for="">CPF/CNPJ</label>
+                        <input type="number" id="cpfcnpj" name="cpfcnpj" min="00000000000">
+                    </div>
+                    <div class="campo">
+                        <label for="departamento">Departamento</label>
+                        <select id="departamento" name="departamento">
+                            <option value="opcao1">Opção 1</option>
+                            <option value="opcao2">Opção 2</option>
+                            <option value="opcao3">Opção 3</option>
+                            <option value="opcao4">Opção 4</option>
+                            <option value="opcao5">Opção 5</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="acoes-form">
+                    <button type="submit" class="botao">Cadastrar</button>
+                    <a href="{{ url_for('cadastro_clientes') }}" class="botao botao-secundario">Cancelar</a>
+                </div>
+            </form>
+        </section>
+        {% endif %}
+    </section>
 {% endblock %}

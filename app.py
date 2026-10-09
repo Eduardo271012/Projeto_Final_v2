@@ -1,20 +1,55 @@
-from flask import Flask, render_template, redirect, url_for
+from urllib import request
 
+from flask import Flask, render_template, redirect, url_for, flash
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+#from banco import
 app = Flask(__name__)
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/cliente', methods=['GET', 'POST'])
-def cliente():
+@app.route('/clientes/cadastro', methods=['GET', 'POST'])
+def cadastro_cliente():
+    if request.method == "POST":
+        # 1 - Pegar os valores digitados no form
+        nome = request.form.get("nome").strip()
+        data_nascimento = request.form.get("data_nascimento").strip()
+        telefone = request.form.get("telefone").strip()
+        email = request.form.get("email").strip()
+        cpf_cnpj = request.form.get("cpf_cnpj").strip()
+        departamento = request.form.get("departamento").strip()
+
+        # 2 - Verificar se foi digitado
+        if not nome:
+            flash("Preencha o nome", "error")
+            return redirect(url_for("cadastro_cliente"))
+        if not data_nascimento:
+            flash("Preencha a data de nascimento", "error")
+            return redirect(url_for("cadastro_cliente"))
+        if not telefone:
+            flash("Preencha o telefone", "error")
+            return redirect(url_for("cadastro_cliente"))
+        if not email:
+            flash("Preencha o email", "error")
+            return redirect(url_for("cadastro_cliente"))
+        if not cpf_cnpj:
+            flash("Preencha o CPF ou CNPJ", "error")
+            return redirect(url_for("cadastro_cliente"))
+        if not departamento:
+            flash("Selecione o departamento", "error")
+            return redirect(url_for("cadastro_cliente"))
+
+        # 3 - Salvar no banco
+       # tabela_time.salvar(nome=nome, numero_camisa=numero_camisa, posicao=posicao, time_id=time_id)
     return render_template('cliente.html')
 
-@app.route('/equipamento', methods=['GET', 'POST'])
-def equipamento():
+@app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
+def cadastro_equipamento():
     return render_template('equipamento.html')
 
-@app.route('/ordens-servico', methods=['GET', 'POST'])
+@app.route('/servico/ordens', methods=['GET', 'POST'])
 def ordens_servico():
     return render_template('ordens_servico.html')
 
@@ -26,6 +61,6 @@ def acesso():
 def setor():
     return render_template('setor.html')
 
-@app.route('/funcionario', methods=['GET', 'POST'])
-def funcionario():
+@app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
+def cadastro_funcionario():
     return render_template('funcionario.html')

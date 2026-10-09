@@ -23,22 +23,22 @@ def cadastro_cliente():
         # 2 - Verificar se foi digitado
         if not nome:
             flash("Preencha o nome", "error")
-            return redirect(url_for("cadastro_cliente"))
+            return redirect(url_for("cadastro_clientes"))
         if not data_nascimento:
             flash("Preencha a data de nascimento", "error")
-            return redirect(url_for("cadastro_cliente"))
+            return redirect(url_for("cadastro_clientes"))
         if not telefone:
             flash("Preencha o telefone", "error")
-            return redirect(url_for("cadastro_cliente"))
+            return redirect(url_for("cadastro_clientes"))
         if not email:
             flash("Preencha o email", "error")
-            return redirect(url_for("cadastro_cliente"))
+            return redirect(url_for("cadastro_clientes"))
         if not cpf_cnpj:
             flash("Preencha o CPF ou CNPJ", "error")
-            return redirect(url_for("cadastro_cliente"))
+            return redirect(url_for("cadastro_clientes"))
         if not departamento:
             flash("Selecione o departamento", "error")
-            return redirect(url_for("cadastro_cliente"))
+            return redirect(url_for("cadastro_clientes"))
 
         # 3 - Salvar no banco
        # tabela_time.salvar(nome=nome, numero_camisa=numero_camisa, posicao=posicao, time_id=time_id)

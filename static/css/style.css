@@ -159,8 +159,8 @@ h1 {
 .container-carrossel-fundo {
     position: relative;
     width: 100%;
-    min-height: calc(100vh - 85px);
-    background-color: #ffffff;
+    min-height: calc(100vh - 110px);
+    background-color: #018da0;
     padding: 20px 40px;
     box-sizing: border-box;
 }
@@ -172,6 +172,7 @@ h1 {
     width: calc(100% - 80px);
     height: calc(100% - 40px);
     display: flex;
+    flex-wrap: wrap;
     gap: 20px;
     opacity: 0;
     visibility: hidden;
@@ -184,14 +185,14 @@ h1 {
 }
 
 .coluna-foto:first-child {
-    flex: 3.5;
+    flex: 3.5 1 450px;
     height: 100%;
     overflow: hidden;
     border-radius: 4px;
 }
 
 .coluna-foto:last-child {
-    flex: 1.5;
+    flex: 1.5 1 250px;
     height: 100%;
     overflow: hidden;
     border-radius: 4px;

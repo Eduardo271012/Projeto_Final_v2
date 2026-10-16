@@ -6,10 +6,9 @@
 
 {% if not editar %}
     <div class="container-botao-direita">
-        <a href="{{ url_for('clientes') }}" class="btn-enviar-rosa">Novo cliente</a>
+        <a href="{{ url_for('cadastro_cliente') }}" class="btn-enviar-rosa">Novo cliente</a>
     </div>
-    {% endif %}
-
+{% endif %}
     {% if request.endpoint == 'cadastro_cliente' %}
         <section class="painel formulario">
             <h2>Novo cliente</h2>

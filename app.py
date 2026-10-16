@@ -3,6 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from banco import *
 from validate_docbr import CPF, CNPJ # Bilioteca para validar dados de documentos brasileiros
+
+from banco import tabela_cliente
 from database import *
 import re
 from datetime import datetime, date
@@ -19,7 +21,7 @@ def clientes():
 @app.route('/clientes/cadastro', methods=['GET', 'POST'])
 def cadastro_cliente():
     if request.method == "POST":
-        # 1 - Pegar os valores digitados no form
+        # 1 - Pegar os valores digitados no formulário
         nome = request.form.get("nome").strip()
         data_nascimento = request.form.get("data_nascimento").strip()
         telefone = request.form.get("telefone").strip()
@@ -27,87 +29,10 @@ def cadastro_cliente():
         cpf_cnpj = request.form.get("cpf_cnpj").strip()
         departamento = request.form.get("departamento").strip()
 
-        # Transforma o CPF/CNPJ em números limpos
-        cpf_cnpj_formatado = re.sub(r"\D", "", cpf_cnpj)
-        # Transforma o telefone digitado em números limpos
-        telefone_fomatado = re.sub(r'\D', '', telefone)
-        # Verifica se já existe um email igual no banco de dados
-        email_existente = db_session.query(Cliente).filter_by(email=email).first()
-        # Verifica se já existe um telefone igual no banco de dados
-        telefone_existente = db_session.query(Cliente).filter_by(telefone=telefone).first()
-
-        # Explicação da Regex:
-        # ^[1-9]{2} = DDD válido (dois dígitos de 1 a 9)
-        # (?:[2-8]|9[1-9]) = Telefones fixos começam de 2 a 8. Celulares começam com 9 e o segundo dígito não é 0.
-        # [0-9]{7}$ = O restante dos números (7 dígitos)
-        regex_telefone = r'^[1-9]{2}(?:[2-8]|9[1-9])[0-9]{7}$'
-        #  Regex padrão para validar e-mails (verifica se tem @, pontos e domínio)
-        regex_email = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        validar_cpf = CPF()
-        validar_cnpj = CNPJ()
-
-        # 2 - Verificar se foi digitado
-        if not nome:
-            flash("Preencha o nome", "error")
-            return redirect(url_for("cadastro_cliente"))
-        if not data_nascimento:
-            flash("Preencha a data de nascimento", "error")
-            return redirect(url_for("cadastro_cliente"))
-        if not telefone:
-            flash("Preencha o telefone", "error")
-            return redirect(url_for("cadastro_cliente"))
-        if not email:
-            flash("Preencha o email", "error")
-            return redirect(url_for("cadastro_cliente"))
-        if not cpf_cnpj:
-            flash("Preencha o CPF ou CNPJ", "error")
-            return redirect(url_for("cadastro_cliente"))
-        if not departamento:
-            flash("Selecione o departamento", "error")
-            return redirect(url_for("cadastro_cliente"))
-
-        try:
-            data_validada = datetime.strptime(data_nascimento, "Y%-m%-d%").date()
-        except ValueError:
-            flash("A data inserida não existe ou está no formato errado", "error")
-            return redirect(url_for("cadastro_clientes"))
-
-        # Validar os dados antes de subir no banco
-        if len(nome) > 50:
-            flash("O nome é muito longo", "error")
-            return redirect(url_for("cadastro_clientes"))
-        # Compara para ver se o telefone formatado está de acordo com o modelo de telefone padrão
-        if not re.match(regex_telefone, telefone_fomatado):
-            flash("Digite um telefone válido", "error")
-            return redirect(url_for("cadastro_clientes"))
-        if telefone_existente:
-            flash("O telefone já foi utilizado", "error")
-            return redirect(url_for("cadastro_clientes"))
-        if data_validada.year < 1900:
-            flash("A data de nascimento é muito antiga", "error")
-            return redirect(url_for("cadastro_clientes"))
-        if not re.match(regex_email, email):
-            flash("Digite um email válido", "error")
-            return redirect(url_for("cadastro_clientes"))
-        elif email_existente:
-            flash("O email já foi utilizado", "error")
-            return redirect(url_for("cadastro_clientes"))
-        if len(cpf_cnpj_formatado) == 11:
-            if not validar_cpf.validate(cpf_cnpj_formatado):
-                flash("CPF inválido", "error")
-                return redirect(url_for("cadastro_clientes"))
-        elif len(cpf_cnpj_formatado) == 14:
-            if not validar_cnpj.validate(cpf_cnpj_formatado):
-                flash("CNPJ inválido", "error")
-                return redirect(url_for("cadastro_clientes"))
-        else:
-            flash("Digite somente CPFs ou CNPJs", "error")
-            return redirect(url_for("cadastro_clientes"))
-
-        return redirect(url_for('clientes'))
+        tabela_cliente.validar_cliente(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)
 
         # 3 - Salvar no banco
-       # tabela_time.salvar(nome=nome, numero_camisa=numero_camisa, posicao=posicao, time_id=time_id)
+        tabela_cliente.salvar(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)
     return render_template('cliente.html')
 
 @app.route('/equipamentos')

@@ -1,6 +1,6 @@
-/* ==========================================================================
-   1. RESET E ESTILOS GERAIS
-   ========================================================================== */
+
+/* 1. RESET E ESTILOS GERAIS */
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -14,9 +14,8 @@ body {
     overflow: hidden;
 }
 
-/* ==========================================================================
-   2. ESTRUTURA DO CABEÇALHO (MOLDE BRANCO)
-   ========================================================================== */
+/* 2. ESTRUTURA DO CABEÇALHO (MOLDE BRANCO) */
+
 .cabecalho-sistema {
     position: relative;
     background-color: #ffffff;
@@ -84,9 +83,7 @@ h1 {
     font-weight: 600;
 }
 
-/* ==========================================================================
-   3. DROPDOWN FLUTUANTE (PAINEL DE TEMAS)
-   ========================================================================== */
+/* 3. DROPDOWN FLUTUANTE (PAINEL DE TEMAS)*/
 .menu-item-dropdown {
     position: relative;
 }
@@ -138,9 +135,7 @@ h1 {
     line-height: 1.6;
 }
 
-/* ==========================================================================
-   4. CARROSSEL DE IMAGENS (MOLDURA FIXADA CORRIGIDA)
-   ========================================================================== */
+/* 4. CARROSSEL DE IMAGENS (MOLDURA FIXADA CORRIGIDA) */
 .container-carrossel-fundo {
     position: absolute;
     top: 114px; /* Ajustado milimetricamente para colar abaixo do menu */

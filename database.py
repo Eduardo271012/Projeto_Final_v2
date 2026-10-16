@@ -69,8 +69,8 @@ class OrdemServico(Base):
     __tablename__ = 'ordens_servico'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    solicitante_id = Column(Integer, ForeignKey('clientes.id', ondelete='CASCADE', onupdate='CASCADE'))
-    responsavel_id = Column(Integer, ForeignKey('funcionarios.id', ondelete='SET NULL', onupdate='CASCADE'))
+    solicitante_id = Column(Integer, ForeignKey('clientes.id', ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    responsavel_id = Column(Integer, ForeignKey('funcionarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     custo_total = Column(Integer)
     descricao = Column(String(10000), nullable=False)
     status_os = Column(String(25), nullable=False)
@@ -90,8 +90,8 @@ class OrdemServico(Base):
 class OrdemServicoEquipamento(Base):
     __tablename__ = 'ordens_servico_equipamentos'
 
-    os_id = Column(Integer, ForeignKey('ordens_servico.id', ondelete='CASCADE', onupdate='CASCADE', primary_key=True, nullable=False))
-    equipamento_id = Column(Integer, ForeignKey('equipamentos.id', ondelete='CASCADE', onupdate='CASCADE', primary_key=True, nullable=False))
+    os_id = Column(Integer, ForeignKey('ordens_servico.id', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, nullable=False)
+    equipamento_id = Column(Integer, ForeignKey('equipamentos.id', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, nullable=False)
     quantidade = Column(Integer, default=1)
 
     # Relacionamentos ordem de serviço e equipamento

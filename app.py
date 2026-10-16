@@ -32,7 +32,9 @@ def cadastro_cliente():
         # Transforma o telefone digitado em números limpos
         telefone_fomatado = re.sub(r'\D', '', telefone)
         # Verifica se já existe um email igual no banco de dados
-        email_existente = db_session.query(Cliente).filter(email=email).first()
+        email_existente = db_session.query(Cliente).filter_by(email=email).first()
+        # Verifica se já existe um telefone igual no banco de dados
+        telefone_existente = db_session.query(Cliente).filter_by(telefone=telefone).first()
 
         # Explicação da Regex:
         # ^[1-9]{2} = DDD válido (dois dígitos de 1 a 9)
@@ -41,6 +43,8 @@ def cadastro_cliente():
         regex_telefone = r'^[1-9]{2}(?:[2-8]|9[1-9])[0-9]{7}$'
         #  Regex padrão para validar e-mails (verifica se tem @, pontos e domínio)
         regex_email = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        validar_cpf = CPF()
+        validar_cnpj = CNPJ()
 
         # 2 - Verificar se foi digitado
         if not nome:
@@ -76,6 +80,9 @@ def cadastro_cliente():
         if not re.match(regex_telefone, telefone_fomatado):
             flash("Digite um telefone válido", "error")
             return redirect(url_for("cadastro_clientes"))
+        if telefone_existente:
+            flash("O telefone já foi utilizado", "error")
+            return redirect(url_for("cadastro_clientes"))
         if data_validada.year < 1900:
             flash("A data de nascimento é muito antiga", "error")
             return redirect(url_for("cadastro_clientes"))
@@ -84,6 +91,17 @@ def cadastro_cliente():
             return redirect(url_for("cadastro_clientes"))
         elif email_existente:
             flash("O email já foi utilizado", "error")
+            return redirect(url_for("cadastro_clientes"))
+        if len(cpf_cnpj_formatado) == 11:
+            if not validar_cpf.validate(cpf_cnpj_formatado):
+                flash("CPF inválido", "error")
+                return redirect(url_for("cadastro_clientes"))
+        elif len(cpf_cnpj_formatado) == 14:
+            if not validar_cnpj.validate(cpf_cnpj_formatado):
+                flash("CNPJ inválido", "error")
+                return redirect(url_for("cadastro_clientes"))
+        else:
+            flash("Digite somente CPFs ou CNPJs", "error")
             return redirect(url_for("cadastro_clientes"))
 
         return redirect(url_for('clientes'))

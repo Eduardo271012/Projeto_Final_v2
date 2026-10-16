@@ -27,22 +27,22 @@ def cadastro_cliente():
         # 2 - Verificar se foi digitado
         if not nome:
             flash("Preencha o nome", "error")
-            return redirect(url_for("cadastro_clientes"))
+            return redirect(url_for("cadastro_cliente"))
         if not data_nascimento:
             flash("Preencha a data de nascimento", "error")
-            return redirect(url_for("cadastro_clientes"))
+            return redirect(url_for("cadastro_cliente"))
         if not telefone:
             flash("Preencha o telefone", "error")
-            return redirect(url_for("cadastro_clientes"))
+            return redirect(url_for("cadastro_cliente"))
         if not email:
             flash("Preencha o email", "error")
-            return redirect(url_for("cadastro_clientes"))
+            return redirect(url_for("cadastro_cliente"))
         if not cpf_cnpj:
             flash("Preencha o CPF ou CNPJ", "error")
-            return redirect(url_for("cadastro_clientes"))
+            return redirect(url_for("cadastro_cliente"))
         if not departamento:
             flash("Selecione o departamento", "error")
-            return redirect(url_for("cadastro_clientes"))
+            return redirect(url_for("cadastro_cliente"))
 
         return redirect(url_for('clientes'))
 
@@ -64,16 +64,16 @@ def cadastro_equipamento():
 
         if not nome_equipamento:
             flash("Preencha o nome", "error")
-            return redirect(url_for("cadastro_equipamentos"))
+            return redirect(url_for("cadastro_equipamento"))
         if not quantidade_estoque:
             flash("Preencha a quantidade", "error")
-            return redirect(url_for("cadastro_equipamentos"))
+            return redirect(url_for("cadastro_equipamento"))
         if not modelo:
             flash("Preencha o modelo", "error")
-            return redirect(url_for("cadastro_equipamentos"))
+            return redirect(url_for("cadastro_equipamento"))
         if not numero_serie:
             flash("Preencha o número de série", "error")
-            return redirect(url_for("cadastro_equipamentos"))
+            return redirect(url_for("cadastro_equipamento"))
 
     return render_template('equipamento.html')
 

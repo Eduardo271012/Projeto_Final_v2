@@ -3,6 +3,7 @@ from database import *
 from sqlalchemy.exc import SQLAlchemyError
 import re
 from validate_docbr import CPF, CNPJ
+from datetime import datetime, date
 
 def validar_cliente(nome, data_nascimento, telefone, email, cpf_cnpj):
     # Transforma o CPF/CNPJ em números limpos
@@ -48,51 +49,51 @@ def validar_cliente(nome, data_nascimento, telefone, email, cpf_cnpj):
         data_validada = datetime.strptime(data_nascimento, "Y%-m%-d%").date()
     except ValueError:
         flash("A data inserida não existe ou está no formato errado", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
 
     # Validar os dados antes de subir no banco
     if len(nome) > 50:
         flash("O nome é muito longo", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
     # Compara para ver se o telefone formatado está de acordo com o modelo de telefone padrão
     if not re.match(regex_telefone, telefone_fomatado):
         flash("Digite um telefone válido", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
     # Exibe uma mensagem e retorna erro caso já exista um telefone igual
     if telefone_existente:
         flash("O telefone já foi utilizado", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
     # Verifica se a data inserida é muito antiga, tornando-a inválida
     if data_validada.year < 1900:
         flash("A data de nascimento é muito antiga", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
     # Verifica se o email está no formato adequado
     if not re.match(regex_email, email):
         flash("Digite um email válido", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
     # Exibe uma mensagem e retorna erro caso já exista um telefone igual
     elif email_existente:
         flash("O email já foi utilizado", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
     # Verifica se o email enviado está no tamanho adequado
     if len(email) > 100:
         flash("O email digitado é muito longo", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
     # Verifica se o documento enviado é um CPF ou CNPJ
     if len(cpf_cnpj_formatado) == 11:
         # Verifica se o CPF é válido
         if not validar_cpf.validate(cpf_cnpj_formatado):
             flash("CPF inválido", "error")
-            return redirect(url_for("cadastro_clientes"))
+            return redirect(url_for("cadastro_cliente"))
     elif len(cpf_cnpj_formatado) == 14:
         # Verifica se o CNPJ é válido
         if not validar_cnpj.validate(cpf_cnpj_formatado):
             flash("CNPJ inválido", "error")
-            return redirect(url_for("cadastro_clientes"))
+            return redirect(url_for("cadastro_cliente"))
     # Caso o documento enviado não esteja nos tamanhos respectivos aos CPF e CNPJ, retorna erro
     else:
         flash("Digite somente CPFs ou CNPJs", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
 
 def salvar(nome, data_nascimento, telefone, email, cpf_cnpj):
     try:
@@ -104,8 +105,8 @@ def salvar(nome, data_nascimento, telefone, email, cpf_cnpj):
     except SQLAlchemyError:
         db_session.rollback()
         flash("Erro ao cadastrar cliente no banco de dados", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))
     except Exception:
         db_session.rollback()
         flash("Erro inesperado", "error")
-        return redirect(url_for("cadastro_clientes"))
+        return redirect(url_for("cadastro_cliente"))

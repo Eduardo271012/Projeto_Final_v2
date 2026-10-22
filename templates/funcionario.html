@@ -29,9 +29,13 @@
                 <div class="campo">
                     <label for="setor">Setor</label>
                     <select id="setor" name="setor">
-                        <option value="opcao1">Opção 1</option>
-                        <option value="opcao2">Opção 2</option>
-                        <option value="opcao3">Opção 3</option>
+                        {% if setores %}
+                            {% for setor in setores %}
+                                <option value="{{ setor.id }}">{{ setor.nome }}</option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="">Não Existem Setores Cadastrados</option>
+                        {% endif %}
                     </select>
                 </div>
                 <div class="campo">

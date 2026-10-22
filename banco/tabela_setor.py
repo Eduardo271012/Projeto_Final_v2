@@ -1,6 +1,23 @@
 from flask import redirect, url_for, flash
 from database import *
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+
+def select_setores():
+    setores_select = (
+        select(Setor)
+    )
+    setores = db_session.execute(setores_select).scalars().all()
+    return setores
+
+def select_ultimo_id():
+    setor_select = (
+        select(Setor.id).
+        order_by(Setor.id.desc()).
+        limit(1)
+    )
+    ultimo_id = db_session.execute(setor_select).scalar()
+    return ultimo_id
 
 def validar_setor(nome, descricao):
     if not nome:

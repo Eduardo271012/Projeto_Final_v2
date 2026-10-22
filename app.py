@@ -6,7 +6,7 @@ from validate_docbr import CPF, CNPJ # Bilioteca para validar dados de documento
 from database import *
 import re
 from datetime import datetime, date
-from banco import tabela_setor, tabela_cliente, tabela_equipamento
+from banco import tabela_setor, tabela_cliente, tabela_equipamento, tabela_funcionario
 
 app = Flask(__name__)
 app.secret_key = "quarks-solucoes"
@@ -56,10 +56,6 @@ def cadastro_equipamento():
         erro = tabela_equipamento.validar_equipamento(nome=nome_equipamento, quantidade=quantidade_estoque, modelo=modelo, numero_serie=numero_serie)
         if erro:
             return redirect(url_for("cadastro_equipamento"))
-        if not equipamento_id:
-            flash("Preencha o equipamento", "error")
-            return redirect(url_for("equipamento_"
-                                    "+id"))
 
         tabela_equipamento.salvar(nome=nome_equipamento, quantidade=quantidade_estoque, modelo=modelo, numero_serie=numero_serie)
     return render_template('equipamento.html')
@@ -117,7 +113,22 @@ def funcionarios():
 
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
 def cadastro_funcionario():
-    return render_template('funcionario.html')
+    funcionarios_cadastrados = tabela_funcionario.select_funcionarios()
+    ultimo_setor = tabela_setor.select_ultimo_id()
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        cpf = request.form.get("cpf", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        setor_id = request.form.get("setor", "").strip()
+
+        erro = tabela_funcionario.validar_funcionario(nome=nome, cpf=cpf, email=email, setor_id=setor_id, funcionarios=funcionarios_cadastrados, ultimo_setor=ultimo_setor)
+        if erro:
+            return redirect(url_for("cadastro_funcionario"))
+
+        tabela_funcionario.salvar(nome=nome, cpf=cpf, email=email, setor_id=setor_id)
+
+    setores = tabela_setor.select_setores()
+    return render_template('funcionario.html', setores=setores)
 
 @app.route('/acesso', methods=['GET'])
 def acesso():

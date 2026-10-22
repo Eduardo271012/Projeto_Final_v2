@@ -52,6 +52,7 @@ def cadastro_equipamento():
         quantidade_estoque = request.form.get("quantidade_estoque").strip()
         modelo = request.form.get("modelo").strip()
         numero_serie = request.form.get("numero_serie").strip()
+        equipamento.id = request.form.get("equipamento.id").strip()
 
         if not nome_equipamento:
             flash("Preencha o nome", "error")
@@ -65,6 +66,10 @@ def cadastro_equipamento():
         if not numero_serie:
             flash("Preencha o número de série", "error")
             return redirect(url_for("cadastro_equipamento"))
+        if not equipamento_id:
+            flash("Preencha o equipamento", "error")
+            return redirect(url_for("equipamento_"
+                                    "+id"))
 
     return render_template('equipamento.html')
 
@@ -79,14 +84,15 @@ def ordens_servico():
 def cadastro_ordem():
     if request.method == "POST":
         titulo_os = request.form.get("titulo_os", "").strip()
-        cliente = request.form.get("cliente", "").strip()
+        funcionario = request.form.get("funcionario", "").strip()
         descricao = request.form.get("descricao", "").strip()
         status = request.form.get("status")
         prioridade = request.form.get("prioridade")
         datasolicitacao = request.form.get("datasolicitacao")
         dataentrega = request.form.get("dataentrega")
+        os_id = request.form.get("id")
 
-        if not titulo_os or not cliente or not descricao:
+        if not titulo_os or not funcionario or not descricao or not status or not prioridade or not datasolicitacao or not dataentrega:
             flash("Preencha os campos obrigatórios da OS", "error")
             return redirect(url_for("cadastro_ordem"))
 

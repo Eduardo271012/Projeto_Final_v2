@@ -19,8 +19,8 @@
                     <input type="text" id="titulo_os" name="titulo_os" required placeholder="Ex: Crie projeto 1">
                 </div>
                 <div class="campo">
-                    <label for="cliente">Cliente</label>
-                    <input type="text" id="cliente" name="cliente" required placeholder="Ex: João">
+                    <label for="funcionario">Funcionário</label>
+                    <input type="text" id="funcionario" name="funcionario" required placeholder="Ex: João">
                 </div>
                 <div class="campo">
                     <label for="descricao">Descrição</label>
@@ -51,10 +51,52 @@
                     <label for="dataentrega">Data da entrega</label>
                     <input type="date" id="dataentrega" name="dataentrega">
                 </div>
+                <div class="campo">
+                    <label>Equipamentos</label>
+                    {% for equipamento in equipamentos %}
+                    <div class="linha-campos">
+                        <input type="checkbox" name="equipamentos" value="{{ equipamento.id }}" id="equipamento_{{ equipamento.id }}">
+                        <label for="equipamento_{{ equipamento.id }}">{{ equipamento.nome }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
                 <div class="acoes-formulario">
                     <button type="submit" class="botao">Salvar</button>
+                    <a href="{{ url_for('ordens_servico') }}" class="botao botao-secundario">Cancelar</a>
                 </div>
             </form>
         </section>
     {% endif %}
+    <section class="painel">
+        <h2>Ordens de serviço</h2>
+        {% if times %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Titulo_os</th>
+                    <th>Funcionario</th>
+                    <th>Descricao</th>
+                    <th>Status</th>
+                    <th>Prioridade</th>
+                    <th>Datasolicitação</th>
+                    <th>Dataentrega</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for ordem_servico, equipamentos in ordens_servicos %}
+                <tr>
+                    <td>{{ os.id }}</td>
+                    <td>{<a href="{{url_for('ordens_servico', os_id = os.id )}}"></a></td>
+                    <td>{{ ordens_servico.funcionarios }}</td>
+                    <td>{{ equipamentos }}</td>
+                    <td>{{ ordens_servico.status }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+            <p class="vazio">Nenhuma OS cadastrada ainda</p>
+    {% endif %}
+    </section>
 {% endblock %}

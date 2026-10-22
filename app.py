@@ -31,10 +31,10 @@ def cadastro_cliente():
         data_nascimento = request.form.get("data_nascimento", date.today()).strip()
         telefone = request.form.get("telefone", "").strip()
         email = request.form.get("email", "").strip().lower()
-        cpf_cnpj = request.form.get("cpf_cnpj", "").strip()
+        cpf_cnpj = request.form.get("cpfcnpj", "").strip()
         departamento = request.form.get("departamento").strip()
 
-        tabela_cliente.validar_cliente(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)
+        tabela_cliente.validar_cliente(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj, departamento=departamento)
 
         # 3 - Salvar no banco
         tabela_cliente.salvar(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)

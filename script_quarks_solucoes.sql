@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS setores (
 CREATE TABLE IF NOT EXISTS equipamentos (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     
-    custo_equipamento INT,
+    nome VARCHAR(50) NOT NULL,
+    numero_serie VARCHAR(10),
     quantidade INT,
     modelo VARCHAR(50),
     status_delete BOOL DEFAULT 1
@@ -38,7 +39,7 @@ CREATE TABLE IF NOT EXISTS funcionarios (
     email VARCHAR(100) UNIQUE,
     funcao VARCHAR(50),
     status_delete BOOL DEFAULT 1,
-    
+
     CONSTRAINT fk_funcionario_setor
 		FOREIGN KEY (setor_id) REFERENCES setores(id)
         ON UPDATE CASCADE
@@ -49,7 +50,7 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     solicitante_id INT,
     responsavel_id INT,
-    
+
     custo_total INT,
     descricao TEXT(1000),
     status_os VARCHAR(25),
@@ -57,7 +58,7 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
     data_execucao DATE,
     prioridade VARCHAR(25),
     status_delete BOOL DEFAULT 1,
-    
+
     CONSTRAINT fk_ordem_servico_cliente
 		FOREIGN KEY (solicitante_id) REFERENCES clientes(id)
         ON UPDATE CASCADE
@@ -71,11 +72,11 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
 CREATE TABLE IF NOT EXISTS ordens_servico_equipamentos (
 	os_id INT NOT NULL,
     equipamento_id INT NOT NULL,
-    
+
     quantidade INT DEFAULT 1,
 
     PRIMARY KEY (os_id, equipamento_id),
-    
+
     CONSTRAINT fk_ordem_servico
 		FOREIGN KEY (os_id) REFERENCES ordens_servico(id)
         ON UPDATE CASCADE

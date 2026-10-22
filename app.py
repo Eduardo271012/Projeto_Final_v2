@@ -3,14 +3,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from banco import *
 from validate_docbr import CPF, CNPJ # Bilioteca para validar dados de documentos brasileiros
-
-from banco import tabela_cliente
 from database import *
 import re
 from datetime import datetime, date
+from banco import tabela_setor, tabela_cliente, tabela_equipamento
 
 app = Flask(__name__)
-
 app.secret_key = "quarks-solucoes"
 
 @app.route('/')
@@ -28,13 +26,15 @@ def cadastro_cliente():
     if request.method == "POST":
         # 1 - Pegar os valores digitados no formulário
         nome = request.form.get("nome", "").strip()
-        data_nascimento = request.form.get("data_nascimento", date.today()).strip()
+        data_nascimento = request.form.get("data_nascimento", "").strip()
         telefone = request.form.get("telefone", "").strip()
         email = request.form.get("email", "").strip().lower()
-        cpf_cnpj = request.form.get("cpfcnpj", "").strip()
+        cpf_cnpj = request.form.get("cpf_cnpj", "").strip()
         departamento = request.form.get("departamento").strip()
 
-        tabela_cliente.validar_cliente(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj, departamento=departamento)
+        erro = tabela_cliente.validar_cliente(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj, departamento=departamento)
+        if erro:
+            return redirect(url_for("cadastro_cliente"))
 
         # 3 - Salvar no banco
         tabela_cliente.salvar(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)
@@ -44,28 +44,19 @@ def cadastro_cliente():
 def equipamentos():
     return render_template('equipamento.html')
 
-
 @app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
 def cadastro_equipamento():
     if request.method == "POST":
-        nome_equipamento = request.form.get("nome_equipamento").strip()
+        nome_equipamento = request.form.get("nome_equipamento", "").strip()
         quantidade_estoque = request.form.get("quantidade_estoque").strip()
-        modelo = request.form.get("modelo").strip()
+        modelo = request.form.get("modelo", "").strip()
         numero_serie = request.form.get("numero_serie").strip()
 
-        if not nome_equipamento:
-            flash("Preencha o nome", "error")
-            return redirect(url_for("cadastro_equipamento"))
-        if not quantidade_estoque:
-            flash("Preencha a quantidade", "error")
-            return redirect(url_for("cadastro_equipamento"))
-        if not modelo:
-            flash("Preencha o modelo", "error")
-            return redirect(url_for("cadastro_equipamento"))
-        if not numero_serie:
-            flash("Preencha o número de série", "error")
+        erro = tabela_equipamento.validar_equipamento(nome=nome_equipamento, quantidade=quantidade_estoque, modelo=modelo, numero_serie=numero_serie)
+        if erro:
             return redirect(url_for("cadastro_equipamento"))
 
+        tabela_equipamento.salvar(nome=nome_equipamento, quantidade=quantidade_estoque, modelo=modelo, numero_serie=numero_serie)
     return render_template('equipamento.html')
 
 
@@ -101,52 +92,30 @@ def cadastro_ordem():
 def setor():
     return render_template('setor.html')
 
-
 @app.route('/setor/cadastro', methods=['GET', 'POST'])
 def cadastro_setor():
     if request.method == "POST":
-        nome_setor = request.form.get("nome_setor", "").strip()
-        if not nome_setor:
-            flash("Preencha o nome do setor", "error")
+        nome = request.form.get("nome", "").strip()
+        descricao = request.form.get("descricao", "").strip()
+
+        erro = tabela_setor.validar_setor(nome=nome, descricao=descricao)
+        if erro:
             return redirect(url_for("cadastro_setor"))
 
-        # Lógica para salvar no banco futuramente...
-        return redirect(url_for('setor'))
-
+        tabela_setor.salvar(nome=nome, descricao=descricao)
     return render_template('setor.html')
 
-
-# --- ROTAS DE FUNCIONÁRIOS ---
 @app.route('/funcionarios', methods=['GET'])
 def funcionarios():
-    # CORREÇÃO: Nova rota criada para renderizar a página de funcionários sem o formulário aberto
     return render_template('funcionario.html')
-
 
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
 def cadastro_funcionario():
-    if request.method == "POST":
-        nome = request.form.get("nome", "").strip()
-        cpf = request.form.get("cpf", "").strip()
-        email = request.form.get("email", "").strip()
-        setor = request.form.get("setor")
-        funcao = request.form.get("funcao")
-
-        if not nome or not email:
-            flash("Nome e Email são obrigatórios", "error")
-            return redirect(url_for("cadastro_funcionario"))
-
-        # Lógica para salvar no banco futuramente...
-        return redirect(url_for('funcionarios'))
-
     return render_template('funcionario.html')
 
-
-# --- DEMAIS ROTAS ---
-@app.route('/acesso', methods=['GET', 'POST'])
+@app.route('/acesso', methods=['GET'])
 def acesso():
     return render_template('acesso.html')
-
 
 # Iniciar aplicação web
 if __name__ == '__main__':

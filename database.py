@@ -41,8 +41,8 @@ class Equipamento(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     nome = Column(String(50), nullable=False)
     modelo = Column(String(50))
-    custo_equipamento = Column(Integer)
     quantidade = Column(Integer)
+    numero_serie = Column(String(10))
     status_delete = Column(Boolean, default=True)
 
     # Relacionamento com as ordens de serviço

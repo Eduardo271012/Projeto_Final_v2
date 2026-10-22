@@ -12,7 +12,7 @@
 
     {% if request.endpoint == 'cadastro_ordem' %}
         <section class="painel formulario">
-            <h2>Nova ordem de serviço</h2>
+            <h1>Nova ordem de serviço</h1>
             <form method="POST" action="{{ url_for('cadastro_ordem') }}">
                 <div class="campo">
                     <label for="titulo_os">Título OS</label>
@@ -95,8 +95,6 @@
             {% endfor %}
             </tbody>
         </table>
-    {% else %}
-            <p class="vazio">Nenhuma OS cadastrada ainda</p>
     {% endif %}
     </section>
 {% endblock %}

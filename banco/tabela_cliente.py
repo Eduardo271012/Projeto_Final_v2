@@ -5,7 +5,7 @@ import re
 from validate_docbr import CPF, CNPJ
 from datetime import datetime, date
 
-def validar_cliente(nome, data_nascimento, telefone, email, cpf_cnpj):
+def validar_cliente(nome, data_nascimento, telefone, email, cpf_cnpj, departamento):
     # Transforma o CPF/CNPJ em números limpos
     cpf_cnpj_formatado = re.sub(r"\D", "", cpf_cnpj)
     # Transforma o telefone digitado em números limpos

@@ -37,6 +37,15 @@
     </header>
 
     <main>
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% if mensagens %}
+                <div class="flash-container">
+                    {% for categoria, mensagem in mensagens %}
+                        <div class="flash flash-{{ categoria }}">{{ mensagem }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         {% block conteudo %}{% endblock %}
     </main>
 </body>

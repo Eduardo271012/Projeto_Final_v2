@@ -2,12 +2,16 @@ from flask import Flask, render_template, redirect, url_for, flash, request
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from banco import *
+from validate_docbr import CPF, CNPJ # Bilioteca para validar dados de documentos brasileiros
+
+from banco import tabela_cliente
+from database import *
 import re
 from datetime import datetime, date
 
 app = Flask(__name__)
-app.secret_key = "chave_secreta_para_os_flash_messages"  # Obrigatório para usar flash()
 
+app.secret_key = "quarks-solucoes"
 
 @app.route('/')
 def index():
@@ -19,59 +23,24 @@ def index():
 def clientes():
     return render_template('cliente.html')
 
-
 @app.route('/clientes/cadastro', methods=['GET', 'POST'])
 def cadastro_cliente():
     if request.method == "POST":
+        # 1 - Pegar os valores digitados no formulário
         nome = request.form.get("nome", "").strip()
-        data_nascimento = request.form.get("data_nascimento", "").strip()
+        data_nascimento = request.form.get("data_nascimento", date.today()).strip()
         telefone = request.form.get("telefone", "").strip()
         email = request.form.get("email", "").strip().lower()
         cpf_cnpj = request.form.get("cpf_cnpj", "").strip()
-        departamento = request.form.get("departamento", "").strip()
+        departamento = request.form.get("departamento").strip()
 
-        cpf_cnpj_formatado = re.sub(r"\D", "", cpf_cnpj)
-        telefone_fomatado = re.sub(r'\D', '', telefone)
+        tabela_cliente.validar_cliente(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)
 
-        email_existente = db_session.query(Cliente).filter(Cliente.email == email).first()
-
-        regex_telefone = r'^[1-9]{2}(?:[2-8]|9[1-9])[0-9]{7}$'
-        regex_email = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-
-        if not nome or not data_nascimento or not telefone or not email or not cpf_cnpj or not departamento:
-            flash("Preencha todos os campos obrigatórios", "error")
-            return redirect(url_for("cadastro_cliente"))
-
-        try:
-            data_validada = datetime.strptime(data_nascimento, "%Y-%m-%d").date()
-        except ValueError:
-            flash("A data inserida não existe ou está no formato errado", "error")
-            return redirect(url_for("cadastro_cliente"))
-
-        if len(nome) > 50:
-            flash("O nome é muito longo", "error")
-            return redirect(url_for("cadastro_cliente"))
-        if not re.match(regex_telefone, telefone_fomatado):
-            flash("Digite um telefone válido", "error")
-            return redirect(url_for("cadastro_cliente"))
-        if data_validada.year < 1900:
-            flash("A data de nascimento é muito antiga", "error")
-            return redirect(url_for("cadastro_cliente"))
-        if not re.match(regex_email, email):
-            flash("Digite um email válido", "error")
-            return redirect(url_for("cadastro_cliente"))
-        elif email_existente:
-            flash("O email já foi utilizado", "error")
-            return redirect(url_for("cadastro_cliente"))
-
-        # Lógica para salvar no banco futuramente...
-        return redirect(url_for('clientes'))
-
+        # 3 - Salvar no banco
+        tabela_cliente.salvar(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)
     return render_template('cliente.html')
 
-
-# --- ROTAS DE EQUIPAMENTOS ---
-@app.route('/equipamentos', methods=['GET'])
+@app.route('/equipamentos')
 def equipamentos():
     return render_template('equipamento.html')
 
@@ -79,17 +48,23 @@ def equipamentos():
 @app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
 def cadastro_equipamento():
     if request.method == "POST":
-        nome_equipamento = request.form.get("nome_equipamento", "").strip()
-        quantidade_estoque = request.form.get("quantidade_estoque", "").strip()
-        modelo = request.form.get("modelo", "").strip()
-        numero_serie = request.form.get("numero_serie", "").strip()
+        nome_equipamento = request.form.get("nome_equipamento").strip()
+        quantidade_estoque = request.form.get("quantidade_estoque").strip()
+        modelo = request.form.get("modelo").strip()
+        numero_serie = request.form.get("numero_serie").strip()
 
-        if not nome_equipamento or not quantidade_estoque or not modelo or not numero_serie:
-            flash("Preencha todos os campos do equipamento", "error")
+        if not nome_equipamento:
+            flash("Preencha o nome", "error")
             return redirect(url_for("cadastro_equipamento"))
-
-        # Lógica para salvar no banco futuramente...
-        return redirect(url_for('equipamentos'))
+        if not quantidade_estoque:
+            flash("Preencha a quantidade", "error")
+            return redirect(url_for("cadastro_equipamento"))
+        if not modelo:
+            flash("Preencha o modelo", "error")
+            return redirect(url_for("cadastro_equipamento"))
+        if not numero_serie:
+            flash("Preencha o número de série", "error")
+            return redirect(url_for("cadastro_equipamento"))
 
     return render_template('equipamento.html')
 

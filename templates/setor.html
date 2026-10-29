@@ -1,32 +1,66 @@
 {% extends 'base.html' %}
 {% block conteudo %}
     <div class="cabecalho-pagina">
-        <div>
-            <h1>Setores</h1>
-            <p class="subtitulo">Cadastro dos setores Quarks</p>
+        <div class="barra-titulo-linha">
+            <p class="subtitulo">SETORES</p>
         </div>
+
         {% if not editar %}
-            <a href="{{ url_for('cadastro_setor') }}" class="botao">Cadastrar setor</a>
+        <div class="container-botao-direita">
+            <a href="{{ url_for('cadastro_setor') }}" class="design-btn-direita">CADASTRAR</a>
+        </div>
         {% endif %}
     </div>
 
     {% if request.endpoint == 'cadastro_setor' %}
-        <section class="painel formulario">
-            <h2>Novo setor</h2>
+    <div class="container-criar">
+        <section class="painel-formulario">
+            <h2 class="card-titulo">CADASTRAR SETOR</h2>
             <form method="POST" action="{{ url_for('cadastro_setor') }}">
-                <div class="campo">
+                <div class="campo-formulario">
                     <label for="nome">Nome</label>
-                    <input type="text" id="nome" name="nome" required placeholder="Ex: Gestão">
+                    <input type="text" id="nome" name="nome" required placeholder="Ex: Gestão" class="campo-input">
                 </div>
-                <div class="campo">
+                <div class="campo-formulario">
                     <label for="descricao">Descrição</label>
-                    <textarea id="descricao" name="descricao" required placeholder="Ex: Área gestão fica no prédio 1"></textarea>
+                    <textarea id="descricao" name="descricao" required placeholder="Ex: Localizado no bloco 1" class="campo-input"></textarea>
                 </div>
 
-                <div class="acoes-formulario">
-                    <button type="submit" class="botao">Salvar</button>
+                <div class="botoes-formulario">
+                    <button type="submit" class="botao botao-enviar">Enviar</button>
+                    <button type="reset" class="botao botao-redefinir">Redefinir</button>
                 </div>
             </form>
         </section>
+    </div>
+    {% endif %}
+
+    <!-- CORREÇÃO: A tabela de listagem só aparece se o usuário não estiver na tela de cadastro -->
+    {% if request.endpoint != 'cadastro_setor' %}
+    <section class="painel">
+        <h2>LISTA DE SETORES</h2>
+        {% if setores %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Nome</th>
+                    <th>Descrição</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for setor in setores %}
+                <tr>
+                    <td>{{ setor.id }}</td>
+                    <td>{{ setor.nome }}</td>
+                    <td>{{ setor.descricao }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p class="vazio">Nenhum setor listado.</p>
+        {% endif %}
+    </section>
     {% endif %}
 {% endblock %}

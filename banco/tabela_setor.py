@@ -1,6 +1,13 @@
-from flask import redirect, url_for, flash
-from database import *
+from flask import flash
+from database import Setor, db_session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select
+
+def select_todos():
+    # Adicionada esta função que estava faltando para listar os setores na tabela do HTML
+    setor_sql = select(Setor)
+    setor = db_session.execute(setor_sql).scalars().all()
+    return setor
 
 def validar_setor(nome, descricao):
     if not nome:
@@ -17,18 +24,22 @@ def validar_setor(nome, descricao):
         flash("A descrição é muito longa", "error")
         return True
 
+    return False
+
 def salvar(nome, descricao):
     try:
-        setor_novo = Setor(nome=nome, descricao=descricao)
-        db_session.add(setor_novo)
+        setor = Setor(nome=nome, descricao=descricao)
+        db_session.add(setor)
         db_session.commit()
         flash("Setor cadastrado com sucesso", "success")
-        return redirect(url_for("setor"))
-    except SQLAlchemyError:
+        return True  # CORREÇÃO 2: Retorna apenas True indicando que salvou no banco local
+    except SQLAlchemyError as e:
         db_session.rollback()
+        print(f"Erro de Banco (Setor): {e}")
         flash("Erro ao cadastrar setor no banco de dados", "error")
-        return redirect(url_for("cadastro_setor"))
-    except Exception:
+        return False
+    except Exception as e:
         db_session.rollback()
+        print(f"Erro Inesperado (Setor): {e}")
         flash("Erro inesperado", "error")
-        return redirect(url_for("cadastro_setor"))
+        return False

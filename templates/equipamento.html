@@ -1,41 +1,79 @@
 {% extends 'base.html' %}
 {% block conteudo %}
-  <div class="cabecalho-pagina">
-        <div>
-            <h1>Equipamentos</h1>
-            <p class="subtitulo">Cadastro dos equipamentos Quarks</p>
+    <div class="cabecalho-pagina">
+        <div class="barra-titulo-linha">
+            <p class="subtitulo">EQUIPAMENTOS</p>
         </div>
         {% if not editar %}
-            <a href="{{ url_for('cadastro_equipamento') }}" class="botao">Cadastrar equipamento</a>
+        <div class="container-botao-direita">
+            <a href="{{ url_for('cadastro_equipamento') }}" class="design-btn-direita">CADASTRAR</a>
+        </div>
         {% endif %}
     </div>
 
     {% if request.endpoint == 'cadastro_equipamento' %}
-        <section class="painel formulario">
-            <h2>Novo equipamento</h2>
+    <div class="container-criar">
+        <section class="painel-formulario">
+            <h2 class="card-titulo">CADASTRAR EQUIPAMENTO</h2>
             <form method="POST" action="{{ url_for('cadastro_equipamento') }}">
-                <div class="campo">
-                    <label for="nome_equipamento">Nome do equipamento</label>
-                    <input type="text" id="nome_equipamento" name="nome_equipamento" required placeholder="Ex: Máquina 1">
+                <div class="campo-formulario">
+                    <label for="nome_equipamento">Nome</label>
+                    <input type="text" id="nome_equipamento" name="nome_equipamento" required placeholder="Ex: Torno Mecânico" class="campo-input">
                 </div>
                 <div class="linha-campos">
-                    <div class="campo">
-                        <label for="quantidade_estoque">Quantidade do estoque</label>
-                        <input type="number" id="quantidade_estoque" name="quantidade_estoque" placeholder="Ex: 2">
+                    <div class="campo-formulario">
+                        <label for="quantidade_estoque">Quantidade no estoque</label>
+                        <input type="number" id="quantidade_estoque" name="quantidade_estoque" placeholder="Ex: 5" class="campo-input">
                     </div>
-                     <div class="campo">
+                     <div class="campo-formulario">
                         <label for="modelo">Modelo</label>
-                        <input type="text" id="modelo" name="modelo">
+                        <input type="text" id="modelo" name="modelo" class="campo-input" placeholder="Ex: TM-250">
                     </div>
-                    <div class="campo">
-                        <label for="numero_serie">Número de série</label>
-                        <input type="number" id="numero_serie" name="numero_serie" placeholder="Ex: n3678">
+                    <!-- AJUSTE: step="0.01" adicionado para permitir o envio de números decimais (Float) sem travar o HTML -->
+                    <div class="campo-formulario">
+                        <label for="custo_equipamento">Custo unitário (R$)</label>
+                        <input type="number" id="custo_equipamento" name="custo_equipamento" step="0.01" placeholder="Ex: 1500.50" class="campo-input">
                     </div>
                 </div>
-                <div class="acoes-formulario">
-                    <button type="submit" class="botao">Salvar</button>
+                <div class="botoes-formulario">
+                    <button type="submit" class="botao botao-enviar">Enviar</button>
+                    <button type="reset" class="botao botao-redefinir">Redefinir</button>
                 </div>
             </form>
         </section>
+    </div>
+    {% endif %}
+
+    <!-- CORREÇÃO: A tabela agora só será exibida se o endpoint for diferente do cadastro de equipamentos -->
+    {% if request.endpoint != 'cadastro_equipamento' %}
+    <section class="painel">
+        <h2>LISTA DE EQUIPAMENTOS</h2>
+        {% if equipamentos %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Nome</th>
+                    <th>Modelo</th>
+                    <th>Quantidade</th>
+                    <th>Custo Unitário</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for equipamento in equipamentos %}
+                <tr>
+                    <td>{{ equipamento.id }}</td>
+                    <td>{{ equipamento.nome }}</td>
+                    <td>{{ equipamento.modelo if equipamento.modelo else '-' }}</td>
+                    <td>{{ equipamento.quantidade if equipamento.quantidade else 0 }}</td>
+                    <td>R$ {{ equipamento.custo_equipamento if equipamento.custo_equipamento else 0 }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p class="vazio">Nenhum equipamento cadastrado ainda</p>
+        {% endif %}
+    </section>
     {% endif %}
 {% endblock %}

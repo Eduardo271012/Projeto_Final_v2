@@ -13,6 +13,14 @@
     --cor-sucesso-fundo: #e6fffa;
     --cor-erro: #c53030;
     --cor-erro-fundo: #fff5f5;
+    --cor-primaria: #2b6cb0;
+    --cor-primaria-escura: #1e4e8c;
+    --cor-fundo: #f4f6f9;
+    --cor-painel: #ffffff;
+    --cor-texto: #2d3748;
+    --cor-texto-claro: #718096;
+    --cor-borda: #0f172a;
+
 }
 
 body {
@@ -21,7 +29,7 @@ body {
     font-weight: 400;
     font-optical-sizing: auto;
     font-style: normal;
-    background-color: #ffffff;
+    background-color: #afcfde;
     overflow-x: hidden;
 }
 
@@ -240,4 +248,182 @@ h1 {
     background-color: var(--cor-erro-fundo);
     color: var(--cor-erro);
     border: 1px solid #feb2b2;
+}
+
+/* 5. PÁGINA SETOR */
+
+.container-botao-direita {
+    display: flex;
+    justify-content: flex-end;
+    max-width: 1200px;
+    margin: 20px 70px 50px auto;
+    padding: 0 20px;
+}
+
+.design-btn-direita {
+    background-color: rgb(15 23 42);
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family:  "Inter Tight", sans-serif;
+    text-decoration: none;
+}
+
+.barra-titulo-linha {
+    background-color: #0f172a;
+    text-align: center;
+    padding: 15px 0;
+    margin: 2px 0px 0px 0px;
+    border-bottom: 5px solid #0284c7;
+    position: relative; /* Necessário para posicionar a linha por baixo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.subtitulo {
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+/* CARD DO FORMULÁRIO */
+
+.container-criar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: Century;
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+.painel-formulario {
+    background-color: #ffffff;
+    border: 2px solid #0f172a;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.card-titulo {
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: 10px;
+    color: #0f172a;
+    font-size: 30px;
+    text-align: center;
+}
+
+.campo-formulario {
+    margin-bottom: 18px;
+}
+
+.campo-formulario label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #0f172a;
+}
+
+.campo-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #0f172a;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+.campo-input:focus {
+    border-color: #518df8;
+    outline: none;
+}
+
+.botoes-formulario {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.botao {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.botao-enviar {
+    background-color: #0f172a;
+    color: white;
+}
+
+.botao-enviar:hover {
+    background-color: #0283c5;
+}
+
+.btn-redefinir {
+    background-color: #868f9a;
+    color: white;
+}
+
+.botao-redefinir:hover {
+    background-color: #5a6268;
+}
+
+/* PAINÉIS */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+}
+
+th, td {
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--cor-borda);
+    font-size: 0.9rem;
+
+}
+
+th {
+    color: var(--cor-texto-claro);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+}
+
+tbody tr:hover {
+    background-color: #adcbda;
+}
+
+.centro {
+    text-align: center;
+}
+
+.acoes-col {
+    text-align: right;
+    white-space: nowrap;
+}
+.painel {
+    background-color: var(--cor-painel);
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+}
+
+.vazio {
+    color: var(--cor-texto-claro);
+    font-style: italic;
+    padding: 12px 0;
 }

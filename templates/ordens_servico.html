@@ -1,100 +1,111 @@
 {% extends 'base.html' %}
 {% block conteudo %}
     <div class="cabecalho-pagina">
-        <div>
-            <h1>Ordens de serviço</h1>
-            <p class="subtitulo">Cadastro das OS's Quarks</p>
+        <div class="barra-titulo-linha">
+            <p class="subtitulo">ORDEM DE SERVIÇO</p>
         </div>
         {% if not editar %}
-            <a href="{{ url_for('cadastro_ordem') }}" class="botao">Cadastrar OS</a>
+        <div class="container-botao-direita">
+            <a href="{{ url_for('cadastro_ordem_view') }}" class="design-btn-direita">CADASTRAR</a>
+        </div>
         {% endif %}
     </div>
 
-    {% if request.endpoint == 'cadastro_ordem' %}
-        <section class="painel formulario">
-            <h1>Nova ordem de serviço</h1>
-            <form method="POST" action="{{ url_for('cadastro_ordem') }}">
-                <div class="campo">
-                    <label for="titulo_os">Título OS</label>
-                    <input type="text" id="titulo_os" name="titulo_os" required placeholder="Ex: Crie projeto 1">
-                </div>
-                <div class="campo">
-                    <label for="funcionario">Funcionário</label>
-                    <input type="text" id="funcionario" name="funcionario" required placeholder="Ex: João">
-                </div>
-                <div class="campo">
-                    <label for="descricao">Descrição</label>
-                    <textarea id="descricao" name="descricao" required placeholder="Ex: A OS precisa de 1 técnico"></textarea>
-                </div>
-                <div class="campo">
-                    <label for="status">Status</label>
-                    <select id="status" name="status">
-                        <option value="concluida">Concluída</option>
-                        <option value="aberta">Aberta: Aguardando técnico</option>
-                        <option value="andamento">Em andamento: Técnico trabalhando</option>
-                        <option value="pausada">Pausada: Aguardando peça chegar do estoque</option>
+    {% if request.endpoint == 'cadastro_ordem_view' %}
+    <div class="container-criar">
+        <section class="painel-formulario">
+            <h2 class="card-titulo">CADASTRAR OS</h2>
+            <form method="POST" action="{{ url_for('cadastro_ordem_view') }}">
+                <div class="campo-formulario">
+                    <label for="responsavel_id">Funcionário (Responsável)</label>
+                    <select id="responsavel_id" name="responsavel_id" required class="campo-input">
+                        <option value="" disabled selected>Selecione o Funcionário</option>
+                        {% for funcionario in funcionarios %}
+                            <option value="{{ funcionario.id }}">{{ funcionario.nome }}</option>
+                        {% else %}
+                            <option value="" disabled>Não existem funcionários cadastrados</option>
+                        {% endfor %}
                     </select>
                 </div>
-                <div class="campo">
+                <div class="campo-formulario">
+                    <label for="descricao">Descrição do Problema / Service</label>
+                    <textarea id="descricao" name="descricao" required placeholder="Ex: Substituir o óleo hidráulico e limpar os filtros." class="campo-input"></textarea>
+                </div>
+                <div class="campo-formulario">
+                    <label for="status_os">Status</label>
+                    <select id="status_os" name="status_os" class="campo-input">
+                        <option value="Aberta">Aberta: Aguardando técnico</option>
+                        <option value="Em andamento">Em andamento: Técnico trabalhando</option>
+                        <option value="Pausada">Pausada: Aguardando peça</option>
+                        <option value="Concluída">Concluída</option>
+                    </select>
+                </div>
+                <div class="campo-formulario">
                     <label for="prioridade">Prioridade</label>
-                    <select id="prioridade" name="prioridade">
-                        <option value="baixa">Baixa</option>
-                        <option value="media">Média</option>
-                        <option value="alta">Alta</option>
+                    <select id="prioridade" name="prioridade" class="campo-input">
+                        <option value="Baixa">Baixa</option>
+                        <option value="Média">Média</option>
+                        <option value="Alta">Alta</option>
                     </select>
                 </div>
-                <div class="campo">
-                    <label for="datasolicitacao">Data da solicitação</label>
-                    <input type="date" id="datasolicitacao" name="datasolicitacao">
+                <div class="campo-formulario">
+                    <label for="custo_total">Custo Estimado (R$)</label>
+                    <input type="number" id="custo_total" name="custo_total" placeholder="Ex: 500" class="campo-input">
                 </div>
-                <div class="campo">
-                    <label for="dataentrega">Data da entrega</label>
-                    <input type="date" id="dataentrega" name="dataentrega">
+                <div class="campo-formulario">
+                    <label for="data_solicitacao">Data da solicitação</label>
+                    <input type="date" id="data_solicitacao" name="data_solicitacao" class="campo-input">
                 </div>
-                <div class="campo">
-                    <label>Equipamentos</label>
-                    {% for equipamento in equipamentos %}
-                    <div class="linha-campos">
-                        <input type="checkbox" name="equipamentos" value="{{ equipamento.id }}" id="equipamento_{{ equipamento.id }}">
-                        <label for="equipamento_{{ equipamento.id }}">{{ equipamento.nome }}</label>
-                    </div>
-                    {% endfor %}
+                <div class="campo-formulario">
+                    <label for="data_execucao">Data da execução/entrega</label>
+                    <input type="date" id="data_execucao" name="data_execucao" class="campo-input">
                 </div>
-                <div class="acoes-formulario">
-                    <button type="submit" class="botao">Salvar</button>
-                    <a href="{{ url_for('ordens_servico') }}" class="botao botao-secundario">Cancelar</a>
+
+                <div class="botoes-formulario">
+                    <button type="submit" class="botao botao-enviar">Enviar</button>
+                    <button type="reset" class="botao botao-redefinir">Redefinir</button>
                 </div>
             </form>
         </section>
+    </div>
     {% endif %}
+
+    <!-- CORREÇÃO: Envolvendo a listagem para esconder a tabela se o formulário estiver aberto -->
+    {% if request.endpoint != 'cadastro_ordem_view' %}
     <section class="painel">
-        <h2>Ordens de serviço</h2>
-        {% if times %}
+        <h2>LISTAR ORDENS DE SERVIÇO</h2>
+        {% if ordens %}
         <table>
             <thead>
                 <tr>
                     <th>Id</th>
-                    <th>Titulo_os</th>
-                    <th>Funcionario</th>
-                    <th>Descricao</th>
+                    <th>Funcionário</th>
+                    <th>Descrição</th>
                     <th>Status</th>
                     <th>Prioridade</th>
-                    <th>Datasolicitação</th>
-                    <th>Dataentrega</th>
+                    <th>Custo</th>
+                    <th>Solicitação</th>
+                    <th>Execução</th>
                 </tr>
             </thead>
             <tbody>
-            {% for ordem_servico, equipamentos in ordens_servicos %}
+            {% for os in ordens %}
                 <tr>
                     <td>{{ os.id }}</td>
-                    <td>{<a href="{{url_for('ordens_servico', os_id = os.id )}}"></a></td>
-                    <td>{{ ordens_servico.funcionarios }}</td>
-                    <td>{{ equipamentos }}</td>
-                    <td>{{ ordens_servico.status }}</td>
+                    <td>{{ os.funcionario.nome if os.funcionario else 'Não atribuído' }}</td>
+                    <td>{{ os.descricao }}</td>
+                    <td>{{ os.status_os }}</td>
+                    <td>{{ os.prioridade }}</td>
+                    <td>R$ {{ os.custo_total if os.custo_total else 0 }}</td>
+                    <td>{{ os.data_solicitacao.strftime('%d/%m/%Y') if os.data_solicitacao else '-' }}</td>
+                    <td>{{ os.data_execucao.strftime('%d/%m/%Y') if os.data_execucao else '-' }}</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
-    {% endif %}
+        {% else %}
+            <p class="vazio">Nenhuma ordem de serviço cadastrada ainda</p>
+        {% endif %}
     </section>
+    {% endif %}
 {% endblock %}

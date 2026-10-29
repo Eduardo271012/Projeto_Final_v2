@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from banco import *
 from validate_docbr import CPF, CNPJ # Bilioteca para validar dados de documentos brasileiros
+from database import *
 import re
 from datetime import datetime, date
 from database import *
@@ -25,6 +26,31 @@ def load_user(user_id):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+# --- ROTAS DE CLIENTES ---
+@app.route('/clientes', methods=['GET'])
+def clientes():
+    return render_template('cliente.html')
+
+@app.route('/clientes/cadastro', methods=['GET', 'POST'])
+def cadastro_cliente():
+    if request.method == "POST":
+        # 1 - Pegar os valores digitados no formulário
+        nome = request.form.get("nome", "").strip()
+        data_nascimento = request.form.get("data_nascimento", "").strip()
+        telefone = request.form.get("telefone", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        cpf_cnpj = request.form.get("cpf_cnpj", "").strip()
+        departamento = request.form.get("departamento").strip()
+
+        erro = tabela_cliente.validar_cliente(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj, departamento=departamento)
+        if erro:
+            return redirect(url_for("cadastro_cliente"))
+
+        # 3 - Salvar no banco
+        tabela_cliente.salvar(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)
+    return render_template('cliente.html')
 
 @app.route('/equipamentos')
 def equipamentos():

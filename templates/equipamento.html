@@ -6,38 +6,40 @@
         </div>
         {% if not editar %}
         <div class="container-botao-direita">
-            <a href="{{ url_for('cadastro_equipamento') }}" class="design-btn-direita">CADASTRAR</a>
+            <a href="{{ url_for('listar_equipamentos_excluidos') if not excluidos else url_for('equipamentos')}}" class="design-btn-direita">EQUIPAMENTOS {% if excluidos %} ATIVOS {% else %} EXCLUIDOS {% endif %}</a>
+            {% if not excluidos %}<a href="{{ url_for('cadastro_equipamento') }}" class="design-btn-direita">CADASTRAR</a>{% endif %}
         </div>
         {% endif %}
     </div>
 
-    {% if request.endpoint == 'cadastro_equipamento' %}
+    {% if request.endpoint == 'cadastro_equipamento' or editar %}
     <div class="container-criar">
         <section class="painel-formulario">
-            <h2 class="card-titulo">CADASTRAR EQUIPAMENTO</h2>
-            <form method="POST" action="{{ url_for('cadastro_equipamento') }}">
+            <h2 class="card-titulo">{{ 'CADASTRAR' if not editar else 'EDITAR' }} EQUIPAMENTO</h2>
+            <form method="POST" action="{{ url_for('cadastro_equipamento') if not editar else url_for('editar_equipamento', equipamento_id=editar.id) }}">
                 <div class="campo-formulario">
                     <label for="nome_equipamento">Nome</label>
-                    <input type="text" id="nome_equipamento" name="nome_equipamento" required placeholder="Ex: Torno Mecânico" class="campo-input">
+                    <input type="text" id="nome_equipamento" name="nome_equipamento" required placeholder="Ex: Torno Mecânico" class="campo-input" value="{{ editar.nome if editar else '' }}">
                 </div>
                 <div class="linha-campos">
                     <div class="campo-formulario">
                         <label for="quantidade_estoque">Quantidade no estoque</label>
-                        <input type="number" id="quantidade_estoque" name="quantidade_estoque" placeholder="Ex: 5" class="campo-input">
+                        <input type="number" id="quantidade_estoque" name="quantidade_estoque" placeholder="Ex: 5" class="campo-input" value="{{ editar.quantidade if editar else '' }}">
                     </div>
                      <div class="campo-formulario">
                         <label for="modelo">Modelo</label>
-                        <input type="text" id="modelo" name="modelo" class="campo-input" placeholder="Ex: TM-250">
+                        <input type="text" id="modelo" name="modelo" class="campo-input" placeholder="Ex: TM-250" value="{{ editar.modelo if editar else '' }}">
                     </div>
                     <!-- AJUSTE: step="0.01" adicionado para permitir o envio de números decimais (Float) sem travar o HTML -->
                     <div class="campo-formulario">
                         <label for="custo_equipamento">Custo unitário (R$)</label>
-                        <input type="number" id="custo_equipamento" name="custo_equipamento" step="0.01" placeholder="Ex: 1500.50" class="campo-input">
+                        <input type="number" id="custo_equipamento" name="custo_equipamento" step="0.01" placeholder="Ex: 1500.50" class="campo-input" value="{{ editar.custo_equipamento if editar else '' }}">
                     </div>
                 </div>
                 <div class="botoes-formulario">
                     <button type="submit" class="botao botao-enviar">Enviar</button>
                     <button type="reset" class="botao botao-redefinir">Redefinir</button>
+                    <a href="{{ url_for('equipamentos') }}" class="botao botao-voltar">Voltar</a>
                 </div>
             </form>
         </section>
@@ -45,7 +47,7 @@
     {% endif %}
 
     <!-- CORREÇÃO: A tabela agora só será exibida se o endpoint for diferente do cadastro de equipamentos -->
-    {% if request.endpoint != 'cadastro_equipamento' %}
+    {% if request.endpoint != 'cadastro_equipamento' and not editar %}
     <section class="painel">
         <h2>LISTA DE EQUIPAMENTOS</h2>
         {% if equipamentos %}
@@ -57,6 +59,7 @@
                     <th>Modelo</th>
                     <th>Quantidade</th>
                     <th>Custo Unitário</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -67,6 +70,7 @@
                     <td>{{ equipamento.modelo if equipamento.modelo else '-' }}</td>
                     <td>{{ equipamento.quantidade if equipamento.quantidade else 0 }}</td>
                     <td>R$ {{ equipamento.custo_equipamento if equipamento.custo_equipamento else 0 }}</td>
+                    <td class="acoes">{% if excluidos %}<a href="{{ url_for('restaurar_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita">Restaurar</a>{% else %}<a href="{{ url_for('excluir_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita excluir-btn">Excluir</a><a href="{{ url_for('editar_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita">Editar</a>{% endif %}</td>
                 </tr>
             {% endfor %}
             </tbody>

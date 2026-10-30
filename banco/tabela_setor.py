@@ -1,22 +1,36 @@
 from flask import flash
-from database import Setor, db_session
+from database import *
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 def select_todos():
     # Adicionada esta função que estava faltando para listar os setores na tabela do HTML
-    setor_sql = select(Setor)
-    setor = db_session.execute(setor_sql).scalars().all()
+    setor_sql = (
+        select(Setor, func.count(Funcionario.id).label("funcionarios")).
+        outerjoin(Funcionario, Setor.id == Funcionario.setor_id).
+        group_by(Setor.id)
+    )
+    setor = db_session.execute(setor_sql).all()
     return setor
 
 def select_ativos():
-    setor_sql = select(Setor).where(Setor.status_delete == 1)
-    setor = db_session.execute(setor_sql).scalars().all()
+    setor_sql = (
+        select(Setor, func.count(Funcionario.id).label("funcionarios")).
+        outerjoin(Funcionario, Setor.id == Funcionario.setor_id).
+        where(Setor.status_delete == 1).
+        group_by(Setor.id)
+    )
+    setor = db_session.execute(setor_sql).all()
     return setor
 
 def select_excluidos():
-    setor_sql = select(Setor).where(Setor.status_delete == 0)
-    setor = db_session.execute(setor_sql).scalars().all()
+    setor_sql = (
+        select(Setor, func.count(Funcionario.id).label("funcionarios")).
+        outerjoin(Funcionario, Setor.id == Funcionario.setor_id).
+        where(Setor.status_delete == 0).
+        group_by(Setor.id)
+    )
+    setor = db_session.execute(setor_sql).all()
     return setor
 
 def select_id(setor_id):

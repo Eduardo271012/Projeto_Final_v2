@@ -32,8 +32,13 @@ def index():
 
 @app.route('/equipamentos')
 def equipamentos():
-    lista_equipamentos = tabela_equipamento.select_todos()
+    lista_equipamentos = tabela_equipamento.select_ativos()
     return render_template('equipamento.html', equipamentos=lista_equipamentos)
+
+@app.route('/equipamentos/excluidos', methods=['GET'])
+def listar_equipamentos_excluidos():
+    lista_equipamentos = tabela_equipamento.select_excluidos()
+    return render_template('equipamento.html', equipamentos=lista_equipamentos, excluidos=1)
 
 @app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
 def cadastro_equipamento():
@@ -44,7 +49,7 @@ def cadastro_equipamento():
         custo = request.form.get("custo_equipamento", "").strip()
 
         # 1. Executa a validação
-        if tabela_equipamento.validar_equipamento(nome, quantidade, modelo, custo) is True:
+        if tabela_equipamento.validar_equipamento(nome, quantidade, modelo, custo):
             return redirect(url_for("cadastro_equipamento"))
 
         # 2. Se tudo estiver certo, salva e manda para a listagem
@@ -53,6 +58,44 @@ def cadastro_equipamento():
 
     lista_equipamentos = tabela_equipamento.select_todos()
     return render_template('equipamento.html', equipamentos=lista_equipamentos)
+
+@app.route('/equipamentos/editar/<equipamento_id>', methods=['GET', 'POST'])
+def editar_equipamento(equipamento_id):
+    equipamento = tabela_equipamento.select_id(equipamento_id)
+    if request.method == "POST":
+        nome = request.form.get("nome_equipamento", "").strip()
+        quantidade = request.form.get("quantidade_estoque", "").strip()
+        modelo = request.form.get("modelo", "").strip()
+        custo = request.form.get("custo_equipamento", "").strip()
+
+        if tabela_equipamento.validar_equipamento(nome, quantidade, modelo, custo):
+            return redirect(url_for("editar_equipamento"), equipamento_id=equipamento_id)
+        else:
+            equipamento.nome = nome
+            equipamento.quantidade = quantidade
+            equipamento.modelo = modelo
+            equipamento.custo = custo
+            db_session.commit()
+            flash("Equipamento editado com sucesso", "success")
+            return redirect(url_for("equipamentos"))
+
+    return render_template('equipamento.html', editar=equipamento)
+
+@app.route('/equipamentos/excluir/<equipamento_id>', methods=['GET', 'POST'])
+def excluir_equipamento(equipamento_id):
+    equipamento = tabela_equipamento.select_id(equipamento_id)
+    if equipamento:
+        equipamento.status_delete = False
+        db_session.commit()
+    return redirect(url_for('equipamentos'))
+
+@app.route('/equipamentos/restaurar/<equipamento_id>', methods=['GET', 'POST'])
+def restaurar_equipamento(equipamento_id):
+    equipamento = tabela_equipamento.select_id(equipamento_id)
+    if equipamento:
+        equipamento.status_delete = True
+        db_session.commit()
+    return redirect(url_for('listar_equipamentos_excluidos'))
 
 
 # --- ROTAS DE ORDENS DE SERVIÇO ---
@@ -115,6 +158,24 @@ def cadastro_setor():
     lista_setores = tabela_setor.select_todos()
     return render_template('setor.html', setores=lista_setores)
 
+@app.route('/setor/editar/<setor_id>', methods=['GET', 'POST'])
+def editar_setor(setor_id):
+    setor = tabela_setor.select_id(setor_id)
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        descricao = request.form.get("descricao", "").strip()
+
+        if tabela_setor.validar_setor(nome, descricao):
+            return redirect(url_for("editar_setor", setor_id=setor_id))
+        else:
+            setor.nome = nome
+            setor.descricao = descricao
+            db_session.commit()
+            flash("Setor editado com sucesso", "success")
+            return redirect(url_for("setor"))
+
+    return render_template('setor.html', editar=setor)
+
 @app.route('/setor/excluir/<setor_id>', methods=['GET', 'POST'])
 def excluir_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
@@ -161,8 +222,7 @@ def cadastro_funcionario():
     # ADICIONE ISTO AQUI: Busca todos os setores para carregar no componente <select> do HTML
 
 
-    setores_sql = select(Setor)
-    lista_setores = db_session.execute(setores_sql).scalars().all()
+    lista_setores = tabela_setor.select_todos()
 
     # Enviamos a lista de setores capturada para a página HTML
     return render_template('funcionario.html', setores=lista_setores)

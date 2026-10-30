@@ -10,6 +10,8 @@ from database import *
 from banco import tabela_setor, tabela_equipamento, tabela_funcionario, tabela_ordens_servico
 from flask_login import LoginManager, login_required, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from database import Setor, db_session
+from sqlalchemy import select
 
 app = Flask(__name__)
 app.secret_key = "quarks-solucoes"
@@ -27,30 +29,6 @@ def load_user(user_id):
 def index():
     return render_template('index.html')
 
-
-# --- ROTAS DE CLIENTES ---
-@app.route('/clientes', methods=['GET'])
-def clientes():
-    return render_template('cliente.html')
-
-@app.route('/clientes/cadastro', methods=['GET', 'POST'])
-def cadastro_cliente():
-    if request.method == "POST":
-        # 1 - Pegar os valores digitados no formulário
-        nome = request.form.get("nome", "").strip()
-        data_nascimento = request.form.get("data_nascimento", "").strip()
-        telefone = request.form.get("telefone", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        cpf_cnpj = request.form.get("cpf_cnpj", "").strip()
-        departamento = request.form.get("departamento").strip()
-
-        erro = tabela_cliente.validar_cliente(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj, departamento=departamento)
-        if erro:
-            return redirect(url_for("cadastro_cliente"))
-
-        # 3 - Salvar no banco
-        tabela_cliente.salvar(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)
-    return render_template('cliente.html')
 
 @app.route('/equipamentos')
 def equipamentos():
@@ -162,8 +140,7 @@ def cadastro_funcionario():
         return redirect(url_for('funcionarios'))
 
     # ADICIONE ISTO AQUI: Busca todos os setores para carregar no componente <select> do HTML
-    from database import Setor, db_session
-    from sqlalchemy import select
+
 
     setores_sql = select(Setor)
     lista_setores = db_session.execute(setores_sql).scalars().all()

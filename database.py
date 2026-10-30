@@ -59,7 +59,7 @@ class Funcionario(Base, UserMixin):
     email = Column(String(100), unique=True)
     funcao = Column(String(50))
     status_delete = Column(Boolean, default=True)
-    senha = Column(String(255), nullable=False, default='mudar123')
+
 
     # Relacionamentos com as ordens de serviço e setor
     ordens_servico_atribuidas = relationship('OrdemServico', back_populates='funcionario')

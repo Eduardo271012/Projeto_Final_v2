@@ -10,6 +10,20 @@ def select_todos():
     equipamentos = db_session.execute(equipamentos_sql).scalars().all()
     return equipamentos
 
+def select_ativos():
+    equipamentos_sql = select(Equipamento).where(Equipamento.status_delete == 1)
+    equipamento = db_session.execute(equipamentos_sql).scalars().all()
+    return equipamento
+
+def select_excluidos():
+    equipamentos_sql = select(Equipamento).where(Equipamento.status_delete == 0)
+    equipamento = db_session.execute(equipamentos_sql).scalars().all()
+    return equipamento
+
+def select_id(equipamento_id):
+    equipamento_sql = select(Equipamento).where(Equipamento.id == equipamento_id)
+    equipamento = db_session.execute(equipamento_sql).scalar_one_or_none()
+    return equipamento
 
 def validar_equipamento(nome, quantidade, modelo, custo_equipamento):
     if not nome:

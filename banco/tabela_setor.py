@@ -1,7 +1,7 @@
 from flask import flash
 from database import Setor, db_session
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 def select_todos():
     # Adicionada esta função que estava faltando para listar os setores na tabela do HTML
@@ -43,3 +43,8 @@ def salvar(nome, descricao):
         print(f"Erro Inesperado (Setor): {e}")
         flash("Erro inesperado", "error")
         return False
+
+def select_quantidade_total():
+    setores_sql = select(func.count(Setor.id))
+    qtd_total = db_session.execute(setores_sql).scalar()
+    return qtd_total

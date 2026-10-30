@@ -18,7 +18,7 @@ from flask_login import UserMixin
 
 # Conexão com o banco
 # Mudar usuário, senha e nome do banco
-engine = create_engine("mysql+pymysql://root:senaisp@10.135.232.28:3306/quarks_solucoes")
+engine = create_engine("mysql+pymysql://swan:senaisp@10.135.232.28:3306/quarks_solucoes")
 db_session =scoped_session(sessionmaker(bind=engine))
 Base = declarative_base()
 

@@ -1,7 +1,7 @@
 from flask import flash
 from database import Equipamento, db_session
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 
 def select_todos():
@@ -66,3 +66,10 @@ def salvar(nome, modelo, quantidade, custo_equipamento):
         print(f"Erro Inesperado (Equipamento): {e}")
         flash("Erro inesperado", "error")
         return False
+
+def select_quantidade_total():
+    equipamentos_sql = select(func.count(Equipamento.id))
+    qtd_total = db_session.execute(equipamentos_sql).scalar()
+    return qtd_total
+
+print(select_quantidade_total())

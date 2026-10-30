@@ -1,4 +1,29 @@
 {% extends 'base.html' %}
+{% block titulo %}Dashboard{% endblock %}
 {% block conteudo %}
+  <h1>Dashboard</h1>
+    <p class="subtitulo">Visão geral da plataforma da Quarks Soluções Industriais</p>
 
+    <div class="cartoes">
+        <div class="cartao">
+            <div class="cartao-valor">{{ total_ordens_servico }}</div>
+            <div class="cartao-label">Ordens de serviço</div>
+        </div>
+        <div class="cartao">
+            <div class="cartao-valor">{{ total_equipamentos }}</div>
+            <div class="cartao-label">Equipamentos</div>
+        </div>
+        <div class="cartao">
+            <div class="cartao-valor">{{ total_setores }}</div>
+            <div class="cartao-label">Setores</div>
+        </div>
+     <div class="cartao">
+            <div class="cartao-valor">{{ total_funcionarios }}</div>
+            <div class="cartao-label">Funcionários</div>
+        </div>
+    </div>
+
+    <div class="grid-dashboard">
+
+    </div>
 {% endblock %}

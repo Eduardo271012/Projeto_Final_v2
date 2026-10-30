@@ -151,7 +151,19 @@ def cadastro_funcionario():
 # --- DEMAIS ROTAS ---
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    return render_template('dashboard.html')
+    ordens_servico = tabela_ordens_servico.select_quantidade_total()
+    equipamentos = tabela_equipamento.select_quantidade_total()
+    setores = tabela_setor.select_quantidade_total()
+    funcionarios = tabela_funcionario.select_quantidade_total()
+
+    return render_template(
+        "dashboard.html",
+        total_ordens_servico=ordens_servico,
+        total_equipamentos=equipamentos,
+        total_setores=setores,
+        total_funcionarios=funcionarios
+    )
+
 
 
 

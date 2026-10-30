@@ -1,7 +1,8 @@
 from flask import flash
+
 from database import OrdemServico, db_session
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import select
+from sqlalchemy import select, func
 from datetime import datetime
 
 
@@ -43,3 +44,10 @@ def salvar(cliente_id, responsavel_id, descricao, status_os, prioridade, custo_t
         print(f"Erro Inesperado (OS): {e}")
         flash("Erro inesperado ao gerar OS.", "error")
         return False
+
+
+
+def select_quantidade_total():
+    ordens_servico_sql = select(func.count(OrdemServico.id))
+    qtd_total = db_session.execute(ordens_servico_sql).scalar()
+    return qtd_total

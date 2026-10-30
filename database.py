@@ -8,12 +8,12 @@ from flask_login import UserMixin
 # 1. PARTE NOVA: CRIA O BANCO SE ELE NÃO EXISTIR NO SEU COMPUTADOR
 # ==============================================================================
 
-# conn = pymysql.connect(host="localhost", user="root", password="senaisp", port=3306)
-# try:
-#     with conn.cursor() as cursor:
-#         cursor.execute("CREATE DATABASE IF NOT EXISTS quarks_solucoes;")
-# finally:
-#     conn.close()
+conn = pymysql.connect(host="localhost", user="root", password="senaisp", port=3306)
+try:
+    with conn.cursor() as cursor:
+        cursor.execute("CREATE DATABASE IF NOT EXISTS quarks_solucoes;")
+finally:
+     conn.close()
 
 
 # Conexão com o banco
@@ -29,7 +29,7 @@ class Setor(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     nome = Column(String(50), nullable=False)
-    descricao = Column(String)
+    descricao = Column(String(10000))
     status_delete = Column(Boolean, default=True)
 
     # Relacionamento com o setor
@@ -44,7 +44,7 @@ class Equipamento(Base):
     modelo = Column(String(50))
     quantidade = Column(Integer)
     custo_equipamento = Column(Float)
-    status_delete = Column(Boolean, default=True)
+    status_delete = Column(Integer, default=1)
 
     # Relacionamento com as ordens de serviço
     ordens_servico_associadas = relationship('OrdemServicoEquipamento', back_populates='equipamento')
@@ -56,7 +56,7 @@ class Recurso(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     equipamento_id = Column(Integer, ForeignKey('equipamentos.id', ondelete='SET NULL', onupdate='CASCADE'))
     nome = Column(String(50), nullable=False)
-    descricao = Column(String)
+    descricao = Column(String(1000))
     status_delete = Column(Boolean, default=True)
 
     equipamento_necessario = relationship('Equipamento', back_populates='equipamento_recurso')
@@ -85,7 +85,7 @@ class OrdemServico(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     responsavel_id = Column(Integer, ForeignKey('funcionarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     custo_total = Column(Integer)
-    descricao = Column(String, nullable=False)
+    descricao = Column(String(500), nullable=False)
     status_os = Column(String(25), nullable=False)
     data_solicitacao = Column(Date)
     data_execucao = Column(Date)

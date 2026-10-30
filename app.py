@@ -10,6 +10,8 @@ from database import *
 from banco import tabela_setor, tabela_equipamento, tabela_funcionario, tabela_ordens_servico
 from flask_login import LoginManager, login_required, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from database import Setor, db_session
+from sqlalchemy import select
 
 app = Flask(__name__)
 app.secret_key = "quarks-solucoes"
@@ -26,6 +28,7 @@ def load_user(user_id):
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/equipamentos')
 def equipamentos():
@@ -152,8 +155,7 @@ def cadastro_funcionario():
         return redirect(url_for('funcionarios'))
 
     # ADICIONE ISTO AQUI: Busca todos os setores para carregar no componente <select> do HTML
-    from database import Setor, db_session
-    from sqlalchemy import select
+
 
     setores_sql = select(Setor)
     lista_setores = db_session.execute(setores_sql).scalars().all()

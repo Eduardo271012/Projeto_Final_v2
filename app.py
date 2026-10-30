@@ -27,31 +27,6 @@ def load_user(user_id):
 def index():
     return render_template('index.html')
 
-
-# --- ROTAS DE CLIENTES ---
-@app.route('/clientes', methods=['GET'])
-def clientes():
-    return render_template('cliente.html')
-
-@app.route('/clientes/cadastro', methods=['GET', 'POST'])
-def cadastro_cliente():
-    if request.method == "POST":
-        # 1 - Pegar os valores digitados no formulário
-        nome = request.form.get("nome", "").strip()
-        data_nascimento = request.form.get("data_nascimento", "").strip()
-        telefone = request.form.get("telefone", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        cpf_cnpj = request.form.get("cpf_cnpj", "").strip()
-        departamento = request.form.get("departamento").strip()
-
-        erro = tabela_cliente.validar_cliente(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj, departamento=departamento)
-        if erro:
-            return redirect(url_for("cadastro_cliente"))
-
-        # 3 - Salvar no banco
-        tabela_cliente.salvar(nome=nome, data_nascimento=data_nascimento, telefone=telefone, email=email, cpf_cnpj=cpf_cnpj)
-    return render_template('cliente.html')
-
 @app.route('/equipamentos')
 def equipamentos():
     lista_equipamentos = tabela_equipamento.select_todos()
@@ -111,9 +86,13 @@ def cadastro_ordem_view():
 # --- ROTAS DE SETORES ---
 @app.route('/setor', methods=['GET'])
 def setor():
-    lista_setores = tabela_setor.select_todos()
+    lista_setores = tabela_setor.select_ativos()
     return render_template('setor.html', setores=lista_setores)
 
+@app.route('/setor/excluidos', methods=['GET'])
+def listar_setores_excluidos():
+    lista_setores = tabela_setor.select_excluidos()
+    return render_template('setor.html', excluidos=lista_setores)
 
 @app.route('/setor/cadastro', methods=['GET', 'POST'])
 def cadastro_setor():
@@ -133,6 +112,17 @@ def cadastro_setor():
     lista_setores = tabela_setor.select_todos()
     return render_template('setor.html', setores=lista_setores)
 
+@app.route('/setor/excluir/<setor_id>', methods=['GET', 'POST'])
+def excluir_setor(setor_id):
+    setor = tabela_setor.select_setor(setor_id)
+    if setor:
+        setor.status_delete = False
+        db_session.commit()
+    return redirect(url_for('setor'))
+
+@app.route('/setor/resgatar/<setor_id>', methods=['GET', 'POST'])
+def resgatar_setor(setor_id):
+    pass
 
 # --- ROTAS DE FUNCIONÁRIOS ---
 @app.route('/funcionarios', methods=['GET'])

@@ -9,6 +9,21 @@ def select_todos():
     setor = db_session.execute(setor_sql).scalars().all()
     return setor
 
+def select_ativos():
+    setor_sql = select(Setor).where(Setor.status_delete == 1)
+    setor = db_session.execute(setor_sql).scalars().all()
+    return setor
+
+def select_excluidos():
+    setor_sql = select(Setor).where(Setor.status_delete == 0)
+    setor = db_session.execute(setor_sql).scalars().all()
+    return setor
+
+def select_id(setor_id):
+    setor_sql = select(Setor).where(Setor.id == setor_id)
+    setor = db_session.execute(setor_sql).scalar_one_or_none()
+    return setor
+
 def validar_setor(nome, descricao):
     if not nome:
         flash("Preencha o nome do setor", "error")

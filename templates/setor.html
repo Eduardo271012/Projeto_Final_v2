@@ -13,23 +13,24 @@
         {% endif %}
     </div>
 
-    {% if request.endpoint == 'cadastro_setor' %}
+    {% if request.endpoint == 'cadastro_setor' or editar %}
     <div class="container-criar">
         <section class="painel-formulario">
-            <h2 class="card-titulo">CADASTRAR SETOR</h2>
-            <form method="POST" action="{{ url_for('cadastro_setor') }}">
+            <h2 class="card-titulo">{% if editar %}EDITAR{% else %}CADASTRAR{% endif %} SETOR</h2>
+            <form method="POST" action="{{ url_for('cadastro_setor') if not editar else url_for('editar_setor', setor_id=editar.id)}}">
                 <div class="campo-formulario">
                     <label for="nome">Nome</label>
-                    <input type="text" id="nome" name="nome" required placeholder="Ex: Gestão" class="campo-input">
+                    <input type="text" id="nome" name="nome" required placeholder="{{ 'Ex: Gestão' if not editar else '' }}" class="campo-input" value="{{ editar.nome if editar else '' }}">
                 </div>
                 <div class="campo-formulario">
                     <label for="descricao">Descrição</label>
-                    <textarea id="descricao" name="descricao" required placeholder="Ex: Localizado no bloco 1" class="campo-input"></textarea>
+                    <textarea id="descricao" name="descricao" required placeholder="{{ 'Ex: Localizado no bloco 1' if not editar else editar.descricao }}" class="campo-input"></textarea>
                 </div>
 
                 <div class="botoes-formulario">
                     <button type="submit" class="botao botao-enviar">Enviar</button>
                     <button type="reset" class="botao botao-redefinir">Redefinir</button>
+                    <a href="{{ url_for('setor') }}" class="botao botao-voltar">Voltar</a>
                 </div>
             </form>
         </section>
@@ -37,7 +38,7 @@
     {% endif %}
 
     <!-- CORREÇÃO: A tabela de listagem só aparece se o usuário não estiver na tela de cadastro -->
-    {% if request.endpoint != 'cadastro_setor' %}
+    {% if request.endpoint != 'cadastro_setor' and not editar %}
     <section class="painel">
         <h2>LISTA DE SETORES</h2>
         {% if setores %}
@@ -47,16 +48,18 @@
                     <th>Id</th>
                     <th>Nome</th>
                     <th>Descrição</th>
+                    <th>Funcionários</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
-            {% for setor in setores %}
+            {% for setor, total in setores %}
                 <tr>
                     <td>{{ setor.id }}</td>
                     <td>{{ setor.nome }}</td>
                     <td>{{ setor.descricao }}</td>
-                    <td>{% if excluidos %} <a href="{{ url_for('restaurar_setor', setor_id=setor.id) }}" class="design-btn-direita">Restaurar</a> {% else %} <a href="{{ url_for('excluir_setor', setor_id=setor.id) }}" class="design-btn-direita excluir-btn">Excluir</a> {% endif %}</td>
+                    <td>{{ total }}</td>
+                    <td class="acoes">{% if excluidos %}<a href="{{ url_for('restaurar_setor', setor_id=setor.id) }}" class="design-btn-direita">Restaurar</a>{% else %}<a href="{{ url_for('excluir_setor', setor_id=setor.id) }}" class="design-btn-direita excluir-btn">Excluir</a><a href="{{ url_for('editar_setor', setor_id=setor.id) }}" class="design-btn-direita">Editar</a>{% endif %}</td>
                 </tr>
             {% endfor %}
             </tbody>

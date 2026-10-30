@@ -375,13 +375,19 @@ h1 {
     background-color: #0283c5;
 }
 
-.btn-redefinir {
+.botao-redefinir {
     background-color: #868f9a;
     color: white;
 }
 
 .botao-redefinir:hover {
     background-color: #5a6268;
+}
+
+.botao-voltar {
+    background-color: #868f9a;
+    color: white;
+    text-decoration: none;
 }
 
 /* PAINÉIS */
@@ -396,7 +402,6 @@ th, td {
     padding: 10px 8px;
     border-bottom: 1px solid var(--cor-borda);
     font-size: 0.9rem;
-
 }
 
 th {
@@ -415,10 +420,17 @@ tbody tr:hover {
     text-align: center;
 }
 
+.acoes {
+    display: flex;
+    justify-content: flex-start;
+    gap: 1vw;
+}
+
 .acoes-col {
     text-align: right;
     white-space: nowrap;
 }
+
 .painel {
     background-color: var(--cor-painel);
     border: 1px solid var(--cor-borda);

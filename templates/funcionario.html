@@ -32,7 +32,7 @@
                     <label for="setor">Setor</label>
                     <select name="setor" id="setor" required class="campo-input">
                         <option value="" disabled selected>Selecione um Setor</option>
-                        {% for setor in setores %}
+                        {% for setor, total in setores %}
                             <option value="{{ setor.id }}">{{ setor.nome }}</option>
                         {% else %}
                             <option value="" disabled>Não Existem Setores Cadastrados</option>
@@ -71,6 +71,7 @@
                     <th>Email</th>
                     <th>Setor</th>
                     <th>Função</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -82,6 +83,7 @@
                     <td>{{ funcionario.email }}</td>
                     <td>{{ setor.nome }}</td>
                     <td>{{ funcionario.funcao }}</td>
+                    <td class="acoes"></td>
                 </tr>
             {% endfor %}
             </tbody>

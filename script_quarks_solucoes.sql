@@ -2,32 +2,36 @@ DROP DATABASE quarks_solucoes;
 CREATE DATABASE IF NOT EXISTS quarks_solucoes;
 USE quarks_solucoes;
 
-CREATE TABLE IF NOT EXISTS clientes (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-    
-	cpf_cnpj BIGINT UNIQUE NOT NULL,
-    nome VARCHAR(50) NOT NULL,
-    email VARCHAR(100) UNIQUE,
-    telefone BIGINT UNIQUE,
-    data_nascimento DATE,
-    status_delete BOOL DEFAULT 1
-);
-
 CREATE TABLE IF NOT EXISTS setores (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-    
-    nome VARCHAR(50),
-    descricao TEXT(10000)
+
+    nome VARCHAR(50) NOT NULL,
+    descricao TEXT,
+    status_delete BOOL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS equipamentos (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-    
+
     nome VARCHAR(50) NOT NULL,
-    numero_serie VARCHAR(10),
+    custo_equipamento FLOAT,
     quantidade INT,
     modelo VARCHAR(50),
     status_delete BOOL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS recursos (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    equipamento_id INT,
+
+    nome VARCHAR(50) NOT NULL,
+    descricao TEXT,
+    status_delete BOOL DEFAULT 1,
+
+    CONSTRAINT fk_recurso_equipamento
+		FOREIGN KEY (equipamento_id) REFERENCES equipamentos(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS funcionarios (
@@ -37,6 +41,7 @@ CREATE TABLE IF NOT EXISTS funcionarios (
 	cpf BIGINT UNIQUE NOT NULL,
     nome VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE,
+    senha VARCHAR(255) NOT NULL DEFAULT "mudar123",
     funcao VARCHAR(50),
     status_delete BOOL DEFAULT 1,
 
@@ -48,7 +53,6 @@ CREATE TABLE IF NOT EXISTS funcionarios (
 
 CREATE TABLE IF NOT EXISTS ordens_servico (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-    solicitante_id INT,
     responsavel_id INT,
 
     custo_total INT,
@@ -59,10 +63,6 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
     prioridade VARCHAR(25),
     status_delete BOOL DEFAULT 1,
 
-    CONSTRAINT fk_ordem_servico_cliente
-		FOREIGN KEY (solicitante_id) REFERENCES clientes(id)
-        ON UPDATE CASCADE
-        ON DELETE CASCADE,
 	CONSTRAINT fk_ordem_servico_funcionario
 		FOREIGN KEY (responsavel_id) REFERENCES funcionarios(id)
 		ON UPDATE CASCADE

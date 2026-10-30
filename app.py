@@ -89,9 +89,13 @@ def cadastro_ordem_view():
 # --- ROTAS DE SETORES ---
 @app.route('/setor', methods=['GET'])
 def setor():
-    lista_setores = tabela_setor.select_todos()
+    lista_setores = tabela_setor.select_ativos()
     return render_template('setor.html', setores=lista_setores)
 
+@app.route('/setor/excluidos', methods=['GET'])
+def listar_setores_excluidos():
+    lista_setores = tabela_setor.select_excluidos()
+    return render_template('setor.html', setores=lista_setores, excluidos=1)
 
 @app.route('/setor/cadastro', methods=['GET', 'POST'])
 def cadastro_setor():
@@ -111,6 +115,21 @@ def cadastro_setor():
     lista_setores = tabela_setor.select_todos()
     return render_template('setor.html', setores=lista_setores)
 
+@app.route('/setor/excluir/<setor_id>', methods=['GET', 'POST'])
+def excluir_setor(setor_id):
+    setor = tabela_setor.select_id(setor_id)
+    if setor:
+        setor.status_delete = False
+        db_session.commit()
+    return redirect(url_for('setor'))
+
+@app.route('/setor/restaurar/<setor_id>', methods=['GET', 'POST'])
+def restaurar_setor(setor_id):
+    setor = tabela_setor.select_id(setor_id)
+    if setor:
+        setor.status_delete = True
+        db_session.commit()
+    return redirect(url_for('listar_setores_excluidos'))
 
 # --- ROTAS DE FUNCIONÁRIOS ---
 @app.route('/funcionarios', methods=['GET'])

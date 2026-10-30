@@ -29,7 +29,8 @@ class Setor(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     nome = Column(String(50), nullable=False)
-    descricao = Column(String(10000))
+    descricao = Column(String)
+    status_delete = Column(Boolean, default=True)
 
     # Relacionamento com o setor
     funcionarios = relationship('Funcionario', back_populates='setor')
@@ -47,6 +48,18 @@ class Equipamento(Base):
 
     # Relacionamento com as ordens de serviço
     ordens_servico_associadas = relationship('OrdemServicoEquipamento', back_populates='equipamento')
+    equipamento_recurso = relationship('Recurso', back_populates='equipamento_necessario')
+
+class Recurso(Base):
+    __tablename__ = 'recursos'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    equipamento_id = Column(Integer, ForeignKey('equipamentos.id', ondelete='SET NULL', onupdate='CASCADE'))
+    nome = Column(String(50), nullable=False)
+    descricao = Column(String)
+    status_delete = Column(Boolean, default=True)
+
+    equipamento_necessario = relationship('Equipamento', back_populates='equipamento_recurso')
 
 # Tabela funcionários
 class Funcionario(Base, UserMixin):
@@ -59,7 +72,7 @@ class Funcionario(Base, UserMixin):
     email = Column(String(100), unique=True)
     funcao = Column(String(50))
     status_delete = Column(Boolean, default=True)
-
+    senha = Column(String(255), nullable=False, default='mudar123')
 
     # Relacionamentos com as ordens de serviço e setor
     ordens_servico_atribuidas = relationship('OrdemServico', back_populates='funcionario')
@@ -72,7 +85,7 @@ class OrdemServico(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     responsavel_id = Column(Integer, ForeignKey('funcionarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     custo_total = Column(Integer)
-    descricao = Column(String(10000), nullable=False)
+    descricao = Column(String, nullable=False)
     status_os = Column(String(25), nullable=False)
     data_solicitacao = Column(Date)
     data_execucao = Column(Date)

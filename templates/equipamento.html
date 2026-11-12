@@ -6,7 +6,7 @@
         </div>
         {% if not editar %}
         <div class="container-botao-direita">
-            <a href="{{ url_for('listar_equipamentos_excluidos') if not excluidos else url_for('equipamentos')}}" class="design-btn-direita">EQUIPAMENTOS {% if excluidos %} ATIVOS {% else %} EXCLUIDOS {% endif %}</a>
+            <a href="{{ url_for('listar_equipamentos_excluidos') if not excluidos else url_for('equipamentos') }}" class="design-btn-direita">EQUIPAMENTOS {% if excluidos %}ATIVOS{% else %}EXCLUÍDOS{% endif %}</a>
             {% if not excluidos %}<a href="{{ url_for('cadastro_equipamento') }}" class="design-btn-direita">CADASTRAR</a>{% endif %}
         </div>
         {% endif %}

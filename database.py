@@ -1,41 +1,27 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Boolean, BigInteger, Float
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker, scoped_session
-import pymysql
+import os
 from flask_login import UserMixin
+from sqlalchemy import Boolean, BigInteger, Column, Date, Float, ForeignKey, Integer, String, create_engine
+from sqlalchemy.orm import declarative_base, relationship, scoped_session, sessionmaker
 
-
-# ==============================================================================
-# 1. PARTE NOVA: CRIA O BANCO SE ELE NÃO EXISTIR NO SEU COMPUTADOR
-# ==============================================================================
-
-conn = pymysql.connect(host="localhost", user="root", password="senaisp", port=3306)
-try:
-    with conn.cursor() as cursor:
-        cursor.execute("CREATE DATABASE IF NOT EXISTS quarks_solucoes;")
-finally:
-     conn.close()
-
-
-# Conexão com o banco
-# Mudar usuário, senha e nome do banco
 engine = create_engine("mysql+pymysql://root:senaisp@:3306/quarks_solucoes")
-db_session =scoped_session(sessionmaker(bind=engine))
+if os.getenv("USE_LOCAL_DB", "1").lower() in {"1", "true", "yes"}:
+    engine = create_engine("sqlite:///quarks_solucoes_local.db")
+
+db_session = scoped_session(sessionmaker(bind=engine))
 Base = declarative_base()
 
 
-# Tabela setores
 class Setor(Base):
     __tablename__ = 'setores'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     nome = Column(String(50), nullable=False)
     descricao = Column(String(10000))
-    status_delete = Column(Boolean, default=True)
+    status_delete = Column(Boolean, default=True, nullable=False)
 
-    # Relacionamento com o setor
     funcionarios = relationship('Funcionario', back_populates='setor')
 
-# Tabela equipamentos
+
 class Equipamento(Base):
     __tablename__ = 'equipamentos'
 
@@ -44,11 +30,11 @@ class Equipamento(Base):
     modelo = Column(String(50))
     quantidade = Column(Integer)
     custo_equipamento = Column(Float)
-    status_delete = Column(Integer, default=1)
+    status_delete = Column(Boolean, default=True, nullable=False)
 
-    # Relacionamento com as ordens de serviço
     ordens_servico_associadas = relationship('OrdemServicoEquipamento', back_populates='equipamento')
     equipamento_recurso = relationship('Recurso', back_populates='equipamento_necessario')
+
 
 class Recurso(Base):
     __tablename__ = 'recursos'
@@ -57,11 +43,11 @@ class Recurso(Base):
     equipamento_id = Column(Integer, ForeignKey('equipamentos.id', ondelete='SET NULL', onupdate='CASCADE'))
     nome = Column(String(50), nullable=False)
     descricao = Column(String(1000))
-    status_delete = Column(Boolean, default=True)
+    status_delete = Column(Boolean, default=True, nullable=False)
 
     equipamento_necessario = relationship('Equipamento', back_populates='equipamento_recurso')
 
-# Tabela funcionários
+
 class Funcionario(Base, UserMixin):
     __tablename__ = 'funcionarios'
 
@@ -71,14 +57,13 @@ class Funcionario(Base, UserMixin):
     nome = Column(String(50), nullable=False)
     email = Column(String(100), unique=True)
     funcao = Column(String(50))
-    status_delete = Column(Boolean, default=True)
+    status_delete = Column(Boolean, default=True, nullable=False)
     senha = Column(String(255), nullable=False, default='mudar123')
 
-    # Relacionamentos com as ordens de serviço e setor
     ordens_servico_atribuidas = relationship('OrdemServico', back_populates='funcionario')
     setor = relationship('Setor', back_populates='funcionarios')
 
-# Tabela ordens de serviço
+
 class OrdemServico(Base):
     __tablename__ = 'ordens_servico'
 
@@ -90,15 +75,12 @@ class OrdemServico(Base):
     data_solicitacao = Column(Date)
     data_execucao = Column(Date)
     prioridade = Column(String(25))
-    status_delete = Column(Boolean, default=True)
+    status_delete = Column(Boolean, default=True, nullable=False)
 
-    # Relacionamentos com o funcionario (responsável) e equipamentos
     funcionario = relationship('Funcionario', back_populates='ordens_servico_atribuidas')
     equipamentos_associados = relationship('OrdemServicoEquipamento', back_populates='ordem_servico')
 
-# Tabela intermediária
-# Necessária em uma relação N:N
-# Uma ordem de serviço pode ter muitos equipamentos e um equipamento pode estar em mais de uma ordem de serviço
+
 class OrdemServicoEquipamento(Base):
     __tablename__ = 'ordens_servico_equipamentos'
 
@@ -106,6 +88,8 @@ class OrdemServicoEquipamento(Base):
     equipamento_id = Column(Integer, ForeignKey('equipamentos.id', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, nullable=False)
     quantidade = Column(Integer, default=1)
 
-    # Relacionamentos ordem de serviço e equipamento
     ordem_servico = relationship('OrdemServico', back_populates='equipamentos_associados')
     equipamento = relationship('Equipamento', back_populates='ordens_servico_associadas')
+
+
+Base.metadata.create_all(bind=engine)

@@ -1,111 +1,63 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Boolean, BigInteger, Float
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker, scoped_session
-import pymysql
-from flask_login import UserMixin
+from datetime import datetime
+
+from flask import flash
+from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
+
+from database import OrdemServico, db_session
 
 
-# ==============================================================================
-# 1. PARTE NOVA: CRIA O BANCO SE ELE NÃO EXISTIR NO SEU COMPUTADOR
-# ==============================================================================
-
-conn = pymysql.connect(host="localhost", user="root", password="senaisp", port=3306)
-try:
-    with conn.cursor() as cursor:
-        cursor.execute("CREATE DATABASE IF NOT EXISTS quarks_solucoes;")
-finally:
-    conn.close()
+def select_todas():
+    ordens_sql = select(OrdemServico).order_by(OrdemServico.id.desc())
+    return db_session.execute(ordens_sql).scalars().all()
 
 
-# Conexão com o banco
-# Mudar usuário, senha e nome do banco
-engine = create_engine("mysql+pymysql://root:senaisp@:3306/quarks_solucoes")
-db_session =scoped_session(sessionmaker(bind=engine))
-Base = declarative_base()
+def salvar(os_id, responsavel_id, descricao, status_os, prioridade, custo_total, data_solicitacao, data_execucao):
+    try:
+        if not descricao or not descricao.strip():
+            flash("Preencha a descri??o da ordem de servi?o", "error")
+            return False
+
+        data_solicitacao = (
+            datetime.strptime(data_solicitacao, "%Y-%m-%d").date() if data_solicitacao else None
+        )
+        data_execucao = (
+            datetime.strptime(data_execucao, "%Y-%m-%d").date() if data_execucao else None
+        )
+
+        ordem = OrdemServico(
+            id=os_id or None,
+            responsavel_id=int(responsavel_id) if responsavel_id not in (None, "") else None,
+            descricao=descricao.strip(),
+            status_os=status_os or "Aberta",
+            prioridade=prioridade or "M?dia",
+            custo_total=int(custo_total) if custo_total not in (None, "") else 0,
+            data_solicitacao=data_solicitacao,
+            data_execucao=data_execucao,
+        )
+
+        db_session.add(ordem)
+        db_session.commit()
+        flash("Ordem de servi?o cadastrada com sucesso", "success")
+        return True
+    except SQLAlchemyError as e:
+        db_session.rollback()
+        flash("Erro ao cadastrar ordem de servi?o no banco de dados", "error")
+        print(f"Erro de Banco (Ordem de Servi?o): {e}")
+        return False
+    except ValueError as e:
+        db_session.rollback()
+        flash("Datas inv?lidas. Informe as datas no formato correto", "error")
+        print(f"Erro de valor (Ordem de Servi?o): {e}")
+        return False
+    except Exception as e:
+        db_session.rollback()
+        flash("Erro inesperado ao cadastrar ordem de servi?o", "error")
+        print(f"Erro Inesperado (Ordem de Servi?o): {e}")
+        return False
 
 
-# Tabela setores
-class Setor(Base):
-    __tablename__ = 'setores'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    nome = Column(String(50), nullable=False)
-    descricao = Column(String)
-    status_delete = Column(Boolean, default=True)
-
-    # Relacionamento com o setor
-    funcionarios = relationship('Funcionario', back_populates='setor')
-
-# Tabela equipamentos
-class Equipamento(Base):
-    __tablename__ = 'equipamentos'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    nome = Column(String(50), nullable=False)
-    modelo = Column(String(50))
-    quantidade = Column(Integer)
-    custo_equipamento = Column(Float)
-    status_delete = Column(Boolean, default=True)
-
-    # Relacionamento com as ordens de serviço
-    ordens_servico_associadas = relationship('OrdemServicoEquipamento', back_populates='equipamento')
-    equipamento_recurso = relationship('Recurso', back_populates='equipamento_necessario')
-
-class Recurso(Base):
-    __tablename__ = 'recursos'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    equipamento_id = Column(Integer, ForeignKey('equipamentos.id', ondelete='SET NULL', onupdate='CASCADE'))
-    nome = Column(String(50), nullable=False)
-    descricao = Column(String)
-    status_delete = Column(Boolean, default=True)
-
-    equipamento_necessario = relationship('Equipamento', back_populates='equipamento_recurso')
-
-# Tabela funcionários
-class Funcionario(Base, UserMixin):
-    __tablename__ = 'funcionarios'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    setor_id = Column(Integer, ForeignKey('setores.id', ondelete='SET NULL', onupdate='CASCADE'))
-    cpf = Column(BigInteger, nullable=False, unique=True)
-    nome = Column(String(50), nullable=False)
-    email = Column(String(100), unique=True)
-    funcao = Column(String(50))
-    status_delete = Column(Boolean, default=True)
-    senha = Column(String(255), nullable=False, default='mudar123')
-
-    # Relacionamentos com as ordens de serviço e setor
-    ordens_servico_atribuidas = relationship('OrdemServico', back_populates='funcionario')
-    setor = relationship('Setor', back_populates='funcionarios')
-
-# Tabela ordens de serviço
-class OrdemServico(Base):
-    __tablename__ = 'ordens_servico'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    responsavel_id = Column(Integer, ForeignKey('funcionarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
-    custo_total = Column(Integer)
-    descricao = Column(String, nullable=False)
-    status_os = Column(String(25), nullable=False)
-    data_solicitacao = Column(Date)
-    data_execucao = Column(Date)
-    prioridade = Column(String(25))
-    status_delete = Column(Boolean, default=True)
-
-    # Relacionamentos com o funcionario (responsável) e equipamentos
-    funcionario = relationship('Funcionario', back_populates='ordens_servico_atribuidas')
-    equipamentos_associados = relationship('OrdemServicoEquipamento', back_populates='ordem_servico')
-
-# Tabela intermediária
-# Necessária em uma relação N:N
-# Uma ordem de serviço pode ter muitos equipamentos e um equipamento pode estar em mais de uma ordem de serviço
-class OrdemServicoEquipamento(Base):
-    __tablename__ = 'ordens_servico_equipamentos'
-
-    os_id = Column(Integer, ForeignKey('ordens_servico.id', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, nullable=False)
-    equipamento_id = Column(Integer, ForeignKey('equipamentos.id', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True, nullable=False)
-    quantidade = Column(Integer, default=1)
-
-    # Relacionamentos ordem de serviço e equipamento
-    ordem_servico = relationship('OrdemServico', back_populates='equipamentos_associados')
-    equipamento = relationship('Equipamento', back_populates='ordens_servico_associadas')
+def select_quantidade_total():
+    ordens_sql = select(func.count(OrdemServico.id))
+    qtd_total = db_session.execute(ordens_sql).scalar()
+    return qtd_total

@@ -24,7 +24,7 @@
                 </div>
                 <div class="campo-formulario">
                     <label for="descricao">Descrição</label>
-                    <textarea id="descricao" name="descricao" required placeholder="{{ 'Ex: Localizado no bloco 1' if not editar else editar.descricao }}" class="campo-input"></textarea>
+                    <textarea id="descricao" name="descricao" required placeholder="{{ 'Ex: Localizado no bloco 1' if not editar else '' }}" class="campo-input">{{ editar.descricao if editar else '' }}</textarea>
                 </div>
 
                 <div class="botoes-formulario">

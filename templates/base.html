@@ -6,53 +6,74 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <header class="cabecalho-sistema">
-        <!-- Linha única principal do cabeçalho -->
-        <div class="bloco-topo-esquerdo">
+<header class="cabecalho-sistema">
+    <!-- Linha única principal do cabeçalho -->
+    <div class="bloco-topo-esquerdo">
 
-            <!-- Exclusiva da Logo + Subtítulo -->
-            <div class="logo-wrapper">
-                <img src="{{ url_for('static', filename='imagem/logo.png') }}" alt="Logo Quarks" class="logo-cabecalho">
-                <h1>SOLUÇÕES INDUSTRIAIS</h1>
-            </div>
-
-            <!-- "Temas de Atuação" alinhado logo após a logo -->
-            <div class="menu-item-dropdown">
-                <a href="#" class="link-principal destaque-temas">Sobre Nós ▾</a>
-                {% block painel_dropdown %}{% endblock %}
-            </div>
-
-            <!-- MENU PRINCIPAL: Empurrado automaticamente para a extrema direita -->
-            <nav class="menu">
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('index') }}" class="link-principal">INÍCIO</a>
-                    <a href="{{ url_for('dashboard') }}" class="link-principal">DASHBOARD</a>
-                    <a href="{{ url_for('setor') }}" class="link-principal">SETORES</a>
-                    <a href="{{ url_for('ordens_servico_lista_view') }}" class="link-principal">ORDEM DE SERVIÇO</a>
-                    <a href="{{ url_for('equipamentos') }}" class="link-principal">EQUIPAMENTOS</a>
-                    <a href="{{ url_for('funcionarios') }}" class="link-principal">FUNCIONÁRIO</a>
-                    <a href="{{ url_for('logout') }}" class="link-sair">SAIR</a>
-                {% else %}
-                    <a href="{{ url_for('index') }}" class="link-principal">INÍCIO</a>
-                    <a href="{{ url_for('login') }}" class="link-principal">LOGIN</a>
-                    <a href="{{ url_for('login', registro=True) }}" class="link-principal">CADASTRAR</a>
-                {% endif %}
-            </nav>
-
+        <!-- Exclusiva da Logo + Subtítulo -->
+        <div class="logo-wrapper">
+            <img src="{{ url_for('static', filename='imagem/logo.png') }}" alt="Logo Quarks" class="logo-cabecalho">
+            <h1>SOLUÇÕES INDUSTRIAIS</h1>
         </div>
-    </header>
 
-    <main>
-        {% with mensagens = get_flashed_messages(with_categories=true) %}
-            {% if mensagens %}
-                <div class="flash-container">
-                    {% for categoria, mensagem in mensagens %}
-                        <div class="flash flash-{{ categoria }}">{{ mensagem }}</div>
-                    {% endfor %}
+        <!-- "Temas de Atuação" alinhado logo após a logo -->
+        <div class="menu-item-dropdown">
+            <a href="#" class="link-principal destaque-temas">Sobre Nós ▾</a>
+            {% block painel_dropdown %}{% endblock %}
+        </div>
+
+        <!-- MENU PRINCIPAL: Empurrado automaticamente para a extrema direita -->
+        <nav class="menu">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('index') }}" class="link-principal">INÍCIO</a>
+                <a href="{{ url_for('dashboard') }}" class="link-principal">DASHBOARD</a>
+                <a href="{{ url_for('setor') }}" class="link-principal">SETORES</a>
+                <a href="{{ url_for('ordens_servico_lista_view') }}" class="link-principal">ORDEM DE SERVIÇO</a>
+                <a href="{{ url_for('equipamentos') }}" class="link-principal">EQUIPAMENTOS</a>
+                <a href="{{ url_for('funcionarios') }}" class="link-principal">FUNCIONÁRIO</a>
+                <a href="{{ url_for('logout') }}" class="link-sair">SAIR</a>
+
+                <div class="perfil-menu-wrapper">
+                    <!-- Botão do Avatar -->
+                    <div class="usuario-perfil" title="{{ current_user.nome }}">
+                        <div class="avatar-inicial">
+                            {{ current_user.nome[0] | upper }}
+                        </div>
+                    </div>
+
+                    <!-- Card Dropdown exclusivo do perfil -->
+                    <div class="perfil-dropdown-card">
+                        <div class="perfil-card-titulo">MEU PERFIL</div>
+                        <div class="perfil-card-divisor"></div>
+                        <div class="perfil-card-info"><strong>Nome:</strong> {{ current_user.nome }}</div>
+                        <div class="perfil-card-info"><strong>E-mail:</strong> {{ current_user.email }}</div>
+
+                        <a href="{{ url_for('perfil') }}" class="perfil-card-link">Ver perfil completo</a>
+                    </div>
                 </div>
+
+
+            {% else %}
+                <a href="{{ url_for('index') }}" class="link-principal">INÍCIO</a>
+                <a href="{{ url_for('login') }}" class="link-principal">LOGIN</a>
+                <a href="{{ url_for('login', registro=True) }}" class="link-principal">CADASTRAR</a>
             {% endif %}
-        {% endwith %}
-        {% block conteudo %}{% endblock %}
-    </main>
+        </nav>
+
+    </div>
+</header>
+
+<main>
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+        {% if mensagens %}
+            <div class="flash-container">
+                {% for categoria, mensagem in mensagens %}
+                    <div class="flash flash-{{ categoria }}">{{ mensagem }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    {% block conteudo %}{% endblock %}
+</main>
 </body>
 </html>

@@ -444,3 +444,45 @@ tbody tr:hover {
     font-style: italic;
     padding: 12px 0;
 }
+
+/* CARTÕES DASHBOARD */
+.cartoes {
+    display: flex;
+    gap: 16px;
+    margin: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.cartao {
+    background-color: var(--cor-painel);
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    padding: 20px 28px;
+    min-width: 200px;
+    text-align: center;
+}
+
+.cartao-valor {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--cor-primaria);
+}
+
+.cartao-label {
+    color: var(--cor-texto-claro);
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+.grid-dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 800px) {
+    .grid-dashboard {
+        grid-template-columns: 1fr;
+    }
+}

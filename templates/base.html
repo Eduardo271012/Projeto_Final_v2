@@ -5,7 +5,7 @@
     <title>Quarks Soluções</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
+<body class="{% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'funcionarios'] %}tela-listas{% endif %}">
     <header class="cabecalho-sistema">
         <!-- Linha única principal do cabeçalho -->
         <div class="bloco-topo-esquerdo">
@@ -18,7 +18,7 @@
 
             <!-- "Temas de Atuação" alinhado logo após a logo -->
             <div class="menu-item-dropdown">
-                <a href="#" class="link-principal destaque-temas">Sobre Nós ▾</a>
+                <a href="#" class="link-principal destaque-temas">Como usar? ▾</a>
                 {% block painel_dropdown %}{% endblock %}
             </div>
 
@@ -42,6 +42,14 @@
         </div>
     </header>
 
+    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'funcionarios'] %}
+        <div class="carrossel-listas" aria-hidden="true">
+            <img class="ativa" src="{{ url_for('static', filename='imagem/foto7.png') }}" alt="">
+            <img src="{{ url_for('static', filename='imagem/foto8.png') }}" alt="">
+            <img src="{{ url_for('static', filename='imagem/foto9.png') }}" alt="">
+        </div>
+    {% endif %}
+
     <main>
         {% with mensagens = get_flashed_messages(with_categories=true) %}
             {% if mensagens %}
@@ -54,5 +62,34 @@
         {% endwith %}
         {% block conteudo %}{% endblock %}
     </main>
+    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'funcionarios'] %}
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // 1. Carrossel da tela de Listas (Setores, Equipamentos, etc.)
+                const slidesListas = document.querySelectorAll('.carrossel-listas img');
+                if (slidesListas.length > 1) {
+                    let indexLista = 0;
+                    setInterval(() => {
+                        slidesListas[indexLista].classList.remove('ativa');
+                        indexLista = (indexLista + 1) % slidesListas.length;
+                        slidesListas[indexLista].classList.add('ativa');
+                    }, 6000);
+                }
+
+                // 2. Carrossel de Par de Imagens (Início / Login)
+                const slidesPares = document.querySelectorAll('.par-de-imagens');
+                if (slidesPares.length > 1) {
+                    let indexPar = 0;
+                    setInterval(() => {
+                        slidesPares[indexPar].classList.remove('active');
+                        indexPar = (indexPar + 1) % slidesPares.length;
+                        slidesPares[indexPar].classList.add('active');
+                    }, 6000);
+                }
+            });
+        </script>
+
+
+    {% endif %}
 </body>
 </html>

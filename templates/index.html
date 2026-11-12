@@ -1,17 +1,27 @@
 {% extends 'base.html' %}
 
-/* Injeta os textos das manutenções no painel do cabeçalho */
+<!-- Guia de uso no painel flutuante do cabeçalho -->
 {% block painel_dropdown %}
 
 <div class="dropdown-conteudo">
-    <div class="dropdown-coluna-texto">
-        <h2>Manutenção Preventiva</h2>
-        <p>Atuamos fortemente na prevenção de falhas antes que elas aconteçam. O novo sistema web da Quarks permite agendar revisões periódicas e acompanhar o histórico completo, garantindo maior produtividade, confiabilidade das informações e eliminando os formulários impressos.</p>
-    </div>
-    <div class="dropdown-coluna-texto">
-        <h2>Manutenção Corretiva</h2>
-        <p>Quando a indústria precisa de respostas rápidas, nosso registro de Ordens de Serviço garante agilidade no atendimento de quebras. Tenha controle total dos chamados em andamento e gerencie as necessidades dos técnicos, atendentes e gestores em uma plataforma moderna.</p>
-    </div>
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">01 · ACESSO E CADASTROS</span>
+        <h2>Organize sua equipe</h2>
+        <p>Faça login ou crie sua conta pela opção “Cadastrar”. Depois, use o menu superior para acessar as áreas do sistema.</p>
+        <p>Cadastre equipamentos, setores e funcionários para manter as informações da operação organizadas.</p>
+    </section>
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">02 · MANUTENÇÃO</span>
+        <h2>Registre uma ordem</h2>
+        <p>Em “Ordem de Serviço”, descreva o problema e selecione o funcionário responsável.</p>
+        <p>Informe prioridade, status, custo estimado e datas para acompanhar cada solicitação.</p>
+    </section>
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">03 · ACOMPANHAMENTO</span>
+        <h2>Consulte e atualize</h2>
+        <p>Acesse o “Dashboard” para consultar um resumo de ordens, equipamentos, setores e funcionários.</p>
+        <p>Edite equipamentos e setores ou restaure os itens excluídos nessas áreas.</p>
+    </section>
 </div>
 {% endblock %}
 

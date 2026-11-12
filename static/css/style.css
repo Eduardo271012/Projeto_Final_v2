@@ -143,18 +143,20 @@ h1 {
     left: 0;
     top: 118px; /* Ajustado dinamicamente para colar perfeitamente sob a nova altura do cabeçalho */
     width: 100vw;
-    height: 380px;
+    max-height: calc(100vh - 118px);
     background-color: rgba(15, 57, 84, 0.96);
     backdrop-filter: blur(8px);
-    padding: 50px 60px;
+    padding: 32px clamp(24px, 7vw, 100px);
     z-index: 99;
     box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     animation: fadeInMenu 0.2s ease-out;
+    overflow-y: auto;
 }
 
 .menu-item-dropdown:hover .dropdown-conteudo {
-    display: flex;
-    gap: 60px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
 }
 
 .menu-item-dropdown:hover .destaque-temas {
@@ -162,20 +164,26 @@ h1 {
 }
 
 .dropdown-coluna-texto {
-    flex: 1;
-    max-width: 500px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.06);
 }
 
-.dropdown-coluna-texto:first-child {
-    border-right: 1px solid rgba(255, 255, 255, 0.15);
-    padding-right: 60px;
+.guia-etapa {
+    display: block;
+    margin-bottom: 12px;
+    color: #7dd3fc;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
 .dropdown-coluna-texto h2 {
     font-family: "Inter Tight", sans-serif;
     color: #ffffff;
-    font-size: 22px;
-    margin-bottom: 16px;
+    font-size: 20px;
+    margin-bottom: 14px;
     font-weight: 600;
 }
 
@@ -185,7 +193,80 @@ h1 {
     line-height: 1.6;
 }
 
-/* 4. CARROSSEL DE IMAGENS */
+.dropdown-coluna-texto p + p {
+    margin-top: 12px;
+}
+
+@media (max-width: 800px) {
+    .dropdown-conteudo {
+        padding: 20px;
+    }
+
+    .menu-item-dropdown:hover .dropdown-conteudo {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .dropdown-coluna-texto {
+        padding: 18px;
+    }
+}
+/* 4. CARROSSEL DE FUNDO DAS LISTAS */
+
+body.tela-listas,
+body.tela-listas main {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.carrossel-listas {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background-color: var(--cor-fundo);
+}
+
+.carrossel-listas img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    opacity: 0 !important;
+    transition: opacity 1.5s ease-in-out !important;
+    will-change: opacity;
+}
+
+/* Ajuste o valor abaixo (de 0.1 a 1) para controlar a transparência da imagem */
+.carrossel-listas img.ativa {
+    opacity: 0.75 !important;
+}
+
+main {
+    position: relative;
+    z-index: 1;
+}
+
+.tela-listas .painel {
+    background-color: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(3px);
+}
+
+.tela-listas table {
+    background-color: transparent;
+}
+
+.tela-listas th {
+    background-color: rgba(248, 250, 252, 0.88);
+}
+
+.tela-listas tbody tr:hover {
+    background-color: rgba(248, 250, 252, 0.72);
+}
+
+/* 5. CARROSSEL DA PÁGINA INICIAL (INDEX) */
 
 .container-carrossel-fundo {
     position: relative;
@@ -434,8 +515,6 @@ h1 {
     background-color: #f1f5f9;
     color: #475569;
     text-decoration: none;
-    margin-right: auto; /* Empurra Redefinir e Enviar para a direita */
-    order: 1;
 }
 
 .botao-voltar:hover {
@@ -445,14 +524,14 @@ h1 {
 
 /* ================= PAINÉIS E TABELAS ================= */
 .painel {
-    background-color: var(--cor-painel, #ffffff);
-    border: 1px solid var(--cor-borda, #e2e8f0);
-    border-radius: 12px;
-    padding: 36px 40px;
-    max-width: 960px;
-    margin: 0 auto 40px auto;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+background-color: var(--cor-painel, #ffffff);
+border: 1px solid var(--cor-borda, #e2e8f0);
+border-radius: 12px;
+padding: 36px 40px;
+max-width: 960px;
+margin: 0 auto 40px auto;
+box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Título dentro do painel (ex: LISTA DE SETORES) igual ao .card-titulo */
@@ -522,7 +601,8 @@ tbody tr:hover {
     white-space: nowrap;
 }
 
-.painel {
+.painel-login {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: var(--cor-painel);
     border: 1px solid var(--cor-borda);
     border-radius: 8px;
@@ -623,8 +703,9 @@ tbody tr:hover {
 
 .botoes-formulario-acesso {
     display: flex;
-    gap: 10px;
-    margin-top: 25px;
+    flex-direction: row; /* Garante a ordem normal (Entrar primeiro) */
+    justify-content: flex-start; /* Alinha ambos à esquerda */
+    gap: 10px; /* Espaço entre os botões */
 }
 
 .botao-acesso {

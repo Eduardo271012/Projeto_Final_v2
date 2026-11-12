@@ -88,69 +88,6 @@ def registro():
 
     return render_template("login.html", registro=request.args.get("registro") == "True")
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == "POST":
-        email = request.form.get("email", "").strip()
-        senha = request.form.get("senha", "").strip()
-        usuario_sql = select(Usuario).where(Usuario.email == email)
-        usuario_resultado = db_session.execute(usuario_sql).scalar()
-
-        if not usuario_resultado:
-            flash("Falha na autenticação: E-mail não encontrado")
-            return redirect(url_for("login"))
-        if usuario_resultado and usuario_resultado.check_password(senha):
-            login_user(usuario_resultado)
-            return redirect(url_for("index"))
-        else:
-            flash("Falha na autenticação: E-mail e senha não encontrado")
-
-    return render_template(
-        "login.html",
-        registro= request.args.get("registro") == "True"
-
-    )
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for("login"))
-
-@app.route("/registro", methods=["GET", "POST"])
-def registro():
-    if request.method == "POST":
-        nome = request.form.get("nome", "").strip()
-        email = request.form.get("email", "").strip()
-        senha = request.form.get("senha", "").strip()
-
-        if not nome and not email and not senha:
-            flash("Preencha o nome, email, senha", "error")
-            return redirect(url_for("registro"))
-        usuario_sql = select(Usuario).where(Usuario.email == email)
-        usuario_email = db_session.execute(usuario_sql).scalar_one_or_none()
-        if usuario_email:
-            flash("E-mail já cadastrado", "error")
-            return redirect(url_for("registro"))
-        try:
-            novo_usuario = Usuario(
-                nome = nome,
-                email = email
-            )
-            novo_usuario.set_password(senha)
-            db_session.add(novo_usuario)
-            db_session.commit()
-            flash("Usuário criado com sucesso", "success")
-        except SQLAlchemyError as e:
-            flash("Erro no banco")
-            return redirect(url_for("registro"))
-        except SQLAlchemyError as e:
-            flash(f"Erro ao registrar", "error")
-            flash("Erro ao registrar")
-            return render_template("registro.html")
-
-    return render_template("login.html", registro=request.args.get("registro") == "True")
-
 
 @app.route('/equipamentos')
 @login_required

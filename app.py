@@ -1,9 +1,12 @@
 from flask import Flask, flash, redirect, render_template, request, url_for
-from flask_login import LoginManager
+from flask_login import LoginManager, login_required, logout_user, login_user
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 from banco import tabela_equipamento, tabela_funcionario, tabela_ordens_servico, tabela_setor
-from database import Funcionario, Setor, db_session
+
+from database import Funcionario, Setor, db_session, Usuario
+
 
 app = Flask(__name__)
 app.secret_key = "quarks-solucoes"
@@ -15,27 +18,93 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db_session.get(Funcionario, int(user_id))
+    return db_session.get(Usuario, int(user_id))
 
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        senha = request.form.get("senha", "").strip()
+        usuario_sql = select(Usuario).where(Usuario.email == email)
+        usuario_resultado = db_session.execute(usuario_sql).scalar()
+
+        if not usuario_resultado:
+            flash("Falha na autenticação: E-mail não encontrado")
+            return redirect(url_for("login"))
+        if usuario_resultado and usuario_resultado.check_password(senha):
+            login_user(usuario_resultado)
+            return redirect(url_for("index"))
+        else:
+            flash("Falha na autenticação: E-mail e senha não encontrado")
+
+    return render_template(
+        "login.html",
+        registro= request.args.get("registro") == "True"
+
+    )
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
+
+@app.route("/registro", methods=["GET", "POST"])
+def registro():
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        email = request.form.get("email", "").strip()
+        senha = request.form.get("senha", "").strip()
+
+        if not nome and not email and not senha:
+            flash("Preencha o nome, email, senha", "error")
+            return redirect(url_for("registro"))
+        usuario_sql = select(Usuario).where(Usuario.email == email)
+        usuario_email = db_session.execute(usuario_sql).scalar_one_or_none()
+        if usuario_email:
+            flash("E-mail já cadastrado", "error")
+            return redirect(url_for("registro"))
+        try:
+            novo_usuario = Usuario(
+                nome = nome,
+                email = email
+            )
+            novo_usuario.set_password(senha)
+            db_session.add(novo_usuario)
+            db_session.commit()
+            flash("Usuário criado com sucesso", "success")
+        except SQLAlchemyError as e:
+            flash("Erro no banco")
+            return redirect(url_for("registro"))
+        except SQLAlchemyError as e:
+            flash(f"Erro ao registrar", "error")
+            flash("Erro ao registrar")
+            return render_template("registro.html")
+
+    return render_template("login.html", registro=request.args.get("registro") == "True")
+
 
 @app.route('/equipamentos')
+@login_required
 def equipamentos():
     lista_equipamentos = tabela_equipamento.select_ativos()
     return render_template('equipamento.html', equipamentos=lista_equipamentos)
 
 
 @app.route('/equipamentos/excluidos')
+@login_required
 def listar_equipamentos_excluidos():
     lista_equipamentos = tabela_equipamento.select_excluidos()
     return render_template('equipamento.html', equipamentos=lista_equipamentos, excluidos=1)
 
 
 @app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
+@login_required
 def cadastro_equipamento():
     if request.method == "POST":
         nome = request.form.get("nome_equipamento", "").strip()
@@ -54,6 +123,7 @@ def cadastro_equipamento():
 
 
 @app.route('/equipamentos/editar/<int:equipamento_id>', methods=['GET', 'POST'])
+@login_required
 def editar_equipamento(equipamento_id):
     equipamento = tabela_equipamento.select_id(equipamento_id)
     if not equipamento or not equipamento.status_delete:
@@ -81,6 +151,7 @@ def editar_equipamento(equipamento_id):
 
 
 @app.route('/equipamentos/excluir/<int:equipamento_id>', methods=['GET', 'POST'])
+@login_required
 def excluir_equipamento(equipamento_id):
     equipamento = tabela_equipamento.select_id(equipamento_id)
     if equipamento and equipamento.status_delete:
@@ -90,6 +161,7 @@ def excluir_equipamento(equipamento_id):
 
 
 @app.route('/equipamentos/restaurar/<int:equipamento_id>', methods=['GET', 'POST'])
+@login_required
 def restaurar_equipamento(equipamento_id):
     equipamento = tabela_equipamento.select_id(equipamento_id)
     if equipamento and not equipamento.status_delete:
@@ -99,12 +171,14 @@ def restaurar_equipamento(equipamento_id):
 
 
 @app.route('/ordens_servico', methods=['GET'])
+@login_required
 def ordens_servico_lista_view():
     lista_ordens = tabela_ordens_servico.select_todas()
     return render_template('ordens_servico.html', ordens=lista_ordens)
 
 
 @app.route('/servico/ordens/cadastro', methods=['GET', 'POST'])
+@login_required
 def cadastro_ordem_view():
     if request.method == "POST":
         responsavel_id = request.form.get("responsavel_id")
@@ -134,18 +208,21 @@ def cadastro_ordem_view():
 
 
 @app.route('/setor', methods=['GET'])
+@login_required
 def setor():
     lista_setores = tabela_setor.select_ativos()
     return render_template('setor.html', setores=lista_setores)
 
 
 @app.route('/setor/excluidos', methods=['GET'])
+@login_required
 def listar_setores_excluidos():
     lista_setores = tabela_setor.select_excluidos()
     return render_template('setor.html', setores=lista_setores, excluidos=1)
 
 
 @app.route('/setor/cadastro', methods=['GET', 'POST'])
+@login_required
 def cadastro_setor():
     if request.method == "POST":
         nome = request.form.get("nome", "").strip()
@@ -162,6 +239,7 @@ def cadastro_setor():
 
 
 @app.route('/setor/editar/<int:setor_id>', methods=['GET', 'POST'])
+@login_required
 def editar_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
     if not setor:
@@ -185,6 +263,7 @@ def editar_setor(setor_id):
 
 
 @app.route('/setor/excluir/<setor_id>', methods=['GET', 'POST'])
+@login_required
 def excluir_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
     if setor:
@@ -194,6 +273,7 @@ def excluir_setor(setor_id):
 
 
 @app.route('/setor/restaurar/<setor_id>', methods=['GET', 'POST'])
+@login_required
 def restaurar_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
     if setor:
@@ -203,12 +283,14 @@ def restaurar_setor(setor_id):
 
 
 @app.route('/funcionarios', methods=['GET'])
+@login_required
 def funcionarios():
     lista_funcionarios = tabela_funcionario.select_todos()
     return render_template('funcionario.html', funcionarios=lista_funcionarios)
 
 
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
+@login_required
 def cadastro_funcionario():
     if request.method == "POST":
         nome = request.form.get("nome", "").strip()
@@ -237,6 +319,7 @@ def cadastro_funcionario():
 
 
 @app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
     ordens_servico = tabela_ordens_servico.select_quantidade_total()
     equipamentos = tabela_equipamento.select_quantidade_total()

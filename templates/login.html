@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="container-criar-acesso">
+    <section class="painel formulario-acesso">
+        {% if registro %}
+            <h2 class="card-titulo-acesso">CRIAR CONTA</h2>
+            <form method="POST" action="{{ url_for('registro') }}">
+                <div class="campo-formulario-acesso">
+                    <label for="nome">Nome *</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+                <div class="campo-formulario-acesso">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" class="campo-input-acesso" required>
+                </div>
+                <div class="campo-formulario-acesso">
+                    <label for="senha">Palavra-passe *</label>
+                    <input type="password" id="senha" name="senha" class="campo-input-acesso" required>
+                </div>
+                <div class="botoes-formulario-acesso">
+                    <button type="submit" class="botao botao-enviar-acesso">Registrar</button>
+                    <a href="{{ url_for('login') }}" class="botao botao-redefinir-acesso">Já tenho conta</a>
+                </div>
+            </form>
+        {% else %}
+            <h2 class="card-titulo-acesso">LOGIN</h2>
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="campo-formulario-acesso">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" class="campo-input-acesso" required>
+                </div>
+                <div class="campo-formulario-acesso">
+                    <label for="senha">Palavra-passe *</label>
+                    <input type="password" id="senha" name="senha" class="campo-input-acesso" required>
+                </div>
+                <div class="botoes-formulario-acesso">
+                    <button type="submit" class="botao botao-enviar">Entrar</button>
+                    <a href="{{ url_for('login', registro=True) }}" class="botao botao-redefinir-acesso">Criar Conta</a>
+                </div>
+            </form>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

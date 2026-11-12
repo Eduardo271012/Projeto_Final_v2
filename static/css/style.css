@@ -29,7 +29,7 @@ body {
     font-weight: 400;
     font-optical-sizing: auto;
     font-style: normal;
-    background-color: #afcfde;
+    background-color: #f4f4f4;
     overflow-x: hidden;
 }
 
@@ -296,10 +296,10 @@ h1 {
 .barra-titulo-linha {
     background-color: #0f172a;
     text-align: center;
-    padding: 15px 0;
-    margin: 2px 0px 0px 0px;
-    border-bottom: 5px solid #0284c7;
-    position: relative; /* Necessário para posicionar a linha por baixo */
+    padding: 10px 0;
+    margin: 2px 0 0 0;
+    border-bottom: 3px solid #0284c7;
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -307,129 +307,203 @@ h1 {
 
 .subtitulo {
     color: white;
-    font-weight: bold;
-    font-size: 20px;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 1.2;
+    margin: 0;
 }
-
 /* CARD DO FORMULÁRIO */
 
 .container-criar {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    font-family: Century;
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 0 15px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    max-width: 580px;
+    margin: 40px auto;
+    padding: 0 20px;
 }
 
 .painel-formulario {
     background-color: #ffffff;
-    border: 2px solid #0f172a;
-    border-radius: 8px;
-    padding: 24px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0; /* Borda bem sutil no lugar da borda preta grossa */
+    border-radius: 12px;
+    padding: 36px 40px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
 }
 
 .card-titulo {
     margin-top: 0;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #0f172a;
-    padding-bottom: 10px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 16px;
     color: #0f172a;
-    font-size: 30px;
-    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    text-align: left; /* Alinhamento à esquerda traz um ar mais corporativo */
+    letter-spacing: -0.02em;
 }
 
 .campo-formulario {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .campo-formulario label {
     display: block;
-    margin-bottom: 6px;
-    font-weight: bold;
-    color: #0f172a;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
 }
 
 .campo-input {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #0f172a;
-    border-radius: 4px;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
     box-sizing: border-box;
-    font-size: 16px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #0f172a;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.campo-input::placeholder {
+    color: #94a3b8;
 }
 
 .campo-input:focus {
-    border-color: #518df8;
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12); /* Anel de foco suave */
     outline: none;
 }
 
+/* Área dos botões com hierarquia visual */
 .botoes-formulario {
     display: flex;
-    gap: 10px;
-    margin-top: 25px;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
 }
 
 .botao {
     padding: 10px 20px;
     border: none;
-    border-radius: 4px;
-    font-size: 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
     cursor: pointer;
-    font-weight: bold;
-    transition: background 0.2s;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* Botão Principal (Destaque máximo) */
 .botao-enviar {
-    background-color: #0f172a;
-    color: white;
+    background-color: #131c46;
+    color: #ffffff;
+    order: 3; /* Coloca o Enviar por último na direita */
 }
 
 .botao-enviar:hover {
-    background-color: #0283c5;
+    background-color: #1e3a8a;
+    transform: translateY(-1px);
 }
 
+/* Botão Secundário (Contorno limpo) */
 .botao-redefinir {
-    background-color: #868f9a;
-    color: white;
+    background-color: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    order: 2; /* Fica ao lado do Enviar */
 }
 
 .botao-redefinir:hover {
-    background-color: #5a6268;
+    background-color: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
 }
 
+/* Botão Voltar (Discreto à esquerda) */
 .botao-voltar {
-    background-color: #868f9a;
-    color: white;
+    background-color: #f1f5f9;
+    color: #475569;
     text-decoration: none;
+    margin-right: auto; /* Empurra Redefinir e Enviar para a direita */
+    order: 1;
 }
 
-/* PAINÉIS */
+.botao-voltar:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+/* ================= PAINÉIS E TABELAS ================= */
+.painel {
+    background-color: var(--cor-painel, #ffffff);
+    border: 1px solid var(--cor-borda, #e2e8f0);
+    border-radius: 12px;
+    padding: 36px 40px;
+    max-width: 960px;
+    margin: 0 auto 40px auto;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Título dentro do painel (ex: LISTA DE SETORES) igual ao .card-titulo */
+.painel h1,
+.painel h2,
+.painel h3 {
+    margin-top: 0;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 16px;
+    color: #0f172a;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: white;
+    background-color: #ffffff;
 }
 
 th, td {
     text-align: left;
-    padding: 10px 8px;
-    border-bottom: 1px solid var(--cor-borda);
-    font-size: 0.9rem;
+    padding: 16px 14px;
+    border-bottom: 1px solid var(--cor-borda, #e2e8f0);
+    font-size: 0.95rem;
+    color: #0f172a;
+    vertical-align: middle;
 }
 
 th {
-    color: var(--cor-texto-claro);
+    background-color: #f8fafc;
+    color: var(--cor-texto-claro, #64748b);
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.05em;
+}
+
+/* Remove a linha de baixo da última linha da tabela para não duplicar borda */
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr {
+    transition: background-color 0.2s ease;
 }
 
 tbody tr:hover {
-    background-color: #adcbda;
+    background-color: #f8fafc;
 }
 
 .centro {
@@ -439,7 +513,8 @@ tbody tr:hover {
 .acoes {
     display: flex;
     justify-content: flex-start;
-    gap: 1vw;
+    align-items: center;
+    gap: 10px;
 }
 
 .acoes-col {
@@ -456,12 +531,13 @@ tbody tr:hover {
 }
 
 .vazio {
-    color: var(--cor-texto-claro);
+    color: var(--cor-texto-claro, #64748b);
     font-style: italic;
-    padding: 12px 0;
+    padding: 20px 0;
+    text-align: center;
 }
 
-/* CARTÕES DASHBOARD */
+/* ================= CARTÕES DASHBOARD ================= */
 .cartoes {
     display: flex;
     gap: 16px;
@@ -471,22 +547,23 @@ tbody tr:hover {
 }
 
 .cartao {
-    background-color: var(--cor-painel);
-    border: 1px solid var(--cor-borda);
-    border-radius: 8px;
+    background-color: var(--cor-painel, #ffffff);
+    border: 1px solid var(--cor-borda, #e2e8f0);
+    border-radius: 12px;
     padding: 20px 28px;
     min-width: 200px;
     text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .cartao-valor {
     font-size: 2rem;
     font-weight: bold;
-    color: var(--cor-primaria);
+    color: var(--cor-primaria, #131c46);
 }
 
 .cartao-label {
-    color: var(--cor-texto-claro);
+    color: var(--cor-texto-claro, #64748b);
     font-size: 0.85rem;
     margin-top: 4px;
 }

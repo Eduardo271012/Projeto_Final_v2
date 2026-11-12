@@ -22,7 +22,6 @@ def load_user(user_id):
 
 
 @app.route('/')
-@login_required
 def index():
     return render_template('index.html')
 
@@ -53,7 +52,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("login"))
+    return redirect(url_for("index"))
 
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
@@ -91,18 +90,21 @@ def registro():
 
 
 @app.route('/equipamentos')
+@login_required
 def equipamentos():
     lista_equipamentos = tabela_equipamento.select_ativos()
     return render_template('equipamento.html', equipamentos=lista_equipamentos)
 
 
 @app.route('/equipamentos/excluidos')
+@login_required
 def listar_equipamentos_excluidos():
     lista_equipamentos = tabela_equipamento.select_excluidos()
     return render_template('equipamento.html', equipamentos=lista_equipamentos, excluidos=1)
 
 
 @app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
+@login_required
 def cadastro_equipamento():
     if request.method == "POST":
         nome = request.form.get("nome_equipamento", "").strip()
@@ -121,6 +123,7 @@ def cadastro_equipamento():
 
 
 @app.route('/equipamentos/editar/<int:equipamento_id>', methods=['GET', 'POST'])
+@login_required
 def editar_equipamento(equipamento_id):
     equipamento = tabela_equipamento.select_id(equipamento_id)
     if not equipamento or not equipamento.status_delete:
@@ -148,6 +151,7 @@ def editar_equipamento(equipamento_id):
 
 
 @app.route('/equipamentos/excluir/<int:equipamento_id>', methods=['GET', 'POST'])
+@login_required
 def excluir_equipamento(equipamento_id):
     equipamento = tabela_equipamento.select_id(equipamento_id)
     if equipamento and equipamento.status_delete:
@@ -157,6 +161,7 @@ def excluir_equipamento(equipamento_id):
 
 
 @app.route('/equipamentos/restaurar/<int:equipamento_id>', methods=['GET', 'POST'])
+@login_required
 def restaurar_equipamento(equipamento_id):
     equipamento = tabela_equipamento.select_id(equipamento_id)
     if equipamento and not equipamento.status_delete:
@@ -166,12 +171,14 @@ def restaurar_equipamento(equipamento_id):
 
 
 @app.route('/ordens_servico', methods=['GET'])
+@login_required
 def ordens_servico_lista_view():
     lista_ordens = tabela_ordens_servico.select_todas()
     return render_template('ordens_servico.html', ordens=lista_ordens)
 
 
 @app.route('/servico/ordens/cadastro', methods=['GET', 'POST'])
+@login_required
 def cadastro_ordem_view():
     if request.method == "POST":
         responsavel_id = request.form.get("responsavel_id")
@@ -201,18 +208,21 @@ def cadastro_ordem_view():
 
 
 @app.route('/setor', methods=['GET'])
+@login_required
 def setor():
     lista_setores = tabela_setor.select_ativos()
     return render_template('setor.html', setores=lista_setores)
 
 
 @app.route('/setor/excluidos', methods=['GET'])
+@login_required
 def listar_setores_excluidos():
     lista_setores = tabela_setor.select_excluidos()
     return render_template('setor.html', setores=lista_setores, excluidos=1)
 
 
 @app.route('/setor/cadastro', methods=['GET', 'POST'])
+@login_required
 def cadastro_setor():
     if request.method == "POST":
         nome = request.form.get("nome", "").strip()
@@ -229,6 +239,7 @@ def cadastro_setor():
 
 
 @app.route('/setor/editar/<int:setor_id>', methods=['GET', 'POST'])
+@login_required
 def editar_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
     if not setor:
@@ -252,6 +263,7 @@ def editar_setor(setor_id):
 
 
 @app.route('/setor/excluir/<setor_id>', methods=['GET', 'POST'])
+@login_required
 def excluir_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
     if setor:
@@ -261,6 +273,7 @@ def excluir_setor(setor_id):
 
 
 @app.route('/setor/restaurar/<setor_id>', methods=['GET', 'POST'])
+@login_required
 def restaurar_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
     if setor:
@@ -270,12 +283,14 @@ def restaurar_setor(setor_id):
 
 
 @app.route('/funcionarios', methods=['GET'])
+@login_required
 def funcionarios():
     lista_funcionarios = tabela_funcionario.select_todos()
     return render_template('funcionario.html', funcionarios=lista_funcionarios)
 
 
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
+@login_required
 def cadastro_funcionario():
     if request.method == "POST":
         nome = request.form.get("nome", "").strip()
@@ -304,6 +319,7 @@ def cadastro_funcionario():
 
 
 @app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
     ordens_servico = tabela_ordens_servico.select_quantidade_total()
     equipamentos = tabela_equipamento.select_quantidade_total()

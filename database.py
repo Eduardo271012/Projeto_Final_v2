@@ -60,7 +60,6 @@ class Funcionario(Base, UserMixin):
     email = Column(String(100), unique=True)
     funcao = Column(String(50))
     status_delete = Column(Boolean, default=True, nullable=False)
-    senha = Column(String(255), nullable=False, default='mudar123')
 
     ordens_servico_atribuidas = relationship('OrdemServico', back_populates='funcionario')
     setor = relationship('Setor', back_populates='funcionarios')
@@ -98,7 +97,7 @@ class Usuario(Base, UserMixin):
     __tablename__ = "usuarios"
     id = Column(Integer, primary_key=True, autoincrement=True)
     nome = Column(String(50), nullable=False)
-    senha_hash = Column(String(250), nullable=False)
+    senha_hash = Column(String(255), nullable=False)
     email = Column(String(120), unique=True, nullable=False)
     criado_em = Column(DateTime, nullable=False, server_default=func.now())
     atualizado_em = Column(DateTime, nullable=False, server_default=func.now())

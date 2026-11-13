@@ -344,6 +344,7 @@ def dashboard():
     equipamentos = tabela_equipamento.select_quantidade_total()
     setores = tabela_setor.select_quantidade_total()
     funcionarios = tabela_funcionario.select_quantidade_total()
+    ordens_status = tabela_ordens_servico.select_ordem_status()
 
     return render_template(
         "dashboard.html",
@@ -351,6 +352,7 @@ def dashboard():
         total_equipamentos=equipamentos,
         total_setores=setores,
         total_funcionarios=funcionarios,
+        ordens_status=ordens_status,
     )
 
 

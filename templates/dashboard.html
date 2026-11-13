@@ -5,26 +5,72 @@
         <p class="subtitulo">DASHBOARD</p>
     </div>
 
-    <div class="cartoes">
-        <div class="container-perfil">
-            <div class="cartao-valor">{{ total_ordens_servico }}</div>
-            <div class="cartao-label">Ordens de serviço</div>
-        </div>
-        <div class="container-perfil">
-            <div class="cartao-valor">{{ total_equipamentos }}</div>
-            <div class="cartao-label">Equipamentos</div>
-        </div>
-        <div class="container-perfil">
-            <div class="cartao-valor">{{ total_setores }}</div>
-            <div class="cartao-label">Setores</div>
-        </div>
-        <div class="container-perfil">
-            <div class="cartao-valor">{{ total_funcionarios }}</div>
-            <div class="cartao-label">Funcionários</div>
-        </div>
-    </div>
+    <div class="dashboard-wrapper">
+        <h3 class="secao-dashboard-titulo">Visão Geral</h3>
+        <div class="cartoes">
+            <!-- Cartão 1: Ordens de Serviço -->
+            <div class="cartao-dashboard cartao-menu-wrapper">
+                <div class="cartao-valor">{{ total_ordens_servico }}</div>
+                <div class="cartao-label">Ordens de serviço</div>
 
-    <div class="grid-dashboard">
+                <div class="cartao-dropdown-card">
+                    <div class="perfil-card-titulo">ORDENS DE SERVIÇO</div>
+                    <div class="perfil-card-divisor"></div>
+                    <div class="perfil-card-info">Gerencie e acompanhe todas as ordens de serviço abertas.</div>
+                    <a href="{{ url_for('ordens_servico_lista_view') }}" class="perfil-card-link">Ver lista de OS →</a>
+                </div>
+            </div>
 
+            <!-- Cartão 2: Equipamentos -->
+            <div class="cartao-dashboard cartao-menu-wrapper">
+                <div class="cartao-valor">{{ total_equipamentos }}</div>
+                <div class="cartao-label">Equipamentos</div>
+
+                <div class="cartao-dropdown-card">
+                    <div class="perfil-card-titulo">EQUIPAMENTOS</div>
+                    <div class="perfil-card-divisor"></div>
+                    <div class="perfil-card-info">Consulte o inventário de equipamentos e ativos industriais.</div>
+                    <a href="{{ url_for('equipamentos') }}" class="perfil-card-link">Ver lista de equipamentos →</a>
+                </div>
+            </div>
+
+            <!-- Cartão 3: Setores -->
+            <div class="cartao-dashboard cartao-menu-wrapper">
+                <div class="cartao-valor">{{ total_setores }}</div>
+                <div class="cartao-label">Setores</div>
+
+                <div class="cartao-dropdown-card">
+                    <div class="perfil-card-titulo">SETORES</div>
+                    <div class="perfil-card-divisor"></div>
+                    <div class="perfil-card-info">Visualize as áreas e departamentos cadastrados.</div>
+                    <a href="{{ url_for('setor') }}" class="perfil-card-link">Ver lista de setores →</a>
+                </div>
+            </div>
+
+            <!-- Cartão 4: Funcionários -->
+            <div class="cartao-dashboard cartao-menu-wrapper">
+                <div class="cartao-valor">{{ total_funcionarios }}</div>
+                <div class="cartao-label">Funcionários</div>
+
+                <div class="cartao-dropdown-card">
+                    <div class="perfil-card-titulo">FUNCIONÁRIOS</div>
+                    <div class="perfil-card-divisor"></div>
+                    <div class="perfil-card-info">Acesse a equipe técnica e colaboradores.</div>
+                    <a href="{{ url_for('funcionarios') }}" class="perfil-card-link">Ver lista de funcionários →</a>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="secao-dashboard-titulo">Status das Ordens de Serviço</h3>
+        <div class="cartoes">
+            {% for status in ordens_status %}
+            <div class="cartao-dashboard">
+                <div class="cartao-valor">{{ status[1] }}</div>
+                <div class="cartao-label">{{ status[0] }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="grid-dashboard"></div>
     </div>
 {% endblock %}

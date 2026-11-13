@@ -11,54 +11,83 @@
         {% endif %}
     </div>
 
-    {% if request.endpoint == 'cadastro_ordem_view' %}
+    {% if request.endpoint == 'cadastro_ordem_view' or editar %}
     <div class="container-perfil">
         <section class="container-perfil">
-            <h2 class="card-titulo">CADASTRAR OS</h2>
-            <form method="POST" action="{{ url_for('cadastro_ordem_view') }}">
+            <h2 class="card-titulo">{% if editar %}EDITAR{% else %}CADASTRAR{% endif %} OS</h2>
+            <form method="POST" action="{{ url_for('cadastro_ordem_view') if not editar else url_for('editar_ordem_servico', ordem_id=editar.id)}}">
                 <div class="campo-formulario">
                     <label for="responsavel_id">Funcionário (Responsável)</label>
                     <select id="responsavel_id" name="responsavel_id" required class="campo-input">
-                        <option value="" disabled selected>Selecione o Funcionário</option>
-                        {% for funcionario in funcionarios %}
-                            <option value="{{ funcionario.id }}">{{ funcionario.nome }}</option>
+                        {% if funcionarios %}
+                            {% if not editar %}
+                                <option value="" disabled selected>Selecione o Funcionário</option>
+                            {% endif %}
+                            {% for funcionario in funcionarios %}
+                                {% if editar %}
+                                    {% if funcionario.id == editar.id %}
+                                        <option value="{{ funcionario.id }}" selected>{{ funcionario.nome }}</option>
+                                    {% else %}
+                                        <option value="{{ funcionario.id }}">{{ funcionario.nome }}</option>
+                                    {% endif %}
+                                {% else %}
+                                    <option value="{{ funcionario.id }}">{{ funcionario.nome }}</option>
+                                {% endif %}
+                            {% else %}
+                                <option value="" disabled>Não existem funcionários cadastrados</option>
+                            {% endfor %}
                         {% else %}
-                            <option value="" disabled>Não existem funcionários cadastrados</option>
-                        {% endfor %}
+                            <option class="vazio">Nenhum funcionário cadastrado</option>
+                        {% endif %}
                     </select>
                 </div>
                 <div class="campo-formulario">
                     <label for="descricao">Descrição do Problema / Service</label>
-                    <textarea id="descricao" name="descricao" required placeholder="Ex: Substituir o óleo hidráulico e limpar os filtros." class="campo-input"></textarea>
+                    <textarea id="descricao" name="descricao" required placeholder="{{ "Ex: Substituir o óleo hidráulico e limpar os filtros." if not editar else editar.descricao }}" class="campo-input"></textarea>
                 </div>
                 <div class="campo-formulario">
                     <label for="status_os">Status</label>
                     <select id="status_os" name="status_os" class="campo-input">
-                        <option value="Aberta">Aberta: Aguardando técnico</option>
-                        <option value="Em andamento">Em andamento: Técnico trabalhando</option>
-                        <option value="Pausada">Pausada: Aguardando peça</option>
-                        <option value="Concluída">Concluída</option>
+                        {% if editar %}
+                            <option value="Aberta" {% if editar.status_os == "Aberta" %}selected{% endif %}>Aberta: Aguardando técnico</option>
+                            <option value="Em andamento" {% if editar.status_os == "Em andamento" %}selected{% endif %}>Em andamento: Técnico trabalhando</option>
+                            <option value="Pausada" {% if editar.status_os == "Pausada" %}selected{% endif %}>Pausada: Aguardando peça</option>
+                            <option value="Concluída" {% if editar.status_os == "Concluída" %}selected{% endif %}>Concluída</option>
+                        {% else %}
+                            <option value="Em andamento">Em andamento: Técnico trabalhando</option>
+                            <option value="Pausada">Pausada: Aguardando peça</option>
+                            <option value="Aberta">Aberta: Aguardando técnico</option>
+                            <option value="Concluída">Concluída</option>
+                        {% endif %}
                     </select>
                 </div>
                 <div class="campo-formulario">
                     <label for="prioridade">Prioridade</label>
                     <select id="prioridade" name="prioridade" class="campo-input">
-                        <option value="Baixa">Baixa</option>
-                        <option value="Média">Média</option>
-                        <option value="Alta">Alta</option>
+                        {% if editar %}
+                            <option value="Baixa" {% if editar.prioridade == "Baixa" %}selected{% endif %}>Baixa</option>
+                            <option value="Média" {% if editar.prioridade == "Média" %}selected{% endif %}>Média</option>
+                            <option value="Alta" {% if editar.prioridade == "Alta" %}selected{% endif %}>Alta</option>
+                        {% else %}
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média">Média</option>
+                            <option value="Alta">Alta</option>
+                        {% endif %}
                     </select>
                 </div>
                 <div class="campo-formulario">
                     <label for="custo_total">Custo Estimado (R$)</label>
-                    <input type="number" id="custo_total" name="custo_total" placeholder="Ex: 500" class="campo-input">
+                    <input type="number" id="custo_total" name="custo_total" placeholder="Ex: 500" class="campo-input" value="{{ editar.custo_total if editar else '' }}">
                 </div>
+            {% if not editar %}
                 <div class="campo-formulario">
                     <label for="data_solicitacao">Data da solicitação</label>
                     <input type="date" id="data_solicitacao" name="data_solicitacao" class="campo-input">
                 </div>
+            {% endif %}
                 <div class="campo-formulario">
                     <label for="data_execucao">Data da execução/entrega</label>
-                    <input type="date" id="data_execucao" name="data_execucao" class="campo-input">
+                    <input type="date" id="data_execucao" name="data_execucao" class="campo-input" value="{{ editar.data_execucao if editar else '' }}">
                 </div>
 
                 <div class="botoes-formulario">
@@ -86,6 +115,7 @@
                     <th>Custo</th>
                     <th>Solicitação</th>
                     <th>Execução</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -99,6 +129,7 @@
                     <td>R$ {{ os.custo_total if os.custo_total else 0 }}</td>
                     <td>{{ os.data_solicitacao.strftime('%d/%m/%Y') if os.data_solicitacao else '-' }}</td>
                     <td>{{ os.data_execucao.strftime('%d/%m/%Y') if os.data_execucao else '-' }}</td>
+                    <td class="acoes">{% if excluidos %}<a href="{# url_for('', ) #}" class="design-btn-direita">Restaurar</a>{% else %}<a href="{# url_for('', ) #}" class="design-btn-direita excluir-btn">Excluir</a><a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Editar</a>{% endif %}</td>
                 </tr>
             {% endfor %}
             </tbody>

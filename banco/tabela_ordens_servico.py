@@ -67,3 +67,8 @@ def select_ordem_status():
     ordens_sql = select(OrdemServico.status_os, func.count(OrdemServico.id)).group_by(OrdemServico.status_os).order_by(OrdemServico.status_os.asc())
     ordens = db_session.execute(ordens_sql).all()
     return ordens
+
+def select_ordem_id(ordem_id):
+    ordem_sql = select(OrdemServico).where(OrdemServico.id == int(ordem_id))
+    ordem = db_session.execute(ordem_sql).scalar()
+    return ordem

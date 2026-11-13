@@ -224,6 +224,34 @@ def cadastro_ordem_view():
     lista_ordens = tabela_ordens_servico.select_todas()
     return render_template('ordens_servico.html', funcionarios=funcionarios_locais, ordens=lista_ordens)
 
+@app.route('/servico/ordens/editar/<int:ordem_id>', methods=['GET', 'POST'])
+@login_required
+def editar_ordem_servico(ordem_id):
+    ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
+    if not ordem_servico:
+        flash("Ordem de serviço não encontrada", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    if request.method == "POST":
+        responsavel_id = request.form.get("responsavel_id")
+        descricao = request.form.get("descricao", "").strip()
+        status_os = request.form.get("status_os")
+        prioridade = request.form.get("prioridade")
+        custo_total = request.form.get("custo_total")
+        data_execucao = request.form.get("data_execucao")
+
+        ordem_servico.responsavel_id = responsavel_id
+        ordem_servico.descricao = descricao
+        ordem_servico.status_os = status_os
+        ordem_servico.prioridade = prioridade
+        ordem_servico.custo_total = custo_total
+        ordem_servico.data_execucao = data_execucao
+
+        db_session.commit()
+        flash("Ordem de Serviço editada com sucesso", "success")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    return render_template('ordens_servico.html', editar=ordem_servico)
 
 @app.route('/setor', methods=['GET'])
 @login_required
@@ -307,7 +335,6 @@ def funcionarios():
     lista_funcionarios = tabela_funcionario.select_todos()
     return render_template('funcionario.html', funcionarios=lista_funcionarios)
 
-
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
 @login_required
 def cadastro_funcionario():
@@ -335,6 +362,7 @@ def cadastro_funcionario():
 
     lista_setores = tabela_setor.select_ativos()
     return render_template('funcionario.html', setores=lista_setores)
+
 
 
 @app.route('/dashboard', methods=['GET', 'POST'])

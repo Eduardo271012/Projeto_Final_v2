@@ -17,10 +17,12 @@
             </div>
 
             <!-- "Temas de Atuação" alinhado logo após a logo -->
-            <div class="menu-item-dropdown">
-                <a href="#" class="link-principal destaque-temas">Como usar? ▾</a>
-                {% block painel_dropdown %}{% endblock %}
-            </div>
+            {% if request.endpoint in ['index'] %}
+                <div class="menu-item-dropdown">
+                    <a href="#" class="link-principal destaque-temas">Como usar? ▾</a>
+                    {% block painel_dropdown %}{% endblock %}
+                </div>
+            {% endif %}
 
         <!-- MENU PRINCIPAL: Empurrado automaticamente para a extrema direita -->
         <nav class="menu">
@@ -63,7 +65,7 @@
     </div>
 </header>
 
-    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'funcionarios'] %}
+    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'funcionarios', 'perfil', 'cadastro_equipamento', 'cadastro_ordem_view', 'cadastro_setor', 'cadastro_funcionario', 'dashboard', 'registro', 'login', 'editar_setor', 'editar_equipamento'] %}
         <div class="carrossel-listas" aria-hidden="true">
             <img class="ativa" src="{{ url_for('static', filename='imagem/foto7.png') }}" alt="">
             <img src="{{ url_for('static', filename='imagem/foto8.png') }}" alt="">
@@ -83,7 +85,7 @@
         {% endwith %}
         {% block conteudo %}{% endblock %}
     </main>
-    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'funcionarios'] %}
+    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'funcionarios', 'perfil', 'cadastro_equipamento', 'cadastro_ordem_view', 'cadastro_setor', 'cadastro_funcionario', 'dashboard', 'registro', 'login', 'editar_setor', 'editar_equipamento'] %}
         <script>
             document.addEventListener("DOMContentLoaded", () => {
                 // 1. Carrossel da tela de Listas (Setores, Equipamentos, etc.)
@@ -112,5 +114,27 @@
 
 
     {% endif %}
+
+    <!-- SCRIPT DOS ALERTAS (Funciona em todas as páginas) -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const container = document.querySelector('.flash-container');
+            const alertas = document.querySelectorAll('.flash');
+
+            alertas.forEach((alerta) => {
+                setTimeout(() => {
+                    alerta.classList.add('flash-sumindo');
+
+                    setTimeout(() => {
+                        alerta.remove();
+                        // Remove o container vazio para não sobrar margem na tela
+                        if (container && container.children.length === 0) {
+                            container.remove();
+                        }
+                    }, 400);
+                }, 4000); // 4000 = 4 segundos
+            });
+        });
+    </script>
 </body>
 </html>

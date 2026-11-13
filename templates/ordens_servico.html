@@ -12,8 +12,8 @@
     </div>
 
     {% if request.endpoint == 'cadastro_ordem_view' %}
-    <div class="container-criar">
-        <section class="painel-formulario">
+    <div class="container-perfil">
+        <section class="container-perfil">
             <h2 class="card-titulo">CADASTRAR OS</h2>
             <form method="POST" action="{{ url_for('cadastro_ordem_view') }}">
                 <div class="campo-formulario">
@@ -72,7 +72,7 @@
 
     <!-- CORREÇÃO: Envolvendo a listagem para esconder a tabela se o formulário estiver aberto -->
     {% if request.endpoint != 'cadastro_ordem_view' %}
-    <section class="painel">
+    <section class="container-perfil">
         <h2>LISTAR ORDENS DE SERVIÇO</h2>
         {% if ordens %}
         <table>

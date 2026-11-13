@@ -13,8 +13,8 @@
     </div>
 
     {% if request.endpoint == 'cadastro_equipamento' or editar %}
-    <div class="container-criar">
-        <section class="painel-formulario">
+    <div class="container-perfil">
+        <section class="container-perfil">
             <h2 class="card-titulo">{{ 'CADASTRAR' if not editar else 'EDITAR' }} EQUIPAMENTO</h2>
             <form method="POST" action="{{ url_for('cadastro_equipamento') if not editar else url_for('editar_equipamento', equipamento_id=editar.id) }}">
                 <div class="campo-formulario">
@@ -48,7 +48,7 @@
 
     <!-- CORREÇÃO: A tabela agora só será exibida se o endpoint for diferente do cadastro de equipamentos -->
     {% if request.endpoint != 'cadastro_equipamento' and not editar %}
-    <section class="painel">
+    <section class="container-perfil">
         <h2>LISTA DE EQUIPAMENTOS</h2>
         {% if equipamentos %}
         <table>

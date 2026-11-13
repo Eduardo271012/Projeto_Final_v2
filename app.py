@@ -48,6 +48,12 @@ def login():
 
     )
 
+@app.route('/perfil')
+@login_required
+def perfil():
+    return render_template('perfil.html')
+
+
 @app.route('/logout')
 @login_required
 def logout():

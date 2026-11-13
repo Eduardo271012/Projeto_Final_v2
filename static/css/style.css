@@ -753,3 +753,135 @@ tbody tr:hover {
     border-color: #518df8;
     outline: none;
 }
+
+/*Avatar bolinha*/
+/* Garante que o menu alinhe os textos e a bolinha na mesma linha */
+.menu {
+    display: flex;
+    align-items: center;
+}
+
+.usuario-perfil {
+    display: flex;
+    align-items: center;
+    margin: 0 12px; /* Espaçamento entre FUNCIONÁRIO e SAIR */
+    cursor: default;
+}
+
+.avatar-inicial {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: #0284c7; /* Azul que combina com o sistema */
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    user-select: none;
+}
+
+.container-perfil {
+    max-width: 600px;
+    margin: 40px auto;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.container-perfil h2 {
+    margin-top: 0;
+    color: #0f172a;
+    font-size: 18px;
+}
+
+.container-perfil hr {
+    border: 0;
+    border-top: 1px solid #e5e7eb;
+    margin: 15px 0 20px 0;
+}
+
+/*PERFIL*/
+/* Wrapper exclusivo do perfil */
+.perfil-menu-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+/* Card branco do perfil */
+.perfil-dropdown-card {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0; /* Cola a borda direita do card exatamente na borda direita do avatar */
+    margin-top: 12px;
+    width: 280px; /* Largura fixa ideal */
+    height: auto !important; /* Impede que herde altura gigante da navbar */
+    background-color: #ffffff;
+    padding: 18px 20px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    z-index: 9999;
+    text-align: left;
+    cursor: default;
+    box-sizing: border-box;
+}
+
+/* Ponte invisível para o mouse não fechar o menu ao descer */
+.perfil-dropdown-card::before {
+    content: "";
+    position: absolute;
+    top: -15px;
+    left: 0;
+    width: 100%;
+    height: 15px;
+    background: transparent;
+}
+
+/* Exibe o card no hover */
+.perfil-menu-wrapper:hover .perfil-dropdown-card {
+    display: block;
+}
+
+/* Textos internos isolados */
+.perfil-card-titulo {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.perfil-card-divisor {
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 10px 0 12px 0;
+    width: 100%;
+}
+
+.perfil-card-info {
+    font-size: 13px;
+    color: #374151;
+    margin-bottom: 6px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.perfil-card-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.perfil-card-link:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,11 @@
+{% extends "base.html" %} <!-- Troque "base.html" pelo nome do seu arquivo principal -->
+
+{% block conteudo %}
+<div class="container-perfil">
+    <h2>MEU PERFIL</h2>
+    <hr>
+    <p><strong>Nome:</strong> {{ current_user.nome }}</p>
+    <p><strong>E-mail:</strong> {{ current_user.email }}</p>
+    <!-- Adicione outros campos que você tenha no banco, como cargo ou setor -->
+</div>
+{% endblock %}

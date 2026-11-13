@@ -12,8 +12,8 @@
     </div>
 
     {% if request.endpoint == 'cadastro_funcionario' %}
-    <div class="container-criar">
-        <section class="painel-formulario">
+    <div class="container-perfil">
+        <section class="container-perfil">
             <h2 class="card-titulo">CADASTRAR FUNCIONÁRIO</h2>
             <form method="POST" action="{{ url_for('cadastro_funcionario') }}">
                 <div class="campo-formulario">
@@ -59,7 +59,7 @@
 
     <!-- CORREÇÃO: A tabela de listagem agora só renderiza se o formulário de cadastro estiver fechado -->
     {% if request.endpoint != 'cadastro_funcionario' %}
-    <section class="painel">
+    <section class="container-perfil">
         <h2>LISTA DE FUNCIONÁRIOS</h2>
         {% if funcionarios %}
         <table>

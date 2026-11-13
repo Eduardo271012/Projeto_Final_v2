@@ -14,8 +14,8 @@
     </div>
 
     {% if request.endpoint == 'cadastro_setor' or editar %}
-    <div class="container-criar">
-        <section class="painel-formulario">
+    <div class="container-perfil">
+        <section class="container-perfil">
             <h2 class="card-titulo">{% if editar %}EDITAR{% else %}CADASTRAR{% endif %} SETOR</h2>
             <form method="POST" action="{{ url_for('cadastro_setor') if not editar else url_for('editar_setor', setor_id=editar.id)}}">
                 <div class="campo-formulario">
@@ -39,7 +39,7 @@
 
     <!-- CORREÇÃO: A tabela de listagem só aparece se o usuário não estiver na tela de cadastro -->
     {% if request.endpoint != 'cadastro_setor' and not editar %}
-    <section class="painel">
+    <section class="container-perfil">
         <h2>LISTA DE SETORES</h2>
         {% if setores %}
         <table>

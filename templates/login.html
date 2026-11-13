@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block conteudo %}
-<div class="container-criar-acesso">
-    <section class="painel-login formulario-acesso">
+<div class="container-perfil">
+    <section class="container-perfil">
         {% if registro %}
             <h2 class="card-titulo-acesso">CRIAR CONTA</h2>
             <form method="POST" action="{{ url_for('registro') }}">

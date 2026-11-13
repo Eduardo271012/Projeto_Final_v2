@@ -1,4 +1,3 @@
-import os
 from flask_login import UserMixin
 from sqlalchemy import Boolean, BigInteger, Column, Date, Float, ForeignKey, Integer, String, create_engine, DateTime, \
     func
@@ -6,9 +5,6 @@ from sqlalchemy.orm import declarative_base, relationship, scoped_session, sessi
 from werkzeug.security import generate_password_hash, check_password_hash
 
 engine = create_engine("mysql+pymysql://root:senaisp@:3306/quarks_solucoes")
-if os.getenv("USE_LOCAL_DB", "1").lower() in {"1", "true", "yes"}:
-    engine = create_engine("sqlite:///quarks_solucoes_local.db")
-
 db_session = scoped_session(sessionmaker(bind=engine))
 Base = declarative_base()
 
@@ -99,6 +95,7 @@ class Usuario(Base, UserMixin):
     nome = Column(String(50), nullable=False)
     senha_hash = Column(String(255), nullable=False)
     email = Column(String(120), unique=True, nullable=False)
+    papel = Column(String(20), default="usuario", nullable=False)
     criado_em = Column(DateTime, nullable=False, server_default=func.now())
     atualizado_em = Column(DateTime, nullable=False, server_default=func.now())
 

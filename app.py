@@ -1,11 +1,10 @@
 from flask import Flask, flash, redirect, render_template, request, url_for
-from flask_login import LoginManager, login_required, logout_user, login_user
+from flask_login import LoginManager, login_required, logout_user, login_user, current_user
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-
 from banco import tabela_equipamento, tabela_funcionario, tabela_ordens_servico, tabela_setor
-
 from database import Funcionario, Setor, db_session, Usuario
+from functools import wraps
 
 
 app = Flask(__name__)
@@ -21,6 +20,18 @@ def load_user(user_id):
     return db_session.get(Usuario, int(user_id))
 
 
+def roles_required(*papeis_permitidos):
+    def decorator(f):
+        @wraps(f)
+        @login_required
+        def decorated_function(*args, **kwargs):
+            if current_user.papel not in papeis_permitidos:
+                flash("Você não tem permissão para acessar esta página.", "error")
+                return redirect(url_for("index"))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -34,13 +45,14 @@ def login():
         usuario_resultado = db_session.execute(usuario_sql).scalar()
 
         if not usuario_resultado:
-            flash("Falha na autenticação: E-mail não encontrado")
+            flash("Falha na autenticação: E-mail não encontrado", "error")
             return redirect(url_for("login"))
         if usuario_resultado and usuario_resultado.check_password(senha):
             login_user(usuario_resultado)
+            flash(f"BEM-VINDO(A), {usuario_resultado.nome}!😁", "welcome")
             return redirect(url_for("index"))
         else:
-            flash("Falha na autenticação: E-mail e senha não encontrado")
+            flash("Falha na autenticação: E-mail e senha não encontrado", "error")
 
     return render_template(
         "login.html",
@@ -290,6 +302,7 @@ def restaurar_setor(setor_id):
 
 @app.route('/funcionarios', methods=['GET'])
 @login_required
+
 def funcionarios():
     lista_funcionarios = tabela_funcionario.select_todos()
     return render_template('funcionario.html', funcionarios=lista_funcionarios)

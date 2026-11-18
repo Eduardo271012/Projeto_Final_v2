@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from banco import tabela_equipamento, tabela_funcionario, tabela_ordens_servico, tabela_setor
 from database import Funcionario, Setor, db_session, Usuario
 from functools import wraps
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -240,6 +241,26 @@ def editar_ordem_servico(ordem_id):
         custo_total = request.form.get("custo_total")
         data_execucao = request.form.get("data_execucao")
 
+        if not descricao:
+            flash("Preencha a descrição da ordem de serviço", "error")
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
+        try:
+            responsavel_id = int(responsavel_id) if responsavel_id else None
+            custo_total = int(custo_total) if custo_total else 0
+        except ValueError:
+            flash("Funcionário ou custo inválido", "error")
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
+        if data_execucao:
+            try:
+                data_execucao = datetime.strptime(data_execucao, "%Y-%m-%d").date()
+            except ValueError:
+                flash("Informe uma data de execução válida", "error")
+                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+        else:
+            data_execucao = None
+
         ordem_servico.responsavel_id = responsavel_id
         ordem_servico.descricao = descricao
         ordem_servico.status_os = status_os
@@ -247,11 +268,22 @@ def editar_ordem_servico(ordem_id):
         ordem_servico.custo_total = custo_total
         ordem_servico.data_execucao = data_execucao
 
-        db_session.commit()
-        flash("Ordem de Serviço editada com sucesso", "success")
-        return redirect(url_for("ordens_servico_lista_view"))
+        try:
+            db_session.commit()
+            flash("Ordem de Serviço editada com sucesso", "success")
+            return redirect(url_for("ordens_servico_lista_view"))
+        except SQLAlchemyError:
+            db_session.rollback()
+            flash("Erro ao editar a ordem de serviço", "error")
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
-    return render_template('ordens_servico.html', editar=ordem_servico)
+    funcionarios_tupla = tabela_funcionario.select_funcionarios()
+    funcionarios_locais = [f[0] if isinstance(f, tuple) else f for f in funcionarios_tupla]
+    return render_template(
+        'ordens_servico.html',
+        editar=ordem_servico,
+        funcionarios=funcionarios_locais,
+    )
 
 @app.route('/setor', methods=['GET'])
 @login_required

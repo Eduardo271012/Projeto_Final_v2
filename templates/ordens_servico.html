@@ -25,7 +25,7 @@
                             {% endif %}
                             {% for funcionario in funcionarios %}
                                 {% if editar %}
-                                    {% if funcionario.id == editar.id %}
+                                    {% if funcionario.id == editar.responsavel_id %}
                                         <option value="{{ funcionario.id }}" selected>{{ funcionario.nome }}</option>
                                     {% else %}
                                         <option value="{{ funcionario.id }}">{{ funcionario.nome }}</option>
@@ -43,7 +43,7 @@
                 </div>
                 <div class="campo-formulario">
                     <label for="descricao">Descrição do Problema / Service</label>
-                    <textarea id="descricao" name="descricao" required placeholder="{{ "Ex: Substituir o óleo hidráulico e limpar os filtros." if not editar else editar.descricao }}" class="campo-input"></textarea>
+                    <textarea id="descricao" name="descricao" required placeholder="Ex: Substituir o óleo hidráulico e limpar os filtros." class="campo-input">{{ editar.descricao if editar else '' }}</textarea>
                 </div>
                 <div class="campo-formulario">
                     <label for="status_os">Status</label>
@@ -87,7 +87,7 @@
             {% endif %}
                 <div class="campo-formulario">
                     <label for="data_execucao">Data da execução/entrega</label>
-                    <input type="date" id="data_execucao" name="data_execucao" class="campo-input" value="{{ editar.data_execucao if editar else '' }}">
+                    <input type="date" id="data_execucao" name="data_execucao" class="campo-input" value="{{ editar.data_execucao.strftime('%Y-%m-%d') if editar and editar.data_execucao else '' }}">
                 </div>
 
                 <div class="botoes-formulario">
@@ -99,10 +99,10 @@
     </div>
     {% endif %}
 
-    <!-- CORREÇÃO: Envolvendo a listagem para esconder a tabela se o formulário estiver aberto -->
-    {% if request.endpoint != 'cadastro_ordem_view' %}
+    <!-- Esconde a listagem enquanto o cadastro ou a edição estiver aberto -->
+    {% if request.endpoint != 'cadastro_ordem_view' and not editar %}
     <section class="container-perfil">
-        <h2>LISTAR ORDENS DE SERVIÇO</h2>
+        <h2>LISTA DE ORDENS DE SERVIÇO</h2>
         {% if ordens %}
         <table>
             <thead>

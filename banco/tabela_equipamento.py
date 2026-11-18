@@ -82,8 +82,8 @@ def salvar(nome, modelo, quantidade, custo_equipamento):
         return False
 
 def select_quantidade_total():
-    equipamentos_sql = select(func.count(Equipamento.id))
+    equipamentos_sql = select(func.count(Equipamento.id)).where(
+        Equipamento.status_delete == True
+    )
     qtd_total = db_session.execute(equipamentos_sql).scalar()
     return qtd_total
-
-print(select_quantidade_total())

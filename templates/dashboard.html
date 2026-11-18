@@ -68,6 +68,8 @@
                 <div class="cartao-valor">{{ status[1] }}</div>
                 <div class="cartao-label">{{ status[0] }}</div>
             </div>
+            {% else %}
+            <p class="cartao-dashboard">Nenhuma ordem de serviço cadastrada</p>
             {% endfor %}
         </div>
 

@@ -19,7 +19,12 @@ def select_todos():
 
 
 def select_quantidade_total():
-    funcionarios_sql = select(func.count(Funcionario.id))
+    funcionarios_sql = (
+        select(func.count(Funcionario.id))
+        .join(Setor, Setor.id == Funcionario.setor_id)
+        .where(Funcionario.status_delete == True)
+        .where(Setor.status_delete == True)
+    )
     qtd_total = db_session.execute(funcionarios_sql).scalar()
     return qtd_total
 

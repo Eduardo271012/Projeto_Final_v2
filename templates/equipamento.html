@@ -2,7 +2,7 @@
 {% block conteudo %}
     <div class="cabecalho-pagina">
         <div class="barra-titulo-linha">
-            <p class="subtitulo">EQUIPAMENTOS</p>
+            <p class="subtitulo">{% if excluidos %}EXCLUÍDOS{% else %}EQUIPAMENTOS{% endif %}</p>
         </div>
         {% if not editar %}
         <div class="container-botao-direita">
@@ -49,7 +49,7 @@
     <!-- CORREÇÃO: A tabela agora só será exibida se o endpoint for diferente do cadastro de equipamentos -->
     {% if request.endpoint != 'cadastro_equipamento' and not editar %}
     <section class="container-perfil">
-        <h2>LISTA DE EQUIPAMENTOS</h2>
+        <h2>{% if excluidos %}LISTA DE EQUIPAMENTOS EXCLUÍDOS{% else %}LISTA DE EQUIPAMENTOS{% endif %}</h2>
         {% if equipamentos %}
         <table>
             <thead>
@@ -76,7 +76,7 @@
             </tbody>
         </table>
         {% else %}
-            <p class="vazio">Nenhum equipamento cadastrado ainda</p>
+            <p class="vazio">{% if excluidos %}Nenhum equipamento excluído ainda{% else %}Nenhum equipamento cadastrado ainda{% endif %}</p>
         {% endif %}
     </section>
     {% endif %}

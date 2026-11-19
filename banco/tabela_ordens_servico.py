@@ -18,12 +18,24 @@ def salvar(os_id, responsavel_id, descricao, status_os, prioridade, custo_total,
             flash("Preencha a descrição da ordem de serviço", "error")
             return False
 
+        try:
+            custo_total = int(custo_total) if custo_total not in (None, "") else 0
+        except ValueError:
+            flash("O custo estimado deve ser um número inteiro não negativo", "error")
+            return False
+        if custo_total < 0:
+            flash("O custo estimado não pode ser negativo", "error")
+            return False
+
         data_solicitacao = (
             datetime.strptime(data_solicitacao, "%Y-%m-%d").date() if data_solicitacao else None
         )
         data_execucao = (
             datetime.strptime(data_execucao, "%Y-%m-%d").date() if data_execucao else None
         )
+        if data_solicitacao and data_execucao and data_execucao < data_solicitacao:
+            flash("A data de execução não pode ser anterior à data da solicitação", "error")
+            return False
 
         ordem = OrdemServico(
             id=os_id or None,
@@ -31,7 +43,7 @@ def salvar(os_id, responsavel_id, descricao, status_os, prioridade, custo_total,
             descricao=descricao.strip(),
             status_os=status_os or "Aberta",
             prioridade=prioridade or "Média",
-            custo_total=int(custo_total) if custo_total not in (None, "") else 0,
+            custo_total=custo_total,
             data_solicitacao=data_solicitacao,
             data_execucao=data_execucao,
         )

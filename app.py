@@ -286,6 +286,10 @@ def editar_ordem_servico(ordem_id):
             flash("Funcionário ou custo inválido", "error")
             return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
+        if custo_total < 0:
+            flash("O custo estimado não pode ser negativo", "error")
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
         if data_execucao:
             try:
                 data_execucao = datetime.strptime(data_execucao, "%Y-%m-%d").date()
@@ -294,6 +298,14 @@ def editar_ordem_servico(ordem_id):
                 return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
         else:
             data_execucao = None
+
+        if (
+            ordem_servico.data_solicitacao
+            and data_execucao
+            and data_execucao < ordem_servico.data_solicitacao
+        ):
+            flash("A data de execução não pode ser anterior à data da solicitação", "error")
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
         ordem_servico.responsavel_id = responsavel_id
         ordem_servico.descricao = descricao

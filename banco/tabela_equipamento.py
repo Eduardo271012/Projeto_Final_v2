@@ -1,3 +1,5 @@
+import math
+
 from flask import flash
 from database import Equipamento, db_session
 from sqlalchemy.exc import SQLAlchemyError
@@ -29,13 +31,13 @@ def validar_equipamento(nome, quantidade, modelo, custo_equipamento):
     if not nome:
         flash("Preencha o nome", "error")
         return True
-    if not quantidade:
+    if quantidade == "":
         flash("Preencha a quantidade", "error")
         return True
     if not modelo:
         flash("Preencha o modelo", "error")
         return True
-    if not custo_equipamento:
+    if custo_equipamento == "":
         flash("Preencha o custo do equipamento", "error")
         return True
 
@@ -48,10 +50,16 @@ def validar_equipamento(nome, quantidade, modelo, custo_equipamento):
 
     try:
         quantidade = int(quantidade)
-        # CORREÇÃO: Custo pode ser um número quebrado (float) ou inteiro
         custo_equipamento = float(custo_equipamento)
     except ValueError:
         flash("Digite valores numéricos válidos para quantidade e custo", "error")
+        return True
+
+    if quantidade < 0:
+        flash("A quantidade em estoque não pode ser negativa", "error")
+        return True
+    if not math.isfinite(custo_equipamento) or custo_equipamento < 0:
+        flash("O custo do equipamento deve ser um valor válido e não negativo", "error")
         return True
 
     return False  # Retorna False se não houver erros

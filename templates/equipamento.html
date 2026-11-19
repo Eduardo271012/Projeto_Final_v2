@@ -24,7 +24,7 @@
                 <div class="linha-campos">
                     <div class="campo-formulario">
                         <label for="quantidade_estoque">Quantidade no estoque</label>
-                        <input type="number" id="quantidade_estoque" name="quantidade_estoque" placeholder="Ex: 5" class="campo-input" value="{{ editar.quantidade if editar else '' }}">
+                        <input type="number" id="quantidade_estoque" name="quantidade_estoque" min="0" step="1" required placeholder="Ex: 5" class="campo-input" value="{{ editar.quantidade if editar else '' }}">
                     </div>
                      <div class="campo-formulario">
                         <label for="modelo">Modelo</label>
@@ -33,7 +33,7 @@
                     <!-- AJUSTE: step="0.01" adicionado para permitir o envio de números decimais (Float) sem travar o HTML -->
                     <div class="campo-formulario">
                         <label for="custo_equipamento">Custo unitário (R$)</label>
-                        <input type="number" id="custo_equipamento" name="custo_equipamento" step="0.01" placeholder="Ex: 1500.50" class="campo-input" value="{{ editar.custo_equipamento if editar else '' }}">
+                        <input type="number" id="custo_equipamento" name="custo_equipamento" min="0" step="0.01" required placeholder="Ex: 1500.50" class="campo-input" value="{{ editar.custo_equipamento if editar else '' }}">
                     </div>
                 </div>
                 <div class="botoes-formulario">

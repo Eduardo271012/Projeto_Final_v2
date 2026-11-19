@@ -77,7 +77,7 @@
                 </div>
                 <div class="campo-formulario">
                     <label for="custo_total">Custo Estimado (R$)</label>
-                    <input type="number" id="custo_total" name="custo_total" placeholder="Ex: 500" class="campo-input" value="{{ editar.custo_total if editar else '' }}">
+                    <input type="number" id="custo_total" name="custo_total" min="0" step="1" placeholder="Ex: 500" class="campo-input" value="{{ editar.custo_total if editar else '' }}">
                 </div>
             {% if not editar %}
                 <div class="campo-formulario">
@@ -87,7 +87,7 @@
             {% endif %}
                 <div class="campo-formulario">
                     <label for="data_execucao">Data da execução/entrega</label>
-                    <input type="date" id="data_execucao" name="data_execucao" class="campo-input" value="{{ editar.data_execucao.strftime('%Y-%m-%d') if editar and editar.data_execucao else '' }}">
+                    <input type="date" id="data_execucao" name="data_execucao" class="campo-input" min="{{ editar.data_solicitacao.strftime('%Y-%m-%d') if editar and editar.data_solicitacao else '' }}" value="{{ editar.data_execucao.strftime('%Y-%m-%d') if editar and editar.data_execucao else '' }}">
                 </div>
 
                 <div class="botoes-formulario">
@@ -97,6 +97,22 @@
             </form>
         </section>
     </div>
+    {% endif %}
+
+    {% if request.endpoint == 'cadastro_ordem_view' %}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const solicitacao = document.getElementById("data_solicitacao");
+            const execucao = document.getElementById("data_execucao");
+            if (solicitacao && execucao) {
+                const atualizarDataMinima = () => {
+                    execucao.min = solicitacao.value;
+                };
+                solicitacao.addEventListener("input", atualizarDataMinima);
+                atualizarDataMinima();
+            }
+        });
+    </script>
     {% endif %}
 
     <!-- Esconde a listagem enquanto o cadastro ou a edição estiver aberto -->

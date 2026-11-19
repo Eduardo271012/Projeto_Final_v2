@@ -368,7 +368,7 @@ def consultar_setores(ativos, termo):
 
 
 @app.route('/setor/cadastro', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin")
 def cadastro_setor():
     if request.method == "POST":
         nome = request.form.get("nome", "").strip()
@@ -385,7 +385,7 @@ def cadastro_setor():
 
 
 @app.route('/setor/editar/<int:setor_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin")
 def editar_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
     if not setor:
@@ -409,7 +409,7 @@ def editar_setor(setor_id):
 
 
 @app.route('/setor/excluir/<setor_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin")
 def excluir_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
     if setor:
@@ -419,7 +419,7 @@ def excluir_setor(setor_id):
 
 
 @app.route('/setor/restaurar/<setor_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin")
 def restaurar_setor(setor_id):
     setor = tabela_setor.select_id(setor_id)
     if setor:

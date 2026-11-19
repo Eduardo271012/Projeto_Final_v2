@@ -82,10 +82,15 @@ class Usuario(Base, UserMixin):
     setor_id = Column(Integer, ForeignKey('setores.id', ondelete='SET NULL', onupdate='CASCADE'))
     funcao = Column(String(100))
     papel = Column(String(20), default="usuario", nullable=False)
+    ativo = Column(Boolean, default=True, nullable=False)
     criado_em = Column(DateTime, nullable=False, server_default=func.now())
     atualizado_em = Column(DateTime, nullable=False, server_default=func.now())
     setor = relationship('Setor', back_populates='usuarios')
     ordens_servico_atribuidas = relationship('OrdemServico', back_populates='responsavel')
+
+    @property
+    def is_active(self):
+        return bool(self.ativo)
 
     def set_password(self, password):
         self.senha_hash = generate_password_hash(password)

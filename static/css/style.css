@@ -582,7 +582,7 @@ body.tela-listas .container-perfil {
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
     border-radius: 12px !important;
     padding: 20px 24px !important; /* Padding interno menor */
-    max-width: 1120px !important; /* Largura reduzida para mostrar mais o fundo */
+    max-width: 1450px !important; /* Largura reduzida para mostrar mais o fundo */
     width: 90% !important;
     box-sizing: border-box !important;
     margin: 0 auto 32px auto !important;
@@ -636,6 +636,11 @@ td {
     text-overflow: ellipsis;
 }
 
+.form-acao-inline {
+    display: inline-block;
+    margin: 0;
+}
+
 /* Impede que a última coluna (AÇÕES) corte os botões */
 th:last-child,
 td:last-child {
@@ -682,6 +687,54 @@ td.acoes {
     text-align: right;
     white-space: nowrap;
 }
+
+/* ================= AJUSTES EXCLUSIVOS PARA DETALHES DA OS ================= */
+body.tela-listas .container-perfil.detalhes-os {
+    max-width: 900px !important; /* Deixa o painel mais elegante e proporcional para 2 colunas */
+}
+
+.detalhes-os th,
+.detalhes-os td {
+    padding: 12px 16px; /* Respiro mais confortável nas linhas */
+    border-bottom: 1px solid rgba(203, 213, 225, 0.55); /* Linha divisória bem mais suave */
+}
+
+/* Cabeçalho superior (Informação | Detalhe) */
+.detalhes-os thead th {
+    background-color: rgba(248, 250, 252, 0.75);
+    color: #64748b;
+    font-size: 0.75rem;
+    text-align: left;
+}
+
+/* Primeira coluna (Rótulos das informações) */
+.detalhes-os tbody th {
+    width: 240px; /* Largura fixa ideal para os rótulos não esticarem demais */
+    background-color: rgba(248, 250, 252, 0.35); /* Fundo bem sutil */
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.78rem;
+}
+
+/* Segunda coluna (Valores detalhados) */
+.detalhes-os th:last-child,
+.detalhes-os td:last-child {
+    width: auto !important;
+    max-width: none !important;
+    text-align: left !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    overflow-wrap: anywhere;
+    font-size: 0.88rem;
+    color: #0f172a;
+}
+
+/* Remove a borda da última linha também nos <th> */
+.detalhes-os tbody tr:last-child th,
+.detalhes-os tbody tr:last-child td {
+    border-bottom: none;
+}
+
 
 /* ================= CARTÕES DASHBOARD ================= */
 .dashboard-wrapper {

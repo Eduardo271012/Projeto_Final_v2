@@ -2,11 +2,16 @@
 {% block conteudo %}
     <div class="cabecalho-pagina">
         <div class="barra-titulo-linha">
-            <p class="subtitulo">ORDEM DE SERVIÇO</p>
+            <p class="subtitulo">{% if excluidos %}EXCLUÍDOS{% else %}ORDENS DE SERVIÇO{% endif %}</p>
         </div>
         {% if not editar %}
         <div class="container-botao-direita">
-            <a href="{{ url_for('cadastro_ordem_view') }}" class="design-btn-direita">CADASTRAR</a>
+            <a href="{{ url_for('listar_ordens_servico_excluidos') if not excluidos else url_for('ordens_servico_lista_view') }}" class="design-btn-direita">
+                {{ 'ORDENS DE SERVIÇO ATIVAS' if excluidos else 'ORDENS DE SERVIÇO EXCLUÍDAS' }}
+            </a>
+            {% if not excluidos %}
+                <a href="{{ url_for('cadastro_ordem_view') }}" class="design-btn-direita">CADASTRAR</a>
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -26,9 +31,9 @@
                             {% for usuario in usuarios %}
                                 {% if editar %}
                                     {% if usuario.id == editar.responsavel_id %}
-                                        <option value="{{ usuario.id }}" selected>{{ usuario.nome }}</option>
+                                        <option value="{{ usuario.id }}" selected>{{ usuario.nome }}{% if not usuario.ativo %} (INATIVO){% endif %}</option>
                                     {% else %}
-                                        <option value="{{ usuario.id }}">{{ usuario.nome }}</option>
+                                        <option value="{{ usuario.id }}">{{ usuario.nome }}{% if not usuario.ativo %} (INATIVO){% endif %}</option>
                                     {% endif %}
                                 {% else %}
                                     <option value="{{ usuario.id }}">{{ usuario.nome }}</option>
@@ -42,7 +47,7 @@
                     </select>
                 </div>
                 <div class="campo-formulario">
-                    <label for="descricao">Descrição do Problema / Service</label>
+                    <label for="descricao">Descrição do Problema / Serviço</label>
                     <textarea id="descricao" name="descricao" required placeholder="Ex: Substituir o óleo hidráulico e limpar os filtros." class="campo-input">{{ editar.descricao if editar else '' }}</textarea>
                 </div>
                 <div class="campo-formulario">
@@ -118,7 +123,7 @@
     <!-- Esconde a listagem enquanto o cadastro ou a edição estiver aberto -->
     {% if request.endpoint != 'cadastro_ordem_view' and not editar %}
     <section class="container-perfil">
-        <h2>LISTA DE ORDENS DE SERVIÇO</h2>
+        <h2>{% if excluidos %}LISTA DE ORDEM DE SERVIÇO EXCLUÍDAS{% else %}LISTA DE ORDEM DE SERVIÇO{% endif %}</h2>
         <form class="busca-lista" action="{{ url_for('ordens_servico_lista_view') }}" method="get" role="search">
             <label for="busca-ordens">Buscar ordens de serviço</label>
             <input id="busca-ordens" type="search" name="q" value="{{ termo or '' }}" placeholder="Descrição, funcionário, status, prioridade ou ID" maxlength="100">
@@ -143,15 +148,33 @@
             <tbody>
             {% for os in ordens %}
                 <tr>
-                    <td>{{ os.id }}</td>
-                    <td>{{ os.responsavel.nome if os.responsavel else 'Não atribuído' }}</td>
+                    <td><a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}">{{ os.id }}</a></td>
+                    <td>
+                        {% if os.responsavel %}
+                            {{ os.responsavel.nome }}{% if not os.responsavel.ativo %} <strong>(INATIVO)</strong>{% endif %}
+                        {% else %}
+                            Não atribuído
+                        {% endif %}
+                    </td>
                     <td>{{ os.descricao }}</td>
                     <td>{{ os.status_os }}</td>
                     <td>{{ os.prioridade }}</td>
                     <td>R$ {{ os.custo_total if os.custo_total else 0 }}</td>
                     <td>{{ os.data_solicitacao.strftime('%d/%m/%Y') if os.data_solicitacao else '-' }}</td>
                     <td>{{ os.data_execucao.strftime('%d/%m/%Y') if os.data_execucao else '-' }}</td>
-                    <td class="acoes">{% if excluidos %}<a href="{# url_for('', ) #}" class="design-btn-direita">Restaurar</a>{% else %}<a href="{# url_for('', ) #}" class="design-btn-direita excluir-btn">Excluir</a><a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Editar</a>{% endif %}</td>
+                    <td class="acoes">
+                        {% if excluidos %}
+                            <form method="POST" action="{{ url_for('restaurar_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline">
+                                <button type="submit" class="design-btn-direita">Restaurar</button>
+                            </form>
+                        {% else %}
+                            <a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Detalhes</a>
+                            <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Editar</a>
+                            <form method="POST" action="{{ url_for('excluir_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline" onsubmit="return confirm('Deseja excluir esta ordem de serviço?');">
+                                <button type="submit" class="design-btn-direita excluir-btn">Excluir</button>
+                            </form>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

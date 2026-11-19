@@ -19,7 +19,10 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db_session.get(Usuario, int(user_id))
+    usuario = db_session.get(Usuario, int(user_id))
+    if usuario and not usuario.ativo:
+        return None
+    return usuario
 
 
 def roles_required(*papeis_permitidos):
@@ -48,6 +51,9 @@ def login():
 
         if not usuario_resultado:
             flash("Falha na autenticação: E-mail não encontrado", "error")
+            return redirect(url_for("login"))
+        if not usuario_resultado.ativo:
+            flash("Este usuário está inativo e não pode acessar o sistema", "error")
             return redirect(url_for("login"))
         if usuario_resultado and usuario_resultado.check_password(senha):
             login_user(usuario_resultado)
@@ -221,8 +227,18 @@ def restaurar_equipamento(equipamento_id):
 @app.route('/ordens_servico', methods=['GET'])
 @login_required
 def ordens_servico_lista_view():
+    return listar_ordens_servico(excluidos=False)
+
+
+@app.route('/ordens_servico/excluidos', methods=['GET'])
+@login_required
+def listar_ordens_servico_excluidos():
+    return listar_ordens_servico(excluidos=True)
+
+
+def listar_ordens_servico(excluidos):
     termo = request.args.get("q", "").strip()[:100]
-    consulta = select(OrdemServico)
+    consulta = select(OrdemServico).where(OrdemServico.status_delete.is_(not excluidos))
     if termo:
         filtros = [
             OrdemServico.descricao.icontains(termo, autoescape=True),
@@ -236,7 +252,12 @@ def ordens_servico_lista_view():
             Usuario, OrdemServico.responsavel_id == Usuario.id
         ).where(or_(*filtros))
     lista_ordens = db_session.execute(consulta.order_by(OrdemServico.id.asc())).scalars().all()
-    return render_template('ordens_servico.html', ordens=lista_ordens, termo=termo)
+    return render_template(
+        'ordens_servico.html',
+        ordens=lista_ordens,
+        termo=termo,
+        excluidos=excluidos,
+    )
 
 
 @app.route('/servico/ordens/cadastro', methods=['GET', 'POST'])
@@ -266,6 +287,56 @@ def cadastro_ordem_view():
     usuarios_comuns = tabela_usuario.select_comuns()
     lista_ordens = tabela_ordens_servico.select_todas()
     return render_template('ordens_servico.html', usuarios=usuarios_comuns, ordens=lista_ordens)
+
+
+@app.route('/servico/ordens/<int:ordem_id>')
+@login_required
+def detalhes_ordem_servico(ordem_id):
+    ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
+    if not ordem_servico or not ordem_servico.status_delete:
+        flash("Ordem de serviço não encontrada", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    return render_template("ordem_servico_detalhes.html", ordem=ordem_servico)
+
+
+@app.route('/servico/ordens/excluir/<int:ordem_id>', methods=['POST'])
+@login_required
+def excluir_ordem_servico(ordem_id):
+    ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
+    if not ordem_servico or not ordem_servico.status_delete:
+        flash("Ordem de serviço não encontrada", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    ordem_servico.status_delete = False
+    try:
+        db_session.commit()
+        flash("Ordem de serviço excluída com sucesso", "success")
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao excluir ordem de serviço %s", ordem_id)
+        flash("Erro ao excluir a ordem de serviço", "error")
+    return redirect(url_for("ordens_servico_lista_view"))
+
+
+@app.route('/servico/ordens/restaurar/<int:ordem_id>', methods=['POST'])
+@login_required
+def restaurar_ordem_servico(ordem_id):
+    ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
+    if not ordem_servico or ordem_servico.status_delete:
+        flash("Ordem de serviço excluída não encontrada", "error")
+        return redirect(url_for("listar_ordens_servico_excluidos"))
+
+    ordem_servico.status_delete = True
+    try:
+        db_session.commit()
+        flash("Ordem de serviço restaurada com sucesso", "success")
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao restaurar ordem de serviço %s", ordem_id)
+        flash("Erro ao restaurar a ordem de serviço", "error")
+    return redirect(url_for("listar_ordens_servico_excluidos"))
+
 
 @app.route('/servico/ordens/editar/<int:ordem_id>', methods=['GET', 'POST'])
 @login_required
@@ -331,7 +402,9 @@ def editar_ordem_servico(ordem_id):
             flash("Erro ao editar a ordem de serviço", "error")
             return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
-    usuarios_comuns = tabela_usuario.select_comuns()
+    usuarios_comuns = tabela_usuario.select_comuns_para_atribuicao(
+        ordem_servico.responsavel_id
+    )
     return render_template(
         'ordens_servico.html',
         editar=ordem_servico,
@@ -493,6 +566,44 @@ def editar_funcionario(usuario_id):
         return redirect(url_for("funcionarios"))
 
     return render_template("funcionario.html", editar=usuario, setores=setores)
+
+
+@app.route('/funcionarios/<int:usuario_id>/inativar', methods=['POST'])
+@roles_required("admin")
+def inativar_funcionario(usuario_id):
+    usuario = db_session.get(Usuario, usuario_id)
+    if not usuario or usuario.papel != "usuario":
+        flash("Funcionário não encontrado", "error")
+        return redirect(url_for("funcionarios"))
+
+    usuario.ativo = False
+    try:
+        db_session.commit()
+        flash("Funcionário inativado com sucesso. As OS atuais foram mantidas.", "success")
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao inativar funcionário %s", usuario_id)
+        flash("Erro ao inativar o funcionário", "error")
+    return redirect(url_for("funcionarios"))
+
+
+@app.route('/funcionarios/<int:usuario_id>/ativar', methods=['POST'])
+@roles_required("admin")
+def ativar_funcionario(usuario_id):
+    usuario = db_session.get(Usuario, usuario_id)
+    if not usuario or usuario.papel != "usuario":
+        flash("Funcionário não encontrado", "error")
+        return redirect(url_for("funcionarios"))
+
+    usuario.ativo = True
+    try:
+        db_session.commit()
+        flash("Funcionário ativado com sucesso", "success")
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao ativar funcionário %s", usuario_id)
+        flash("Erro ao ativar o funcionário", "error")
+    return redirect(url_for("funcionarios"))
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required

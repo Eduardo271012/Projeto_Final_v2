@@ -572,31 +572,32 @@ main {
     background-color: #e2e8f0;
     color: #0f172a;
 }
-
 /* ================= PAINÉIS E TABELAS ================= */
-/* ================= PAINÉIS E TABELAS ================= */
-.painel {
-    background-color: var(--cor-painel, #ffffff);
-    border: 1px solid var(--cor-borda, #e2e8f0);
-    border-radius: 12px;
-    padding: 28px 32px;
-    max-width: 1220px; /* Largura ampla para caber até 7 colunas sem apertar */
-    width: 94%;
-    margin: 0 auto 40px auto;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+.painel,
+body.tela-listas .container-perfil {
+    background-color: rgba(255, 255, 255, 0.50) !important; /* Transparência suave */
+    backdrop-filter: blur(8px); /* Efeito vidro fosco para não perder leitura */
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 12px !important;
+    padding: 20px 24px !important; /* Padding interno menor */
+    max-width: 1120px !important; /* Largura reduzida para mostrar mais o fundo */
+    width: 90% !important;
+    box-sizing: border-box !important;
+    margin: 0 auto 32px auto !important;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12) !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     overflow-x: auto;
 }
 
-.painel h1,
-.painel h2,
-.painel h3 {
+.painel h1, .painel h2, .painel h3,
+body.tela-listas .container-perfil h2 {
     margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
     border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 14px;
+    padding-bottom: 10px;
     color: #0f172a;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: -0.02em;
 }
@@ -604,32 +605,31 @@ main {
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #ffffff;
-    table-layout: auto; /* Deixa cada coluna respirar conforme o seu conteúdo */
+    background-color: transparent;
+    table-layout: auto;
 }
 
 th, td {
     text-align: left;
-    padding: 12px 14px; /* Espaçamento confortável entre colunas */
+    padding: 9px 10px; /* Linhas mais compactas na altura */
     border-bottom: 1px solid var(--cor-borda, #e2e8f0);
-    font-size: 0.9rem;
+    font-size: 0.83rem;
     color: #0f172a;
     vertical-align: middle;
 }
 
 th {
-    background-color: #f8fafc;
+    background-color: rgba(248, 250, 252, 0.75); /* Cabeçalho da tabela também translúcido */
     color: var(--cor-texto-claro, #64748b);
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    white-space: nowrap; /* Impede que títulos como QUANTIDADE e CUSTO UNITÁRIO grudem */
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
 }
 
-/* Limita a largura máxima de textos longos (como Descrição) sem quebrar outras tabelas */
 td {
-    max-width: 280px;
+    max-width: 190px; /* Enxuga textos longos para caber tudo sem rolar */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -640,7 +640,7 @@ th:last-child,
 td:last-child {
     max-width: none;
     overflow: visible;
-    width: 1%; /* Truque CSS: faz a coluna de ações ocupar apenas o espaço exato dos botões */
+    width: 1%;
     white-space: nowrap;
     text-align: right;
 }
@@ -654,25 +654,27 @@ tbody tr {
 }
 
 tbody tr:hover {
-    background-color: #f8fafc;
+    background-color: rgba(255, 255, 255, 0.65);
 }
 
 .centro {
     text-align: center;
 }
 
-.acoes {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 8px;
+/* CORREÇÃO: Mantém o comportamento de célula de tabela sem quebrar as colunas */
+td.acoes {
+    display: table-cell !important;
+    text-align: right;
+    white-space: nowrap;
 }
 
 .acoes .design-btn-direita,
 .acoes button,
 .acoes a {
-    padding: 7px 14px;
-    font-size: 0.85rem;
+    display: inline-block;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    margin-left: 5px;
 }
 
 .acoes-col {
@@ -680,42 +682,138 @@ tbody tr:hover {
     white-space: nowrap;
 }
 
-
-
 /* ================= CARTÕES DASHBOARD ================= */
-.cartoes {
-    display: flex;
-    gap: 35px;
+.dashboard-wrapper {
+    max-width: 1280px;
     margin: 0 auto;
-    min-height: 75vh;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+    padding: 20px 24px;
 }
 
-.cartao {
-    width: 190px;
-    height: 190px; /* Largura e altura iguais = quadrado */
-    background-color: var(--cor-painel, #ffffff);
-    border: 1px solid var(--cor-borda, #e2e8f0);
-    border-radius: 18px; /* Bordas arredondadas */
-    padding: 24px;
-    box-sizing: border-box;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+.secao-dashboard-titulo {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #1e293b;
+    background-color: rgba(255, 255, 255, 0.85);
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin: 10px 0 12px 0;
+}
 
-    /* Alinha número e texto perfeitamente */
+.cartoes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 42px;
+}
+
+.cartao-dashboard {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--cor-painel);
+    border: 1px solid var(--cor-borda);
+    border-top: 4px solid var(--cor-primaria);
+    border-radius: 8px;
+    padding: 24px 16px;
+    text-align: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: flex-start;
-    text-align: left;
-    transition: transform 0.2s ease;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.cartao:hover {
-    transform: translateY(-5px);
+.cartao-dashboard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
 }
+
+.cartao-status {
+    border-top: 4px solid var(--cor-primaria);
+}
+
+.cartao-valor {
+    font-size: 2.1rem;
+    font-weight: bold;
+    color: var(--cor-primaria);
+    line-height: 1.2;
+}
+
+.cartao-label {
+    color: var(--cor-texto-claro);
+    font-size: 0.85rem;
+    margin-top: 6px;
+    line-height: 1.3;
+}
+
+/* ================= DROPDOWN NOS CARTÕES ================= */
+.cartao-menu-wrapper {
+    position: relative;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.cartao-menu-wrapper:hover {
+    z-index: 50;
+}
+
+.cartao-dropdown-card {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    width: 100%;
+    min-width: 240px;
+    background-color: #ffffff;
+    padding: 16px 18px;
+    border: 1px solid #cbd5e1;
+    border-top: 3px solid var(--cor-primaria);
+    border-radius: 8px;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.22), 0 4px 10px rgba(15, 23, 42, 0.1);
+    z-index: 9999;
+    text-align: left;
+    cursor: default;
+    box-sizing: border-box;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-8px);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+}
+
+.cartao-dropdown-card::before {
+    content: "";
+    position: absolute;
+    top: -14px;
+    left: 0;
+    width: 100%;
+    height: 14px;
+    background: transparent;
+}
+
+.cartao-menu-wrapper:hover .cartao-dropdown-card {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Responsividade */
+@media (max-width: 900px) {
+    .cartoes {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 500px) {
+    .cartoes {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 /* FORMULÁRIO DE CRIAÇÃO E LOGIN DE ACESSO */
 

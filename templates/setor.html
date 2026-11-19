@@ -2,7 +2,7 @@
 {% block conteudo %}
     <div class="cabecalho-pagina">
         <div class="barra-titulo-linha">
-            <p class="subtitulo">SETORES</p>
+            <p class="subtitulo">{% if excluidos %}EXCLUÍDOS{% else %}SETORES{% endif %}</p>
         </div>
 
         {% if not editar %}
@@ -40,7 +40,7 @@
     <!-- CORREÇÃO: A tabela de listagem só aparece se o usuário não estiver na tela de cadastro -->
     {% if request.endpoint != 'cadastro_setor' and not editar %}
     <section class="container-perfil">
-        <h2>LISTA DE SETORES</h2>
+        <h2>{% if excluidos %}LISTA DE SETORES EXCLUÍDOS{% else %}LISTA DE SETORES{% endif %}</h2>
         {% if setores %}
         <table>
             <thead>
@@ -65,7 +65,7 @@
             </tbody>
         </table>
         {% else %}
-            <p class="vazio">Nenhum setor listado.</p>
+            <p class="vazio">{% if excluidos %}Nenhum setor excluído ainda{% else %}Nenhum setor listado.{% endif %}</p>
         {% endif %}
     </section>
     {% endif %}

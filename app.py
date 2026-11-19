@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from banco import tabela_equipamento, tabela_funcionario, tabela_ordens_servico, tabela_setor
 from database import Funcionario, Setor, db_session, Usuario
 from functools import wraps
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -224,6 +225,65 @@ def cadastro_ordem_view():
     lista_ordens = tabela_ordens_servico.select_todas()
     return render_template('ordens_servico.html', funcionarios=funcionarios_locais, ordens=lista_ordens)
 
+@app.route('/servico/ordens/editar/<int:ordem_id>', methods=['GET', 'POST'])
+@login_required
+def editar_ordem_servico(ordem_id):
+    ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
+    if not ordem_servico:
+        flash("Ordem de serviço não encontrada", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    if request.method == "POST":
+        responsavel_id = request.form.get("responsavel_id")
+        descricao = request.form.get("descricao", "").strip()
+        status_os = request.form.get("status_os")
+        prioridade = request.form.get("prioridade")
+        custo_total = request.form.get("custo_total")
+        data_execucao = request.form.get("data_execucao")
+
+        if not descricao:
+            flash("Preencha a descrição da ordem de serviço", "error")
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
+        try:
+            responsavel_id = int(responsavel_id) if responsavel_id else None
+            custo_total = int(custo_total) if custo_total else 0
+        except ValueError:
+            flash("Funcionário ou custo inválido", "error")
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
+        if data_execucao:
+            try:
+                data_execucao = datetime.strptime(data_execucao, "%Y-%m-%d").date()
+            except ValueError:
+                flash("Informe uma data de execução válida", "error")
+                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+        else:
+            data_execucao = None
+
+        ordem_servico.responsavel_id = responsavel_id
+        ordem_servico.descricao = descricao
+        ordem_servico.status_os = status_os
+        ordem_servico.prioridade = prioridade
+        ordem_servico.custo_total = custo_total
+        ordem_servico.data_execucao = data_execucao
+
+        try:
+            db_session.commit()
+            flash("Ordem de Serviço editada com sucesso", "success")
+            return redirect(url_for("ordens_servico_lista_view"))
+        except SQLAlchemyError:
+            db_session.rollback()
+            flash("Erro ao editar a ordem de serviço", "error")
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
+    funcionarios_tupla = tabela_funcionario.select_funcionarios()
+    funcionarios_locais = [f[0] if isinstance(f, tuple) else f for f in funcionarios_tupla]
+    return render_template(
+        'ordens_servico.html',
+        editar=ordem_servico,
+        funcionarios=funcionarios_locais,
+    )
 
 @app.route('/setor', methods=['GET'])
 @login_required
@@ -307,7 +367,6 @@ def funcionarios():
     lista_funcionarios = tabela_funcionario.select_todos()
     return render_template('funcionario.html', funcionarios=lista_funcionarios)
 
-
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
 @login_required
 def cadastro_funcionario():
@@ -337,6 +396,7 @@ def cadastro_funcionario():
     return render_template('funcionario.html', setores=lista_setores)
 
 
+
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
@@ -344,6 +404,7 @@ def dashboard():
     equipamentos = tabela_equipamento.select_quantidade_total()
     setores = tabela_setor.select_quantidade_total()
     funcionarios = tabela_funcionario.select_quantidade_total()
+    ordens_status = tabela_ordens_servico.select_ordem_status()
 
     return render_template(
         "dashboard.html",
@@ -351,6 +412,7 @@ def dashboard():
         total_equipamentos=equipamentos,
         total_setores=setores,
         total_funcionarios=funcionarios,
+        ordens_status=ordens_status,
     )
 
 

@@ -74,6 +74,6 @@ def salvar(nome, descricao):
         return False
 
 def select_quantidade_total():
-    setores_sql = select(func.count(Setor.id))
+    setores_sql = select(func.count(Setor.id)).where(Setor.status_delete == True)
     qtd_total = db_session.execute(setores_sql).scalar()
     return qtd_total

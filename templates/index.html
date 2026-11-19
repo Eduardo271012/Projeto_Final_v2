@@ -3,25 +3,52 @@
 <!-- Guia de uso no painel flutuante do cabeçalho -->
 {% block painel_dropdown %}
 
-<div class="dropdown-conteudo">
+<div class="dropdown-conteudo {% if current_user.is_authenticated %}dropdown-funcionario{% else %}dropdown-visitante{% endif %}">
+    {% if current_user.is_authenticated and current_user.papel == 'usuario' %}
     <section class="dropdown-coluna-texto">
-        <span class="guia-etapa">01 · CADASTROS</span>
-        <h2>Prepare sua operação</h2>
-        <p>Crie sua conta pelo login para acessar o sistema. O administrador é criado pelo script próprio.</p>
-        <p>Em “Equipamentos”, registre nome, modelo, quantidade em estoque e custo unitário.</p>
+        <span class="guia-etapa">OLÁ, {{ current_user.nome | upper }}!</span>
+        <h2>Comece pelo seu perfil</h2>
+        <p>Seu CPF já está associado à sua conta. O administrador define seu setor e sua função ou cargo.</p>
+        <p>Confira seus dados no perfil. Se algo estiver incorreto ou faltando, peça a atualização ao administrador.</p>
+    </section>
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">01 · SETORES</span>
+        <h2>Encontre seu setor</h2>
+        <p>Acesse “Setores” para ver as áreas da empresa e ler suas descrições. Isso pode ajudar você a identificar a área relacionada ao seu atendimento.</p>
+        <p>Você pode consultar a lista; somente o administrador pode cadastrar, alterar ou excluir setores.</p>
     </section>
     <section class="dropdown-coluna-texto">
         <span class="guia-etapa">02 · ORDENS DE SERVIÇO</span>
-        <h2>Registre o atendimento</h2>
-        <p>Na área “Ordem de Serviço”, escolha o funcionário responsável e descreva o problema ou serviço solicitado.</p>
-        <p>Defina prioridade e status. Se desejar, informe o custo estimado e as datas de solicitação e execução. Consulte as ordens na lista.</p>
+        <h2>Registre um atendimento</h2>
+        <p>Em “Ordem de Serviço”, descreva o problema ou serviço com detalhes que ajudem no atendimento. Depois, selecione o funcionário responsável e informe prioridade e status.</p>
+        <p>Se tiver essas informações, inclua custo estimado e datas. Após salvar, encontre a ordem na lista para consultar seus dados ou editá-la.</p>
     </section>
     <section class="dropdown-coluna-texto">
         <span class="guia-etapa">03 · ACOMPANHAMENTO</span>
-        <h2>Veja o andamento</h2>
-        <p>No “Dashboard”, acompanhe os totais de ordens, equipamentos, setores e funcionários, além da quantidade de ordens por status.</p>
-        <p>Em “Equipamentos” e “Setores”, você pode editar registros, consultar itens excluídos e restaurá-los.</p>
+        <h2>Acompanhe suas solicitações</h2>
+        <p>Consulte “Ordem de Serviço” para rever responsável, prioridade, status e datas. O “Dashboard” mostra um resumo das ordens por status.</p>
+        <p>Em “Equipamentos”, consulte os itens cadastrados. As opções de administração são exclusivas do administrador.</p>
     </section>
+    {% else %}
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">ANTES DE ENTRAR</span>
+        <h2>O que você encontra aqui</h2>
+        <p>Este sistema ajuda você a consultar informações sobre equipamentos e setores e a acompanhar ordens de serviço.</p>
+        <p>Entre com sua conta para acessar as ferramentas disponíveis para o seu perfil.</p>
+    </section>
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">AINDA NÃO TEM CONTA?</span>
+        <h2>Prepare seu primeiro acesso</h2>
+        <p>Selecione “Cadastrar” e informe seu nome, CPF, e-mail e uma senha. Você usará o e-mail e a senha para entrar depois.</p>
+        <p>Após o cadastro, o administrador atribuirá seu setor e sua função ou cargo.</p>
+    </section>
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">DEPOIS DO LOGIN</span>
+        <h2>Use o sistema no seu cotidiano</h2>
+        <p>Você poderá consultar setores e equipamentos, registrar ou acompanhar ordens de serviço e ver um resumo no dashboard.</p>
+        <p>O administrador cuida dos cadastros e das atribuições de setor e função.</p>
+    </section>
+    {% endif %}
 </div>
 {% endblock %}
 

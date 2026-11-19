@@ -8,6 +8,8 @@
         <div class="container-botao-direita">
             <a href="{{ url_for('funcionarios') }}" class="design-btn-direita">VOLTAR</a>
         </div>
+        {% else %}
+        <div class="container-botao-direita"></div>
         {% endif %}
     </div>
 
@@ -56,6 +58,7 @@
                     <th>Email</th>
                     <th>Setor</th>
                     <th>Função/Cargo</th>
+                    <th>Status</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -68,8 +71,18 @@
                     <td>{{ usuario.email }}</td>
                     <td>{{ usuario.setor.nome if usuario.setor else 'Não atribuído' }}</td>
                     <td>{{ usuario.funcao or 'Não atribuída' }}</td>
+                    <td>{{ 'Ativo' if usuario.ativo else 'Inativo' }}</td>
                     <td class="acoes">
                         <a href="{{ url_for('editar_funcionario', usuario_id=usuario.id) }}" class="design-btn-direita">Atribuir/Editar</a>
+                        {% if usuario.ativo %}
+                            <form method="POST" action="{{ url_for('inativar_funcionario', usuario_id=usuario.id) }}" class="form-acao-inline" onsubmit="return confirm('Deseja inativar este funcionário?');">
+                                <button type="submit" class="design-btn-direita excluir-btn">Inativar</button>
+                            </form>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('ativar_funcionario', usuario_id=usuario.id) }}" class="form-acao-inline" onsubmit="return confirm('Deseja ativar este funcionário?');">
+                                <button type="submit" class="design-btn-direita">Ativar</button>
+                            </form>
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}

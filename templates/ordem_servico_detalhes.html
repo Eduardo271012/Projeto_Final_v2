@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+    <div class="cabecalho-pagina">
+        <div class="barra-titulo-linha">
+            <p class="subtitulo">ORDEM DE SERVIÇO #{{ ordem.id }}</p>
+        </div>
+        <div class="container-botao-direita">
+            <a href="{{ url_for('ordens_servico_lista_view') }}" class="design-btn-direita">VOLTAR PARA LISTA DE ORDENS DE SERVIÇO</a>
+            <a href="{{ url_for('editar_ordem_servico', ordem_id=ordem.id) }}" class="design-btn-direita">EDITAR</a>
+        </div>
+    </div>
+
+    <section class="container-perfil detalhes-os">
+        <h2>DETALHES DA ORDEM DE SERVIÇO</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Informação</th>
+                    <th scope="col">Detalhe</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">Identificação</th>
+                    <td>{{ ordem.id }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Funcionário responsável</th>
+                    <td>
+                        {% if ordem.responsavel %}
+                            {{ ordem.responsavel.nome }}{% if not ordem.responsavel.ativo %} <strong>(INATIVO)</strong>{% endif %}
+                        {% else %}
+                            Não atribuído
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">E-mail do responsável</th>
+                    <td>{{ ordem.responsavel.email if ordem.responsavel else '-' }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Descrição</th>
+                    <td>{{ ordem.descricao }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Status</th>
+                    <td>{{ ordem.status_os }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Prioridade</th>
+                    <td>{{ ordem.prioridade or '-' }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Custo estimado</th>
+                    <td>R$ {{ ordem.custo_total if ordem.custo_total is not none else 0 }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Data da solicitação</th>
+                    <td>{{ ordem.data_solicitacao.strftime('%d/%m/%Y') if ordem.data_solicitacao else '-' }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Data da execução</th>
+                    <td>{{ ordem.data_execucao.strftime('%d/%m/%Y') if ordem.data_execucao else '-' }}</td>
+                </tr>
+                {% if ordem.equipamentos_associados %}
+                <tr>
+                    <th scope="row">Equipamentos</th>
+                    <td>
+                        {% for associacao in ordem.equipamentos_associados %}
+                            {{ associacao.equipamento.nome if associacao.equipamento else 'Equipamento removido' }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

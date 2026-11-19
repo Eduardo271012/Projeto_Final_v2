@@ -6,7 +6,11 @@
         </div>
         <div class="container-botao-direita">
             <a href="{{ url_for('ordens_servico_lista_view') }}" class="design-btn-direita">VOLTAR PARA LISTA DE ORDENS DE SERVIÇO</a>
-            <a href="{{ url_for('editar_ordem_servico', ordem_id=ordem.id) }}" class="design-btn-direita">EDITAR</a>
+            {% if current_user.papel != 'tecnico' or ordem.tecnico_responsavel_id == current_user.id %}
+                <a href="{{ url_for('editar_ordem_servico', ordem_id=ordem.id) }}" class="design-btn-direita">
+                    {{ 'ATUALIZAR OS' if current_user.papel == 'tecnico' else 'EDITAR' }}
+                </a>
+            {% endif %}
         </div>
     </div>
 
@@ -33,6 +37,10 @@
                             Não atribuído
                         {% endif %}
                     </td>
+                </tr>
+                <tr>
+                    <th scope="row">Técnico responsável</th>
+                    <td>{{ ordem.tecnico_responsavel.nome if ordem.tecnico_responsavel else 'Não atribuído' }}</td>
                 </tr>
                 <tr>
                     <th scope="row">E-mail do responsável</th>

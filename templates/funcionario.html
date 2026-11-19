@@ -16,9 +16,16 @@
     {% if editar %}
     <div class="container-perfil">
         <section class="container-perfil">
-            <h2 class="card-titulo">ATRIBUIR SETOR E FUNÇÃO</h2>
+            <h2 class="card-titulo">ATRIBUIR PERFIL, SETOR E FUNÇÃO</h2>
             <p>{{ editar.nome }} — {{ editar.email }}</p>
             <form method="POST" action="{{ url_for('editar_funcionario', usuario_id=editar.id) }}">
+                <div class="campo-formulario">
+                    <label for="papel">Perfil de acesso</label>
+                    <select id="papel" name="papel" required class="campo-input">
+                        <option value="usuario" {% if editar.papel == 'usuario' %}selected{% endif %}>Funcionário</option>
+                        <option value="tecnico" {% if editar.papel == 'tecnico' %}selected{% endif %}>Técnico</option>
+                    </select>
+                </div>
                 <div class="campo-formulario">
                     <label for="setor">Setor</label>
                     <select id="setor" name="setor" required class="campo-input">
@@ -58,6 +65,7 @@
                     <th>Email</th>
                     <th>Setor</th>
                     <th>Função/Cargo</th>
+                    <th>Perfil</th>
                     <th>Status</th>
                     <th>Ações</th>
                 </tr>
@@ -71,6 +79,7 @@
                     <td>{{ usuario.email }}</td>
                     <td>{{ usuario.setor.nome if usuario.setor else 'Não atribuído' }}</td>
                     <td>{{ usuario.funcao or 'Não atribuída' }}</td>
+                    <td>{{ 'Técnico' if usuario.papel == 'tecnico' else 'Funcionário' }}</td>
                     <td>{{ 'Ativo' if usuario.ativo else 'Inativo' }}</td>
                     <td class="acoes">
                         <a href="{{ url_for('editar_funcionario', usuario_id=usuario.id) }}" class="design-btn-direita">Atribuir/Editar</a>

@@ -9,6 +9,7 @@ from database import (
     OrdemServico,
     OrdemServicoEquipamento,
     Setor,
+    Usuario,
     db_session,
 )
 
@@ -22,13 +23,8 @@ def validar_vinculos(categoria, setor_id, equipamentos_ids, ordem_atual=None):
 
     try:
         setor_id = int(setor_id)
-        equipamentos_ids = list(dict.fromkeys(int(item) for item in equipamentos_ids))
     except (TypeError, ValueError):
-        flash("Selecione um setor e equipamentos válidos", "error")
-        return None
-
-    if not equipamentos_ids:
-        flash("Selecione pelo menos um equipamento", "error")
+        flash("Selecione um setor válido", "error")
         return None
 
     setor = db_session.get(Setor, setor_id)
@@ -41,6 +37,25 @@ def validar_vinculos(categoria, setor_id, equipamentos_ids, ordem_atual=None):
         associacao.equipamento_id
         for associacao in ordem_atual.equipamentos_associados
     } if ordem_atual else set()
+    equipamentos_ids = validar_equipamentos(equipamentos_ids, equipamentos_atuais)
+    if equipamentos_ids is None:
+        return None
+
+    return setor_id, equipamentos_ids
+
+
+def validar_equipamentos(equipamentos_ids, equipamentos_atuais=None):
+    try:
+        equipamentos_ids = list(dict.fromkeys(int(item) for item in equipamentos_ids))
+    except (TypeError, ValueError):
+        flash("Selecione equipamentos válidos", "error")
+        return None
+
+    if not equipamentos_ids:
+        flash("Selecione pelo menos um equipamento", "error")
+        return None
+
+    equipamentos_atuais = equipamentos_atuais or set()
     equipamentos = db_session.execute(
         select(Equipamento).where(Equipamento.id.in_(equipamentos_ids))
     ).scalars().all()
@@ -53,7 +68,27 @@ def validar_vinculos(categoria, setor_id, equipamentos_ids, ordem_atual=None):
         flash("Selecione apenas equipamentos ativos", "error")
         return None
 
-    return setor_id, equipamentos_ids
+    return equipamentos_ids
+
+
+def validar_tecnico(tecnico_responsavel_id, tecnico_atual_id=None):
+    if tecnico_responsavel_id in (None, ""):
+        return None
+    try:
+        tecnico_responsavel_id = int(tecnico_responsavel_id)
+    except (TypeError, ValueError):
+        flash("Selecione um técnico válido", "error")
+        return False
+
+    tecnico = db_session.get(Usuario, tecnico_responsavel_id)
+    if (
+        not tecnico
+        or tecnico.papel != "tecnico"
+        or (not tecnico.ativo and tecnico.id != tecnico_atual_id)
+    ):
+        flash("Selecione um técnico ativo", "error")
+        return False
+    return tecnico_responsavel_id
 
 
 def select_todas():
@@ -64,6 +99,7 @@ def select_todas():
 def salvar(
     os_id,
     responsavel_id,
+    tecnico_responsavel_id,
     descricao,
     status_os,
     prioridade,
@@ -83,6 +119,9 @@ def salvar(
         if vinculos is None:
             return False
         setor_id, equipamentos_ids = vinculos
+        tecnico_responsavel_id = validar_tecnico(tecnico_responsavel_id)
+        if tecnico_responsavel_id is False:
+            return False
 
         try:
             custo_total = int(custo_total) if custo_total not in (None, "") else 0
@@ -106,6 +145,9 @@ def salvar(
         ordem = OrdemServico(
             id=os_id or None,
             responsavel_id=int(responsavel_id) if responsavel_id not in (None, "") else None,
+            tecnico_responsavel_id=(
+                tecnico_responsavel_id
+            ),
             setor_id=setor_id,
             categoria=categoria,
             descricao=descricao.strip(),

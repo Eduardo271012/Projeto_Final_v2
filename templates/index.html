@@ -29,6 +29,19 @@
         <p>Consulte “Ordem de Serviço” para rever responsável, prioridade, status e datas. O “Dashboard” mostra um resumo das ordens por status.</p>
         <p>Em “Equipamentos”, consulte os itens cadastrados. As opções de administração são exclusivas do administrador.</p>
     </section>
+    {% elif current_user.is_authenticated and current_user.papel == 'tecnico' %}
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">OLÁ, {{ current_user.nome | upper }}!</span>
+        <h2>Ordens atribuídas</h2>
+        <p>Acesse “Ordem de Serviço” para acompanhar as ordens atribuídas a você.</p>
+        <p>Você pode atualizar o status, a prioridade e o custo e adicionar equipamentos.</p>
+    </section>
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">DADOS DA SOLICITAÇÃO</span>
+        <h2>Informações preservadas</h2>
+        <p>A descrição, solicitante, categoria, setor e datas da ordem são definidos na abertura.</p>
+        <p>Essas informações não podem ser alteradas pelo perfil técnico.</p>
+    </section>
     {% else %}
     <section class="dropdown-coluna-texto">
         <span class="guia-etapa">ANTES DE ENTRAR</span>

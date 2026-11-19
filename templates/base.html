@@ -17,7 +17,7 @@
             </div>
 
             <!-- "Temas de Atuação" alinhado logo após a logo -->
-            {% if request.endpoint == 'index' and (not current_user.is_authenticated or current_user.papel == 'usuario') %}
+            {% if request.endpoint == 'index' and (not current_user.is_authenticated or current_user.papel in ['usuario', 'tecnico']) %}
                 <div class="menu-item-dropdown">
                     <a href="#" class="link-principal destaque-temas">Como usar? ▾</a>
                     {% block painel_dropdown %}{% endblock %}

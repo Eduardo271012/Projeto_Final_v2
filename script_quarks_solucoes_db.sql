@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS recursos (
 CREATE TABLE IF NOT EXISTS ordens_servico (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     responsavel_id INT,
+    tecnico_responsavel_id INT,
     setor_id INT,
 
     categoria VARCHAR(30) NOT NULL DEFAULT 'Manutenção',
@@ -74,6 +75,10 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
 		ON DELETE SET NULL,
     CONSTRAINT fk_ordem_servico_setor
         FOREIGN KEY (setor_id) REFERENCES setores(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_ordem_servico_tecnico
+        FOREIGN KEY (tecnico_responsavel_id) REFERENCES usuarios(id)
         ON UPDATE CASCADE
         ON DELETE SET NULL
 );

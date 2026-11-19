@@ -49,6 +49,7 @@ class OrdemServico(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     responsavel_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
+    tecnico_responsavel_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     setor_id = Column(Integer, ForeignKey('setores.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     categoria = Column(String(30), nullable=False)
     custo_total = Column(Integer)
@@ -59,7 +60,16 @@ class OrdemServico(Base):
     prioridade = Column(String(25))
     status_delete = Column(Boolean, default=True, nullable=False)
 
-    responsavel = relationship('Usuario', back_populates='ordens_servico_atribuidas')
+    responsavel = relationship(
+        'Usuario',
+        foreign_keys=[responsavel_id],
+        back_populates='ordens_servico_atribuidas',
+    )
+    tecnico_responsavel = relationship(
+        'Usuario',
+        foreign_keys=[tecnico_responsavel_id],
+        back_populates='ordens_servico_tecnicas',
+    )
     setor = relationship('Setor')
     equipamentos_associados = relationship('OrdemServicoEquipamento', back_populates='ordem_servico')
 
@@ -89,7 +99,16 @@ class Usuario(Base, UserMixin):
     criado_em = Column(DateTime, nullable=False, server_default=func.now())
     atualizado_em = Column(DateTime, nullable=False, server_default=func.now())
     setor = relationship('Setor', back_populates='usuarios')
-    ordens_servico_atribuidas = relationship('OrdemServico', back_populates='responsavel')
+    ordens_servico_atribuidas = relationship(
+        'OrdemServico',
+        foreign_keys='OrdemServico.responsavel_id',
+        back_populates='responsavel',
+    )
+    ordens_servico_tecnicas = relationship(
+        'OrdemServico',
+        foreign_keys='OrdemServico.tecnico_responsavel_id',
+        back_populates='tecnico_responsavel',
+    )
 
     @property
     def is_active(self):

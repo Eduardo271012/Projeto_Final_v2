@@ -246,6 +246,10 @@ def listar_ordens_servico_excluidos():
 def listar_ordens_servico(excluidos):
     termo = request.args.get("q", "").strip()[:100]
     consulta = select(OrdemServico).where(OrdemServico.status_delete.is_(not excluidos))
+    if current_user.papel == "tecnico":
+        consulta = consulta.where(
+            OrdemServico.tecnico_responsavel_id == current_user.id
+        )
     if termo:
         filtros = [
             OrdemServico.descricao.icontains(termo, autoescape=True),
@@ -253,6 +257,9 @@ def listar_ordens_servico(excluidos):
             OrdemServico.prioridade.icontains(termo, autoescape=True),
             OrdemServico.categoria.icontains(termo, autoescape=True),
             Usuario.nome.icontains(termo, autoescape=True),
+            OrdemServico.tecnico_responsavel.has(
+                Usuario.nome.icontains(termo, autoescape=True)
+            ),
             OrdemServico.setor.has(Setor.nome.icontains(termo, autoescape=True)),
             OrdemServico.equipamentos_associados.any(
                 OrdemServicoEquipamento.equipamento.has(
@@ -275,10 +282,15 @@ def listar_ordens_servico(excluidos):
 
 
 @app.route('/servico/ordens/cadastro', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin", "usuario")
 def cadastro_ordem_view():
     if request.method == "POST":
         responsavel_id = request.form.get("responsavel_id")
+        tecnico_responsavel_id = (
+            request.form.get("tecnico_responsavel_id")
+            if current_user.papel == "admin"
+            else None
+        )
         descricao = request.form.get("descricao", "").strip()
         categoria = request.form.get("categoria", "")
         setor_id = request.form.get("setor_id", "")
@@ -292,6 +304,7 @@ def cadastro_ordem_view():
         if tabela_ordens_servico.salvar(
             0,
             responsavel_id,
+            tecnico_responsavel_id,
             descricao,
             status_os,
             prioridade,
@@ -313,6 +326,8 @@ def cadastro_ordem_view():
         categorias_os=tabela_ordens_servico.CATEGORIAS_OS,
         setores=tabela_setor.select_ativos(),
         equipamentos=tabela_equipamento.select_ativos(),
+        tecnicos=tabela_usuario.select_tecnicos_para_atribuicao(),
+        equipamentos_selecionados=[],
     )
 
 
@@ -320,7 +335,14 @@ def cadastro_ordem_view():
 @login_required
 def detalhes_ordem_servico(ordem_id):
     ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
-    if not ordem_servico or not ordem_servico.status_delete:
+    if (
+        not ordem_servico
+        or not ordem_servico.status_delete
+        or (
+            current_user.papel == "tecnico"
+            and ordem_servico.tecnico_responsavel_id != current_user.id
+        )
+    ):
         flash("Ordem de serviço não encontrada", "error")
         return redirect(url_for("ordens_servico_lista_view"))
 
@@ -328,7 +350,7 @@ def detalhes_ordem_servico(ordem_id):
 
 
 @app.route('/servico/ordens/excluir/<int:ordem_id>', methods=['POST'])
-@login_required
+@roles_required("admin", "usuario")
 def excluir_ordem_servico(ordem_id):
     ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
     if not ordem_servico or not ordem_servico.status_delete:
@@ -347,7 +369,7 @@ def excluir_ordem_servico(ordem_id):
 
 
 @app.route('/servico/ordens/restaurar/<int:ordem_id>', methods=['POST'])
-@login_required
+@roles_required("admin", "usuario")
 def restaurar_ordem_servico(ordem_id):
     ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
     if not ordem_servico or ordem_servico.status_delete:
@@ -366,15 +388,87 @@ def restaurar_ordem_servico(ordem_id):
 
 
 @app.route('/servico/ordens/editar/<int:ordem_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin", "usuario", "tecnico")
 def editar_ordem_servico(ordem_id):
     ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
-    if not ordem_servico:
+    if (
+        not ordem_servico
+        or (
+            current_user.papel == "tecnico"
+            and not ordem_servico.status_delete
+        )
+        or (
+            current_user.papel == "tecnico"
+            and ordem_servico.tecnico_responsavel_id != current_user.id
+        )
+    ):
         flash("Ordem de serviço não encontrada", "error")
         return redirect(url_for("ordens_servico_lista_view"))
 
     if request.method == "POST":
+        if current_user.papel == "tecnico":
+            status_os = request.form.get("status_os", "")
+            prioridade = request.form.get("prioridade", "")
+            try:
+                custo_total = int(request.form.get("custo_total") or 0)
+            except ValueError:
+                flash("Informe um custo estimado válido", "error")
+                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
+            if custo_total < 0:
+                flash("O custo estimado não pode ser negativo", "error")
+                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+            if status_os not in {"Aberta", "Em andamento", "Pausada", "Concluída"}:
+                flash("Selecione um status válido", "error")
+                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+            if prioridade not in {"Baixa", "Média", "Alta"}:
+                flash("Selecione uma prioridade válida", "error")
+                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
+            equipamentos_atuais = {
+                associacao.equipamento_id
+                for associacao in ordem_servico.equipamentos_associados
+            }
+            equipamentos_ids = list(equipamentos_atuais) + request.form.getlist(
+                "equipamentos_ids"
+            )
+            equipamentos_ids = tabela_ordens_servico.validar_equipamentos(
+                equipamentos_ids,
+                equipamentos_atuais,
+            )
+            if equipamentos_ids is None:
+                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
+            ordem_servico.status_os = status_os
+            ordem_servico.prioridade = prioridade
+            ordem_servico.custo_total = custo_total
+            try:
+                novos_equipamentos = set(equipamentos_ids) - equipamentos_atuais
+                db_session.add_all(
+                    OrdemServicoEquipamento(
+                        os_id=ordem_servico.id,
+                        equipamento_id=equipamento_id,
+                        quantidade=1,
+                    )
+                    for equipamento_id in novos_equipamentos
+                )
+                db_session.commit()
+                flash("Ordem de serviço atualizada com sucesso", "success")
+                return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+            except SQLAlchemyError:
+                db_session.rollback()
+                app.logger.exception(
+                    "Erro ao atualizar ordem de serviço %s como técnico", ordem_id
+                )
+                flash("Erro ao atualizar a ordem de serviço", "error")
+                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
         responsavel_id = request.form.get("responsavel_id")
+        tecnico_responsavel_id = (
+            request.form.get("tecnico_responsavel_id")
+            if current_user.papel == "admin"
+            else ordem_servico.tecnico_responsavel_id
+        )
         descricao = request.form.get("descricao", "").strip()
         categoria = request.form.get("categoria", "")
         setor_id = request.form.get("setor_id", "")
@@ -425,8 +519,15 @@ def editar_ordem_servico(ordem_id):
         if vinculos is None:
             return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
         setor_id, equipamentos_ids = vinculos
+        tecnico_responsavel_id = tabela_ordens_servico.validar_tecnico(
+            tecnico_responsavel_id,
+            tecnico_atual_id=ordem_servico.tecnico_responsavel_id,
+        )
+        if tecnico_responsavel_id is False:
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
         ordem_servico.responsavel_id = responsavel_id
+        ordem_servico.tecnico_responsavel_id = tecnico_responsavel_id
         ordem_servico.categoria = categoria
         ordem_servico.setor_id = setor_id
         ordem_servico.descricao = descricao
@@ -463,6 +564,9 @@ def editar_ordem_servico(ordem_id):
     usuarios_comuns = tabela_usuario.select_comuns_para_atribuicao(
         ordem_servico.responsavel_id
     )
+    tecnicos = tabela_usuario.select_tecnicos_para_atribuicao(
+        ordem_servico.tecnico_responsavel_id
+    )
     setores_disponiveis = tabela_setor.select_ativos()
     if ordem_servico.setor and ordem_servico.setor not in setores_disponiveis:
         setores_disponiveis.append(ordem_servico.setor)
@@ -477,6 +581,7 @@ def editar_ordem_servico(ordem_id):
         categorias_os=tabela_ordens_servico.CATEGORIAS_OS,
         setores=setores_disponiveis,
         equipamentos=equipamentos_disponiveis,
+        tecnicos=tecnicos,
         equipamentos_selecionados=[
             associacao.equipamento_id
             for associacao in ordem_servico.equipamentos_associados
@@ -577,7 +682,7 @@ def restaurar_setor(setor_id):
 @roles_required("admin")
 def funcionarios():
     termo = request.args.get("q", "").strip()[:100]
-    consulta = select(Usuario).where(Usuario.papel == "usuario")
+    consulta = select(Usuario).where(Usuario.papel.in_(("usuario", "tecnico")))
     if termo:
         filtros = [
             Usuario.nome.icontains(termo, autoescape=True),
@@ -596,7 +701,7 @@ def funcionarios():
 @roles_required("admin")
 def editar_funcionario(usuario_id):
     usuario = db_session.get(Usuario, usuario_id)
-    if not usuario or usuario.papel != "usuario":
+    if not usuario or usuario.papel not in {"usuario", "tecnico"}:
         flash("Funcionário não encontrado", "error")
         return redirect(url_for("funcionarios"))
 
@@ -604,6 +709,7 @@ def editar_funcionario(usuario_id):
     if request.method == "POST":
         setor_id = request.form.get("setor")
         funcao = request.form.get("funcao", "").strip()
+        papel = request.form.get("papel", "")
 
         try:
             setor_id = int(setor_id)
@@ -623,9 +729,13 @@ def editar_funcionario(usuario_id):
         if len(funcao) > 100:
             flash("A função ou cargo pode ter no máximo 100 caracteres", "error")
             return redirect(url_for("editar_funcionario", usuario_id=usuario.id))
+        if papel not in {"usuario", "tecnico"}:
+            flash("Selecione um perfil válido", "error")
+            return redirect(url_for("editar_funcionario", usuario_id=usuario.id))
 
         usuario.setor = setor
         usuario.funcao = funcao
+        usuario.papel = papel
         try:
             db_session.commit()
         except SQLAlchemyError:
@@ -644,7 +754,7 @@ def editar_funcionario(usuario_id):
 @roles_required("admin")
 def inativar_funcionario(usuario_id):
     usuario = db_session.get(Usuario, usuario_id)
-    if not usuario or usuario.papel != "usuario":
+    if not usuario or usuario.papel not in {"usuario", "tecnico"}:
         flash("Funcionário não encontrado", "error")
         return redirect(url_for("funcionarios"))
 
@@ -663,7 +773,7 @@ def inativar_funcionario(usuario_id):
 @roles_required("admin")
 def ativar_funcionario(usuario_id):
     usuario = db_session.get(Usuario, usuario_id)
-    if not usuario or usuario.papel != "usuario":
+    if not usuario or usuario.papel not in {"usuario", "tecnico"}:
         flash("Funcionário não encontrado", "error")
         return redirect(url_for("funcionarios"))
 

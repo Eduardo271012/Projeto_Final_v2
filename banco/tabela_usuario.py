@@ -26,6 +26,19 @@ def select_comuns_para_atribuicao(responsavel_atual_id=None):
     return db_session.execute(consulta).scalars().all()
 
 
+def select_tecnicos_para_atribuicao(tecnico_atual_id=None):
+    consulta = (
+        select(Usuario)
+        .where(Usuario.papel == "tecnico")
+        .where(
+            (Usuario.ativo.is_(True))
+            | (Usuario.id == tecnico_atual_id)
+        )
+        .order_by(Usuario.ativo.desc(), Usuario.nome.asc())
+    )
+    return db_session.execute(consulta).scalars().all()
+
+
 def select_quantidade_comuns():
     consulta = select(func.count(Usuario.id)).where(
         Usuario.papel == "usuario",

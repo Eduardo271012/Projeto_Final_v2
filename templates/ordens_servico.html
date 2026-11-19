@@ -9,7 +9,7 @@
             <a href="{{ url_for('listar_ordens_servico_excluidos') if not excluidos else url_for('ordens_servico_lista_view') }}" class="design-btn-direita">
                 {{ 'ORDENS DE SERVIÇO ATIVAS' if excluidos else 'ORDENS DE SERVIÇO EXCLUÍDAS' }}
             </a>
-            {% if not excluidos %}
+            {% if not excluidos and current_user.papel != 'tecnico' %}
                 <a href="{{ url_for('cadastro_ordem_view') }}" class="design-btn-direita">CADASTRAR</a>
             {% endif %}
         </div>
@@ -21,6 +21,10 @@
         <section class="container-perfil">
             <h2 class="card-titulo">{% if editar %}EDITAR{% else %}CADASTRAR{% endif %} OS</h2>
             <form method="POST" action="{{ url_for('cadastro_ordem_view') if not editar else url_for('editar_ordem_servico', ordem_id=editar.id)}}">
+                {% if current_user.papel == 'tecnico' %}
+                <p><strong>Solicitante:</strong> {{ editar.responsavel.nome if editar.responsavel else 'Não atribuído' }}</p>
+                <p><strong>Técnico responsável:</strong> {{ current_user.nome }}</p>
+                {% else %}
                 <div class="campo-formulario">
                     <label for="responsavel_id">Solicitante</label>
                     <select id="responsavel_id" name="responsavel_id" required class="campo-input">
@@ -46,32 +50,53 @@
                         {% endif %}
                     </select>
                 </div>
+                {% if current_user.papel == 'admin' %}
                 <div class="campo-formulario">
-                    <label for="categoria">Categoria</label>
-                    <select id="categoria" name="categoria" required class="campo-input">
-                        <option value="" disabled {% if not editar %}selected{% endif %}>Selecione uma categoria</option>
-                        {% for categoria in categorias_os %}
-                            <option value="{{ categoria }}" {% if editar and editar.categoria == categoria %}selected{% endif %}>{{ categoria }}</option>
+                    <label for="tecnico_responsavel_id">Técnico responsável</label>
+                    <select id="tecnico_responsavel_id" name="tecnico_responsavel_id" class="campo-input">
+                        <option value="">Não atribuído</option>
+                        {% for tecnico in tecnicos %}
+                            <option value="{{ tecnico.id }}" {% if editar and editar.tecnico_responsavel_id == tecnico.id %}selected{% endif %}>
+                                {{ tecnico.nome }}{% if not tecnico.ativo %} (INATIVO){% endif %}
+                            </option>
                         {% endfor %}
                     </select>
+                </div>
+                {% endif %}
+                {% endif %}
+                <div class="campo-formulario">
+                    <label for="categoria">Categoria</label>
+                    {% if current_user.papel == 'tecnico' %}
+                        <p>{{ editar.categoria }}</p>
+                    {% else %}
+                        <select id="categoria" name="categoria" required class="campo-input">
+                            <option value="" disabled {% if not editar %}selected{% endif %}>Selecione uma categoria</option>
+                            {% for categoria in categorias_os %}
+                                <option value="{{ categoria }}" {% if editar and editar.categoria == categoria %}selected{% endif %}>{{ categoria }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
                 </div>
                 <div class="campo-formulario">
                     <label for="setor_id">Setor</label>
-                    <select id="setor_id" name="setor_id" required class="campo-input">
-                        <option value="" disabled {% if not editar %}selected{% endif %}>Selecione um setor</option>
-                        {% for setor in setores %}
-                            <option value="{{ setor.id }}" {% if editar and editar.setor_id == setor.id %}selected{% endif %}>
-                                {{ setor.nome }}{% if not setor.status_delete %} (INATIVO){% endif %}
-                            </option>
-                        {% else %}
-                            <option value="" disabled>Nenhum setor ativo cadastrado</option>
-                        {% endfor %}
-                    </select>
+                    {% if current_user.papel == 'tecnico' %}
+                        <p>{{ editar.setor.nome if editar.setor else 'Não atribuído' }}</p>
+                    {% else %}
+                        <select id="setor_id" name="setor_id" required class="campo-input">
+                            <option value="" disabled {% if not editar %}selected{% endif %}>Selecione um setor</option>
+                            {% for setor in setores %}
+                                <option value="{{ setor.id }}" {% if editar and editar.setor_id == setor.id %}selected{% endif %}>
+                                    {{ setor.nome }}{% if not setor.status_delete %} (INATIVO){% endif %}
+                                </option>
+                            {% else %}
+                                <option value="" disabled>Nenhum setor ativo cadastrado</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
                 </div>
                 <div class="campo-formulario">
-                    <label for="equipamentos_ids">Equipamento</label>
-                    <select id="equipamentos_ids" name="equipamentos_ids" required class="campo-input">
-                        <option value="" disabled {% if not editar %}selected{% endif %}>Selecione um equipamento</option>
+                    <label for="equipamentos_ids">Equipamentos (selecione um ou mais)</label>
+                    <select id="equipamentos_ids" name="equipamentos_ids" required multiple size="4" class="campo-input">
                         {% for equipamento in equipamentos %}
                             <option value="{{ equipamento.id }}"
                                 {% if editar and equipamento.id in equipamentos_selecionados %}selected{% endif %}>
@@ -85,7 +110,11 @@
 
                 <div class="campo-formulario">
                     <label for="descricao">Descrição do Problema / Serviço</label>
-                    <textarea id="descricao" name="descricao" required placeholder="Ex: Substituir o óleo hidráulico e limpar os filtros." class="campo-input">{{ editar.descricao if editar else '' }}</textarea>
+                    {% if current_user.papel == 'tecnico' %}
+                        <p>{{ editar.descricao }}</p>
+                    {% else %}
+                        <textarea id="descricao" name="descricao" required placeholder="Ex: Substituir o óleo hidráulico e limpar os filtros." class="campo-input">{{ editar.descricao if editar else '' }}</textarea>
+                    {% endif %}
                 </div>
                 <div class="campo-formulario">
                     <label for="status_os">Status</label>
@@ -129,7 +158,12 @@
             {% endif %}
                 <div class="campo-formulario">
                     <label for="data_execucao">Data da execução/entrega</label>
-                    <input type="date" id="data_execucao" name="data_execucao" class="campo-input" min="{{ editar.data_solicitacao.strftime('%Y-%m-%d') if editar and editar.data_solicitacao else '' }}" value="{{ editar.data_execucao.strftime('%Y-%m-%d') if editar and editar.data_execucao else '' }}">
+                    {% if current_user.papel == 'tecnico' %}
+                        <p><strong>Solicitação:</strong> {{ editar.data_solicitacao.strftime('%d/%m/%Y') if editar.data_solicitacao else '-' }}</p>
+                        <p><strong>Execução/entrega:</strong> {{ editar.data_execucao.strftime('%d/%m/%Y') if editar.data_execucao else '-' }}</p>
+                    {% else %}
+                        <input type="date" id="data_execucao" name="data_execucao" class="campo-input" min="{{ editar.data_solicitacao.strftime('%Y-%m-%d') if editar and editar.data_solicitacao else '' }}" value="{{ editar.data_execucao.strftime('%Y-%m-%d') if editar and editar.data_execucao else '' }}">
+                    {% endif %}
                 </div>
 
                 <div class="botoes-formulario">
@@ -173,6 +207,7 @@
                 <tr>
                     <th>Id</th>
                     <th>Funcionário</th>
+                    <th>Técnico</th>
                     <th>Categoria</th>
                     <th>Setor</th>
                     <th>Equipamentos</th>
@@ -196,6 +231,7 @@
                             Não atribuído
                         {% endif %}
                     </td>
+                    <td>{{ os.tecnico_responsavel.nome if os.tecnico_responsavel else 'Não atribuído' }}</td>
                     <td>{{ os.categoria or '-' }}</td>
                     <td>{{ os.setor.nome if os.setor else '-' }}</td>
                     <td>
@@ -213,15 +249,21 @@
                     <td>{{ os.data_execucao.strftime('%d/%m/%Y') if os.data_execucao else '-' }}</td>
                     <td class="acoes">
                         {% if excluidos %}
-                            <form method="POST" action="{{ url_for('restaurar_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline">
-                                <button type="submit" class="design-btn-direita">Restaurar</button>
-                            </form>
+                            {% if current_user.papel != 'tecnico' %}
+                                <form method="POST" action="{{ url_for('restaurar_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline">
+                                    <button type="submit" class="design-btn-direita">Restaurar</button>
+                                </form>
+                            {% endif %}
                         {% else %}
                             <a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Detalhes</a>
-                            <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Editar</a>
-                            <form method="POST" action="{{ url_for('excluir_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline" onsubmit="return confirm('Deseja excluir esta ordem de serviço?');">
-                                <button type="submit" class="design-btn-direita excluir-btn">Excluir</button>
-                            </form>
+                            {% if current_user.papel == 'tecnico' %}
+                                <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Atualizar OS</a>
+                            {% else %}
+                                <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Editar</a>
+                                <form method="POST" action="{{ url_for('excluir_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline" onsubmit="return confirm('Deseja excluir esta ordem de serviço?');">
+                                    <button type="submit" class="design-btn-direita excluir-btn">Excluir</button>
+                                </form>
+                            {% endif %}
                         {% endif %}
                     </td>
                 </tr>

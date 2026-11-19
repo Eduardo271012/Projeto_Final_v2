@@ -6,6 +6,9 @@
     <hr>
     <p><strong>Nome:</strong> {{ current_user.nome }}</p>
     <p><strong>E-mail:</strong> {{ current_user.email }}</p>
+    <p><strong>Perfil:</strong> {{ 'Administrador' if current_user.papel == 'admin' else 'Técnico' if current_user.papel == 'tecnico' else 'Funcionário' }}</p>
+    <p><strong>Setor:</strong> {{ current_user.setor.nome if current_user.setor else 'Não atribuído' }}</p>
+    <p><strong>Função:</strong> {{ current_user.funcao or 'Não atribuída' }}</p>
     <!-- Adicione outros campos que você tenha no banco, como cargo ou setor -->
 </div>
 {% endblock %}

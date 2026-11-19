@@ -50,7 +50,7 @@ class OrdemServico(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     responsavel_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     setor_id = Column(Integer, ForeignKey('setores.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
-    categoria = Column(String(30), nullable=False, default='Manutenção')
+    categoria = Column(String(30), nullable=False)
     custo_total = Column(Integer)
     descricao = Column(String(500), nullable=False)
     status_os = Column(String(25), nullable=False)

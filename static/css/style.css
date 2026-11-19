@@ -576,14 +576,14 @@ main {
 /* ================= PAINÉIS E TABELAS ================= */
 .painel,
 body.tela-listas .container-perfil {
-    background-color: rgba(255, 255, 255, 0.50) !important; /* Transparência suave */
-    backdrop-filter: blur(8px); /* Efeito vidro fosco para não perder leitura */
+    background-color: rgba(255, 255, 255, 0.50) !important;
+    backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
     border-radius: 12px !important;
-    padding: 20px 24px !important; /* Padding interno menor */
-    max-width: 1450px !important; /* Largura reduzida para mostrar mais o fundo */
-    width: 90% !important;
+    padding: 20px 18px !important; /* Padding lateral ajustado */
+    max-width: 1600px !important; /* Permite usar melhor telas widescreen */
+    width: 96% !important; /* Aproveita melhor a largura da tela */
     box-sizing: border-box !important;
     margin: 0 auto 32px auto !important;
     box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12) !important;
@@ -612,25 +612,25 @@ table {
 
 th, td {
     text-align: left;
-    padding: 9px 10px; /* Linhas mais compactas na altura */
+    padding: 8px 6px; /* Células mais compactas nas laterais */
     border-bottom: 1px solid var(--cor-borda, #e2e8f0);
-    font-size: 0.83rem;
+    font-size: 0.78rem; /* Fonte levemente menor para caberem as 12 colunas */
     color: #0f172a;
     vertical-align: middle;
 }
 
 th {
-    background-color: rgba(248, 250, 252, 0.75); /* Cabeçalho da tabela também translúcido */
+    background-color: rgba(248, 250, 252, 0.75);
     color: var(--cor-texto-claro, #64748b);
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
+    font-size: 0.69rem;
+    letter-spacing: 0.03em;
     white-space: nowrap;
 }
 
 td {
-    max-width: 190px; /* Enxuga textos longos para caber tudo sem rolar */
+    max-width: 140px; /* Reduzido de 190px para dar espaço aos botões */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -641,7 +641,7 @@ td {
     margin: 0;
 }
 
-/* Impede que a última coluna (AÇÕES) corte os botões */
+/* Mantém a coluna AÇÕES visível e alinhada à direita */
 th:last-child,
 td:last-child {
     max-width: none;
@@ -667,7 +667,6 @@ tbody tr:hover {
     text-align: center;
 }
 
-/* CORREÇÃO: Mantém o comportamento de célula de tabela sem quebrar as colunas */
 td.acoes {
     display: table-cell !important;
     text-align: right;
@@ -678,9 +677,9 @@ td.acoes {
 .acoes button,
 .acoes a {
     display: inline-block;
-    padding: 5px 10px;
-    font-size: 0.8rem;
-    margin-left: 5px;
+    padding: 4px 8px; /* Botões mais compactos */
+    font-size: 0.75rem;
+    margin-left: 3px;
 }
 
 .acoes-col {

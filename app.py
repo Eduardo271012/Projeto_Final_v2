@@ -64,7 +64,7 @@ def login():
             return redirect(url_for("login"))
         if usuario_resultado and usuario_resultado.check_password(senha):
             login_user(usuario_resultado)
-            flash(f"BEM-VINDO(A), {usuario_resultado.nome}!😁", "welcome")
+            flash(f"BEM-VINDO(A), {usuario_resultado.nome} ({usuario_resultado.papel})!😁", "welcome")
             return redirect(url_for("index"))
         else:
             flash("Falha na autenticação: E-mail e senha não encontrado", "error")

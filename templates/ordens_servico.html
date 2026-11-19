@@ -22,7 +22,7 @@
             <h2 class="card-titulo">{% if editar %}EDITAR{% else %}CADASTRAR{% endif %} OS</h2>
             <form method="POST" action="{{ url_for('cadastro_ordem_view') if not editar else url_for('editar_ordem_servico', ordem_id=editar.id)}}">
                 <div class="campo-formulario">
-                    <label for="responsavel_id">Funcionário responsável</label>
+                    <label for="responsavel_id">Solicitante</label>
                     <select id="responsavel_id" name="responsavel_id" required class="campo-input">
                         {% if usuarios %}
                             {% if not editar %}
@@ -69,8 +69,9 @@
                     </select>
                 </div>
                 <div class="campo-formulario">
-                    <label for="equipamentos_ids">Equipamentos (selecione um ou mais)</label>
-                    <select id="equipamentos_ids" name="equipamentos_ids" required multiple size="4" class="campo-input">
+                    <label for="equipamentos_ids">Equipamento</label>
+                    <select id="equipamentos_ids" name="equipamentos_ids" required class="campo-input">
+                        <option value="" disabled {% if not editar %}selected{% endif %}>Selecione um equipamento</option>
                         {% for equipamento in equipamentos %}
                             <option value="{{ equipamento.id }}"
                                 {% if editar and equipamento.id in equipamentos_selecionados %}selected{% endif %}>
@@ -81,6 +82,7 @@
                         {% endfor %}
                     </select>
                 </div>
+
                 <div class="campo-formulario">
                     <label for="descricao">Descrição do Problema / Serviço</label>
                     <textarea id="descricao" name="descricao" required placeholder="Ex: Substituir o óleo hidráulico e limpar os filtros." class="campo-input">{{ editar.descricao if editar else '' }}</textarea>

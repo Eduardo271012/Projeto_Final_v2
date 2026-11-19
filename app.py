@@ -3,7 +3,14 @@ from flask_login import LoginManager, login_required, logout_user, login_user, c
 from sqlalchemy import String, cast, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from banco import tabela_equipamento, tabela_ordens_servico, tabela_setor, tabela_usuario
-from database import Equipamento, OrdemServico, Setor, Usuario, db_session
+from database import (
+    Equipamento,
+    OrdemServico,
+    OrdemServicoEquipamento,
+    Setor,
+    Usuario,
+    db_session,
+)
 from functools import wraps
 from datetime import datetime
 from validate_docbr import CPF
@@ -244,7 +251,14 @@ def listar_ordens_servico(excluidos):
             OrdemServico.descricao.icontains(termo, autoescape=True),
             OrdemServico.status_os.icontains(termo, autoescape=True),
             OrdemServico.prioridade.icontains(termo, autoescape=True),
+            OrdemServico.categoria.icontains(termo, autoescape=True),
             Usuario.nome.icontains(termo, autoescape=True),
+            OrdemServico.setor.has(Setor.nome.icontains(termo, autoescape=True)),
+            OrdemServico.equipamentos_associados.any(
+                OrdemServicoEquipamento.equipamento.has(
+                    Equipamento.nome.icontains(termo, autoescape=True)
+                )
+            ),
         ]
         if termo.isdecimal() and len(termo) <= 10:
             filtros.append(OrdemServico.id == int(termo))
@@ -266,6 +280,9 @@ def cadastro_ordem_view():
     if request.method == "POST":
         responsavel_id = request.form.get("responsavel_id")
         descricao = request.form.get("descricao", "").strip()
+        categoria = request.form.get("categoria", "")
+        setor_id = request.form.get("setor_id", "")
+        equipamentos_ids = request.form.getlist("equipamentos_ids")
         status_os = request.form.get("status_os")
         prioridade = request.form.get("prioridade")
         custo_total = request.form.get("custo_total")
@@ -281,12 +298,22 @@ def cadastro_ordem_view():
             custo_total,
             data_solicitacao,
             data_execucao,
+            categoria,
+            setor_id,
+            equipamentos_ids,
         ):
             return redirect(url_for("ordens_servico_lista_view"))
 
     usuarios_comuns = tabela_usuario.select_comuns()
     lista_ordens = tabela_ordens_servico.select_todas()
-    return render_template('ordens_servico.html', usuarios=usuarios_comuns, ordens=lista_ordens)
+    return render_template(
+        'ordens_servico.html',
+        usuarios=usuarios_comuns,
+        ordens=lista_ordens,
+        categorias_os=tabela_ordens_servico.CATEGORIAS_OS,
+        setores=tabela_setor.select_ativos(),
+        equipamentos=tabela_equipamento.select_ativos(),
+    )
 
 
 @app.route('/servico/ordens/<int:ordem_id>')
@@ -349,6 +376,9 @@ def editar_ordem_servico(ordem_id):
     if request.method == "POST":
         responsavel_id = request.form.get("responsavel_id")
         descricao = request.form.get("descricao", "").strip()
+        categoria = request.form.get("categoria", "")
+        setor_id = request.form.get("setor_id", "")
+        equipamentos_ids = request.form.getlist("equipamentos_ids")
         status_os = request.form.get("status_os")
         prioridade = request.form.get("prioridade")
         custo_total = request.form.get("custo_total")
@@ -386,7 +416,19 @@ def editar_ordem_servico(ordem_id):
             flash("A data de execução não pode ser anterior à data da solicitação", "error")
             return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
+        vinculos = tabela_ordens_servico.validar_vinculos(
+            categoria,
+            setor_id,
+            equipamentos_ids,
+            ordem_atual=ordem_servico,
+        )
+        if vinculos is None:
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+        setor_id, equipamentos_ids = vinculos
+
         ordem_servico.responsavel_id = responsavel_id
+        ordem_servico.categoria = categoria
+        ordem_servico.setor_id = setor_id
         ordem_servico.descricao = descricao
         ordem_servico.status_os = status_os
         ordem_servico.prioridade = prioridade
@@ -394,6 +436,22 @@ def editar_ordem_servico(ordem_id):
         ordem_servico.data_execucao = data_execucao
 
         try:
+            associacoes_anteriores = list(ordem_servico.equipamentos_associados)
+            quantidades_anteriores = {
+                associacao.equipamento_id: associacao.quantidade
+                for associacao in associacoes_anteriores
+            }
+            for associacao in associacoes_anteriores:
+                db_session.delete(associacao)
+            db_session.flush()
+            db_session.add_all(
+                OrdemServicoEquipamento(
+                    os_id=ordem_servico.id,
+                    equipamento_id=equipamento_id,
+                    quantidade=quantidades_anteriores.get(equipamento_id, 1),
+                )
+                for equipamento_id in equipamentos_ids
+            )
             db_session.commit()
             flash("Ordem de Serviço editada com sucesso", "success")
             return redirect(url_for("ordens_servico_lista_view"))
@@ -405,10 +463,24 @@ def editar_ordem_servico(ordem_id):
     usuarios_comuns = tabela_usuario.select_comuns_para_atribuicao(
         ordem_servico.responsavel_id
     )
+    setores_disponiveis = tabela_setor.select_ativos()
+    if ordem_servico.setor and ordem_servico.setor not in setores_disponiveis:
+        setores_disponiveis.append(ordem_servico.setor)
+    equipamentos_disponiveis = tabela_equipamento.select_ativos()
+    for associacao in ordem_servico.equipamentos_associados:
+        if associacao.equipamento and associacao.equipamento not in equipamentos_disponiveis:
+            equipamentos_disponiveis.append(associacao.equipamento)
     return render_template(
         'ordens_servico.html',
         editar=ordem_servico,
         usuarios=usuarios_comuns,
+        categorias_os=tabela_ordens_servico.CATEGORIAS_OS,
+        setores=setores_disponiveis,
+        equipamentos=equipamentos_disponiveis,
+        equipamentos_selecionados=[
+            associacao.equipamento_id
+            for associacao in ordem_servico.equipamentos_associados
+        ],
     )
 
 @app.route('/setor', methods=['GET'])

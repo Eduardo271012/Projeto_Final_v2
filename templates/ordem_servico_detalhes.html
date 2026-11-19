@@ -39,6 +39,14 @@
                     <td>{{ ordem.responsavel.email if ordem.responsavel else '-' }}</td>
                 </tr>
                 <tr>
+                    <th scope="row">Categoria</th>
+                    <td>{{ ordem.categoria or '-' }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Setor</th>
+                    <td>{{ ordem.setor.nome if ordem.setor else '-' }}</td>
+                </tr>
+                <tr>
                     <th scope="row">Descrição</th>
                     <td>{{ ordem.descricao }}</td>
                 </tr>
@@ -62,16 +70,16 @@
                     <th scope="row">Data da execução</th>
                     <td>{{ ordem.data_execucao.strftime('%d/%m/%Y') if ordem.data_execucao else '-' }}</td>
                 </tr>
-                {% if ordem.equipamentos_associados %}
                 <tr>
                     <th scope="row">Equipamentos</th>
                     <td>
                         {% for associacao in ordem.equipamentos_associados %}
                             {{ associacao.equipamento.nome if associacao.equipamento else 'Equipamento removido' }}{% if not loop.last %}, {% endif %}
+                        {% else %}
+                            -
                         {% endfor %}
                     </td>
                 </tr>
-                {% endif %}
             </tbody>
         </table>
     </section>

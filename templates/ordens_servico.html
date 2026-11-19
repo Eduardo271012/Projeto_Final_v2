@@ -47,6 +47,41 @@
                     </select>
                 </div>
                 <div class="campo-formulario">
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" name="categoria" required class="campo-input">
+                        <option value="" disabled {% if not editar %}selected{% endif %}>Selecione uma categoria</option>
+                        {% for categoria in categorias_os %}
+                            <option value="{{ categoria }}" {% if editar and editar.categoria == categoria %}selected{% endif %}>{{ categoria }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="campo-formulario">
+                    <label for="setor_id">Setor</label>
+                    <select id="setor_id" name="setor_id" required class="campo-input">
+                        <option value="" disabled {% if not editar %}selected{% endif %}>Selecione um setor</option>
+                        {% for setor in setores %}
+                            <option value="{{ setor.id }}" {% if editar and editar.setor_id == setor.id %}selected{% endif %}>
+                                {{ setor.nome }}{% if not setor.status_delete %} (INATIVO){% endif %}
+                            </option>
+                        {% else %}
+                            <option value="" disabled>Nenhum setor ativo cadastrado</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="campo-formulario">
+                    <label for="equipamentos_ids">Equipamentos (selecione um ou mais)</label>
+                    <select id="equipamentos_ids" name="equipamentos_ids" required multiple size="4" class="campo-input">
+                        {% for equipamento in equipamentos %}
+                            <option value="{{ equipamento.id }}"
+                                {% if editar and equipamento.id in equipamentos_selecionados %}selected{% endif %}>
+                                {{ equipamento.nome }}{% if equipamento.modelo %} — {{ equipamento.modelo }}{% endif %}{% if not equipamento.status_delete %} (INATIVO){% endif %}
+                            </option>
+                        {% else %}
+                            <option value="" disabled>Nenhum equipamento ativo cadastrado</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="campo-formulario">
                     <label for="descricao">Descrição do Problema / Serviço</label>
                     <textarea id="descricao" name="descricao" required placeholder="Ex: Substituir o óleo hidráulico e limpar os filtros." class="campo-input">{{ editar.descricao if editar else '' }}</textarea>
                 </div>
@@ -124,11 +159,11 @@
     {% if request.endpoint != 'cadastro_ordem_view' and not editar %}
     <section class="container-perfil">
         <h2>{% if excluidos %}LISTA DE ORDEM DE SERVIÇO EXCLUÍDAS{% else %}LISTA DE ORDEM DE SERVIÇO{% endif %}</h2>
-        <form class="busca-lista" action="{{ url_for('ordens_servico_lista_view') }}" method="get" role="search">
+        <form class="busca-lista" action="{{ url_for(request.endpoint) }}" method="get" role="search">
             <label for="busca-ordens">Buscar ordens de serviço</label>
-            <input id="busca-ordens" type="search" name="q" value="{{ termo or '' }}" placeholder="Descrição, funcionário, status, prioridade ou ID" maxlength="100">
+            <input id="busca-ordens" type="search" name="q" value="{{ termo or '' }}" placeholder="Descrição, categoria, setor, equipamento ou ID" maxlength="100">
             <button type="submit">Buscar</button>
-            {% if termo %}<a href="{{ url_for('ordens_servico_lista_view') }}" class="limpar-busca">Limpar</a>{% endif %}
+            {% if termo %}<a href="{{ url_for(request.endpoint) }}" class="limpar-busca">Limpar</a>{% endif %}
         </form>
         {% if ordens %}
         <table>
@@ -136,6 +171,9 @@
                 <tr>
                     <th>Id</th>
                     <th>Funcionário</th>
+                    <th>Categoria</th>
+                    <th>Setor</th>
+                    <th>Equipamentos</th>
                     <th>Descrição</th>
                     <th>Status</th>
                     <th>Prioridade</th>
@@ -155,6 +193,15 @@
                         {% else %}
                             Não atribuído
                         {% endif %}
+                    </td>
+                    <td>{{ os.categoria or '-' }}</td>
+                    <td>{{ os.setor.nome if os.setor else '-' }}</td>
+                    <td>
+                        {% for associacao in os.equipamentos_associados %}
+                            {{ associacao.equipamento.nome if associacao.equipamento else 'Equipamento removido' }}{% if not loop.last %}, {% endif %}
+                        {% else %}
+                            -
+                        {% endfor %}
                     </td>
                     <td>{{ os.descricao }}</td>
                     <td>{{ os.status_os }}</td>

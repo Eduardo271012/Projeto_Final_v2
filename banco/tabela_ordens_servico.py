@@ -4,7 +4,56 @@ from flask import flash
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 
-from database import OrdemServico, db_session
+from database import (
+    Equipamento,
+    OrdemServico,
+    OrdemServicoEquipamento,
+    Setor,
+    db_session,
+)
+
+CATEGORIAS_OS = ("Manutenção", "Limpeza", "Elétrica", "Hidráulica", "Infraestrutura")
+
+
+def validar_vinculos(categoria, setor_id, equipamentos_ids, ordem_atual=None):
+    if categoria not in CATEGORIAS_OS:
+        flash("Selecione uma categoria válida para a ordem de serviço", "error")
+        return None
+
+    try:
+        setor_id = int(setor_id)
+        equipamentos_ids = list(dict.fromkeys(int(item) for item in equipamentos_ids))
+    except (TypeError, ValueError):
+        flash("Selecione um setor e equipamentos válidos", "error")
+        return None
+
+    if not equipamentos_ids:
+        flash("Selecione pelo menos um equipamento", "error")
+        return None
+
+    setor = db_session.get(Setor, setor_id)
+    setor_atual_id = ordem_atual.setor_id if ordem_atual else None
+    if not setor or (not setor.status_delete and setor.id != setor_atual_id):
+        flash("Selecione um setor ativo", "error")
+        return None
+
+    equipamentos_atuais = {
+        associacao.equipamento_id
+        for associacao in ordem_atual.equipamentos_associados
+    } if ordem_atual else set()
+    equipamentos = db_session.execute(
+        select(Equipamento).where(Equipamento.id.in_(equipamentos_ids))
+    ).scalars().all()
+    equipamentos_por_id = {equipamento.id: equipamento for equipamento in equipamentos}
+    if len(equipamentos_por_id) != len(equipamentos_ids) or any(
+        not equipamentos_por_id[equipamento_id].status_delete
+        and equipamento_id not in equipamentos_atuais
+        for equipamento_id in equipamentos_ids
+    ):
+        flash("Selecione apenas equipamentos ativos", "error")
+        return None
+
+    return setor_id, equipamentos_ids
 
 
 def select_todas():
@@ -12,11 +61,28 @@ def select_todas():
     return db_session.execute(ordens_sql).scalars().all()
 
 
-def salvar(os_id, responsavel_id, descricao, status_os, prioridade, custo_total, data_solicitacao, data_execucao):
+def salvar(
+    os_id,
+    responsavel_id,
+    descricao,
+    status_os,
+    prioridade,
+    custo_total,
+    data_solicitacao,
+    data_execucao,
+    categoria,
+    setor_id,
+    equipamentos_ids,
+):
     try:
         if not descricao or not descricao.strip():
             flash("Preencha a descrição da ordem de serviço", "error")
             return False
+
+        vinculos = validar_vinculos(categoria, setor_id, equipamentos_ids)
+        if vinculos is None:
+            return False
+        setor_id, equipamentos_ids = vinculos
 
         try:
             custo_total = int(custo_total) if custo_total not in (None, "") else 0
@@ -40,6 +106,8 @@ def salvar(os_id, responsavel_id, descricao, status_os, prioridade, custo_total,
         ordem = OrdemServico(
             id=os_id or None,
             responsavel_id=int(responsavel_id) if responsavel_id not in (None, "") else None,
+            setor_id=setor_id,
+            categoria=categoria,
             descricao=descricao.strip(),
             status_os=status_os or "Aberta",
             prioridade=prioridade or "Média",
@@ -49,6 +117,15 @@ def salvar(os_id, responsavel_id, descricao, status_os, prioridade, custo_total,
         )
 
         db_session.add(ordem)
+        db_session.flush()
+        db_session.add_all(
+            OrdemServicoEquipamento(
+                os_id=ordem.id,
+                equipamento_id=equipamento_id,
+                quantidade=1,
+            )
+            for equipamento_id in equipamentos_ids
+        )
         db_session.commit()
         flash("Ordem de serviço cadastrada com sucesso", "success")
         return True
@@ -59,7 +136,7 @@ def salvar(os_id, responsavel_id, descricao, status_os, prioridade, custo_total,
         return False
     except ValueError as e:
         db_session.rollback()
-        flash("Datas inválidas. Informe as datas no formato correto", "error")
+        flash("Datas ou valores inválidos. Verifique os dados informados", "error")
         print(f"Erro de valor (Ordem de Serviço): {e}")
         return False
     except Exception as e:

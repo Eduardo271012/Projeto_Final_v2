@@ -49,6 +49,8 @@ class OrdemServico(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     responsavel_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
+    setor_id = Column(Integer, ForeignKey('setores.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
+    categoria = Column(String(30), nullable=False, default='Manutenção')
     custo_total = Column(Integer)
     descricao = Column(String(500), nullable=False)
     status_os = Column(String(25), nullable=False)
@@ -58,6 +60,7 @@ class OrdemServico(Base):
     status_delete = Column(Boolean, default=True, nullable=False)
 
     responsavel = relationship('Usuario', back_populates='ordens_servico_atribuidas')
+    setor = relationship('Setor')
     equipamentos_associados = relationship('OrdemServicoEquipamento', back_populates='ordem_servico')
 
 

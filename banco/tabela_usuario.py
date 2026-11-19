@@ -1,13 +1,17 @@
-from datetime import datetime, timezone
-from database import db
-from flask_login import UserMixin
+from sqlalchemy import func, select
+
+from database import Usuario, db_session
 
 
-class Usuario(db.Model, UserMixin):
-    __tablename__ = "usuarios"
+def select_comuns():
+    consulta = (
+        select(Usuario)
+        .where(Usuario.papel == "usuario")
+        .order_by(Usuario.id.asc())
+    )
+    return db_session.execute(consulta).scalars().all()
 
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(150), unique=True, nullable=False)
-    senha_hash = db.Column(db.String(255), nullable=False)
-    criado_em = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+def select_quantidade_comuns():
+    consulta = select(func.count(Usuario.id)).where(Usuario.papel == "usuario")
+    return db_session.execute(consulta).scalar_one()

@@ -48,17 +48,19 @@
             </div>
 
             <!-- Cartão 4: Funcionários -->
+            {% if current_user.papel == 'admin' %}
             <div class="cartao-dashboard cartao-menu-wrapper">
-                <div class="cartao-valor">{{ total_funcionarios }}</div>
+                <div class="cartao-valor">{{ total_usuarios }}</div>
                 <div class="cartao-label">Funcionários</div>
 
                 <div class="cartao-dropdown-card">
                     <div class="perfil-card-titulo">FUNCIONÁRIOS</div>
                     <div class="perfil-card-divisor"></div>
-                    <div class="perfil-card-info">Acesse a equipe técnica e colaboradores.</div>
-                    <a href="{{ url_for('funcionarios') }}" class="perfil-card-link">Ver lista de funcionários →</a>
+                    <div class="perfil-card-info">Acesse a lista de funcionários cadastrados no sistema.</div>
+                    <a href="{{ url_for('funcionarios') }}" class="perfil-card-link">Ver funcionários →</a>
                 </div>
             </div>
+            {% endif %}
         </div>
 
         <h3 class="secao-dashboard-titulo">Status das Ordens de Serviço</h3>

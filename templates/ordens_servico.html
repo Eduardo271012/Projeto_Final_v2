@@ -17,21 +17,21 @@
             <h2 class="card-titulo">{% if editar %}EDITAR{% else %}CADASTRAR{% endif %} OS</h2>
             <form method="POST" action="{{ url_for('cadastro_ordem_view') if not editar else url_for('editar_ordem_servico', ordem_id=editar.id)}}">
                 <div class="campo-formulario">
-                    <label for="responsavel_id">Funcionário (Responsável)</label>
+                    <label for="responsavel_id">Funcionário responsável</label>
                     <select id="responsavel_id" name="responsavel_id" required class="campo-input">
-                        {% if funcionarios %}
+                        {% if usuarios %}
                             {% if not editar %}
-                                <option value="" disabled selected>Selecione o Funcionário</option>
+                                <option value="" disabled selected>Selecione o funcionário</option>
                             {% endif %}
-                            {% for funcionario in funcionarios %}
+                            {% for usuario in usuarios %}
                                 {% if editar %}
-                                    {% if funcionario.id == editar.responsavel_id %}
-                                        <option value="{{ funcionario.id }}" selected>{{ funcionario.nome }}</option>
+                                    {% if usuario.id == editar.responsavel_id %}
+                                        <option value="{{ usuario.id }}" selected>{{ usuario.nome }}</option>
                                     {% else %}
-                                        <option value="{{ funcionario.id }}">{{ funcionario.nome }}</option>
+                                        <option value="{{ usuario.id }}">{{ usuario.nome }}</option>
                                     {% endif %}
                                 {% else %}
-                                    <option value="{{ funcionario.id }}">{{ funcionario.nome }}</option>
+                                    <option value="{{ usuario.id }}">{{ usuario.nome }}</option>
                                 {% endif %}
                             {% else %}
                                 <option value="" disabled>Não existem funcionários cadastrados</option>
@@ -144,7 +144,7 @@
             {% for os in ordens %}
                 <tr>
                     <td>{{ os.id }}</td>
-                    <td>{{ os.funcionario.nome if os.funcionario else 'Não atribuído' }}</td>
+                    <td>{{ os.responsavel.nome if os.responsavel else 'Não atribuído' }}</td>
                     <td>{{ os.descricao }}</td>
                     <td>{{ os.status_os }}</td>
                     <td>{{ os.prioridade }}</td>

@@ -54,17 +54,15 @@
                     <th>Id</th>
                     <th>Nome</th>
                     <th>Descrição</th>
-                    <th>Funcionários</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
-            {% for setor, total in setores %}
+            {% for setor in setores %}
                 <tr>
                     <td>{{ setor.id }}</td>
                     <td>{{ setor.nome }}</td>
                     <td>{{ setor.descricao }}</td>
-                    <td>{{ total }}</td>
                     <td class="acoes">{% if excluidos %}<a href="{{ url_for('restaurar_setor', setor_id=setor.id) }}" class="design-btn-direita">Restaurar</a>{% else %}<a href="{{ url_for('excluir_setor', setor_id=setor.id) }}" class="design-btn-direita excluir-btn">Excluir</a><a href="{{ url_for('editar_setor', setor_id=setor.id) }}" class="design-btn-direita">Editar</a>{% endif %}</td>
                 </tr>
             {% endfor %}

@@ -2,23 +2,31 @@
 CREATE DATABASE IF NOT EXISTS quarks_solucoes;
 USE quarks_solucoes;
 
-CREATE TABLE IF NOT EXISTS usuarios (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-
-    nome VARCHAR(50) NOT NULL,
-    senha_hash VARCHAR(255) NOT NULL,
-    email VARCHAR(120) NOT NULL UNIQUE,
-    papel VARCHAR(20) NOT NULL DEFAULT 'usuario',
-    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS setores (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 
     nome VARCHAR(50) NOT NULL,
     descricao TEXT,
     status_delete BOOL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS usuarios (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+
+    nome VARCHAR(50) NOT NULL,
+    senha_hash VARCHAR(255) NOT NULL,
+    email VARCHAR(120) NOT NULL UNIQUE,
+    cpf VARCHAR(11) UNIQUE,
+    setor_id INT,
+    funcao VARCHAR(100),
+    papel VARCHAR(20) NOT NULL DEFAULT 'usuario',
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_usuario_setor
+        FOREIGN KEY (setor_id) REFERENCES setores(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS equipamentos (
@@ -45,22 +53,6 @@ CREATE TABLE IF NOT EXISTS recursos (
         ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS funcionarios (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-    setor_id INT,
-
-	cpf BIGINT UNIQUE NOT NULL,
-    nome VARCHAR(50) NOT NULL,
-    email VARCHAR(100) UNIQUE,
-    funcao VARCHAR(50),
-    status_delete BOOL DEFAULT 1,
-
-    CONSTRAINT fk_funcionario_setor
-		FOREIGN KEY (setor_id) REFERENCES setores(id)
-        ON UPDATE CASCADE
-        ON DELETE SET NULL
-);
-
 CREATE TABLE IF NOT EXISTS ordens_servico (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     responsavel_id INT,
@@ -73,8 +65,8 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
     prioridade VARCHAR(25),
     status_delete BOOL DEFAULT 1,
 
-	CONSTRAINT fk_ordem_servico_funcionario
-		FOREIGN KEY (responsavel_id) REFERENCES funcionarios(id)
+	CONSTRAINT fk_ordem_servico_usuario
+		FOREIGN KEY (responsavel_id) REFERENCES usuarios(id)
 		ON UPDATE CASCADE
 		ON DELETE SET NULL
 );
@@ -99,7 +91,7 @@ CREATE TABLE IF NOT EXISTS ordens_servico_equipamentos (
 
 -- Dados de demonstração para testar os formulários e listagens da aplicação.
 -- A carga pode ser executada novamente: não apaga nem duplica os registros abaixo.
--- A tabela usuarios fica vazia; crie sua conta pelo formulário de cadastro da aplicação.
+-- Crie as contas pelo formulário de cadastro; novas contas são usuários comuns.
 SET NAMES utf8mb4;
 
 INSERT INTO setores (nome, descricao, status_delete)
@@ -168,67 +160,25 @@ WHERE e.nome = 'Compressor de Ar' AND e.modelo = 'CA-50'
   )
 LIMIT 1;
 
-INSERT INTO funcionarios (setor_id, cpf, nome, email, funcao, status_delete)
-SELECT s.id, 52998224725, 'Marina Costa', 'marina.costa@exemplo.com', 'opcao1', 1
-FROM setores s
-WHERE s.nome = 'Manutenção'
-  AND NOT EXISTS (
-      SELECT 1 FROM funcionarios
-      WHERE cpf = 52998224725 OR email = 'marina.costa@exemplo.com'
-  )
-LIMIT 1;
-
-INSERT INTO funcionarios (setor_id, cpf, nome, email, funcao, status_delete)
-SELECT s.id, 11144477735, 'Rafael Souza', 'rafael.souza@exemplo.com', 'opcao2', 1
-FROM setores s
-WHERE s.nome = 'Produção'
-  AND NOT EXISTS (
-      SELECT 1 FROM funcionarios
-      WHERE cpf = 11144477735 OR email = 'rafael.souza@exemplo.com'
-  )
-LIMIT 1;
-
-INSERT INTO funcionarios (setor_id, cpf, nome, email, funcao, status_delete)
-SELECT s.id, 93541134780, 'Camila Oliveira', 'camila.oliveira@exemplo.com', 'opcao3', 1
-FROM setores s
-WHERE s.nome = 'Administrativo'
-  AND NOT EXISTS (
-      SELECT 1 FROM funcionarios
-      WHERE cpf = 93541134780 OR email = 'camila.oliveira@exemplo.com'
-  )
-LIMIT 1;
+INSERT INTO ordens_servico
+    (responsavel_id, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
+SELECT NULL, 850, 'Revisão preventiva do torno mecânico', 'Aberta', '2026-11-10', NULL, 'Baixa', 1
+WHERE NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Revisão preventiva do torno mecânico');
 
 INSERT INTO ordens_servico
     (responsavel_id, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
-SELECT f.id, 850, 'Revisão preventiva do torno mecânico', 'Aberta', '2026-11-10', NULL, 'Baixa', 1
-FROM funcionarios f
-WHERE f.email = 'marina.costa@exemplo.com'
-  AND NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Revisão preventiva do torno mecânico')
-LIMIT 1;
+SELECT NULL, 2400, 'Substituição de sensor da esteira', 'Em andamento', '2026-11-12', NULL, 'Alta', 1
+WHERE NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Substituição de sensor da esteira');
 
 INSERT INTO ordens_servico
     (responsavel_id, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
-SELECT f.id, 2400, 'Substituição de sensor da esteira', 'Em andamento', '2026-11-12', NULL, 'Alta', 1
-FROM funcionarios f
-WHERE f.email = 'rafael.souza@exemplo.com'
-  AND NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Substituição de sensor da esteira')
-LIMIT 1;
+SELECT NULL, 620, 'Inspeção do compressor de ar', 'Pausada', '2026-11-14', NULL, 'Média', 1
+WHERE NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Inspeção do compressor de ar');
 
 INSERT INTO ordens_servico
     (responsavel_id, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
-SELECT f.id, 620, 'Inspeção do compressor de ar', 'Pausada', '2026-11-14', NULL, 'Média', 1
-FROM funcionarios f
-WHERE f.email = 'marina.costa@exemplo.com'
-  AND NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Inspeção do compressor de ar')
-LIMIT 1;
-
-INSERT INTO ordens_servico
-    (responsavel_id, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
-SELECT f.id, 1350, 'Calibração da prensa hidráulica', 'Concluída', '2026-11-01', '2026-11-03', 'Baixa', 1
-FROM funcionarios f
-WHERE f.email = 'rafael.souza@exemplo.com'
-  AND NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Calibração da prensa hidráulica')
-LIMIT 1;
+SELECT NULL, 1350, 'Calibração da prensa hidráulica', 'Concluída', '2026-11-01', '2026-11-03', 'Baixa', 1
+WHERE NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Calibração da prensa hidráulica');
 
 INSERT INTO ordens_servico_equipamentos (os_id, equipamento_id, quantidade)
 SELECT os.id, e.id, 1

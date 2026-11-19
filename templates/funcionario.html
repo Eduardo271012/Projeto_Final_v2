@@ -2,63 +2,42 @@
 {% block conteudo %}
     <div class="cabecalho-pagina">
         <div class="barra-titulo-linha">
-            <p class="subtitulo">FUNCIONÁRIO</p>
+            <p class="subtitulo">FUNCIONÁRIOS</p>
         </div>
-        {% if not editar %}
+        {% if editar %}
         <div class="container-botao-direita">
-            <a href="{{ url_for('cadastro_funcionario') }}" class="design-btn-direita">CADASTRAR</a>
+            <a href="{{ url_for('funcionarios') }}" class="design-btn-direita">VOLTAR</a>
         </div>
         {% endif %}
     </div>
 
-    {% if request.endpoint == 'cadastro_funcionario' %}
+    {% if editar %}
     <div class="container-perfil">
         <section class="container-perfil">
-            <h2 class="card-titulo">CADASTRAR FUNCIONÁRIO</h2>
-            <form method="POST" action="{{ url_for('cadastro_funcionario') }}">
-                <div class="campo-formulario">
-                    <label for="nome">Nome</label>
-                    <input type="text" id="nome" name="nome" required placeholder="Ex: João" class="campo-input">
-                </div>
-                <div class="campo-formulario">
-                    <label for="cpf">CPF</label>
-                    <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" class="campo-input">
-                </div>
-                <div class="campo-formulario">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="Ex: aaaaa@gmail.com" CLASS="campo-input">
-                </div>
+            <h2 class="card-titulo">ATRIBUIR SETOR E FUNÇÃO</h2>
+            <p>{{ editar.nome }} — {{ editar.email }}</p>
+            <form method="POST" action="{{ url_for('editar_funcionario', usuario_id=editar.id) }}">
                 <div class="campo-formulario">
                     <label for="setor">Setor</label>
-                    <select name="setor" id="setor" required class="campo-input">
-                        <option value="" disabled selected>Selecione um Setor</option>
-                        {% for setor, total in setores %}
-                            <option value="{{ setor.id }}">{{ setor.nome }}</option>
-                        {% else %}
-                            <option value="" disabled>Não Existem Setores Cadastrados</option>
+                    <select id="setor" name="setor" required class="campo-input">
+                        <option value="" disabled {% if not editar.setor_id %}selected{% endif %}>Selecione um setor</option>
+                        {% for setor in setores %}
+                            <option value="{{ setor.id }}" {% if editar.setor_id == setor.id %}selected{% endif %}>{{ setor.nome }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="campo-formulario">
-                    <label for="funcao">Função</label>
-                    <select id="funcao" name="funcao" class="campo-input">
-                        <option value="opcao1">Opção 1</option>
-                        <option value="opcao2">Opção 2</option>
-                        <option value="opcao3">Opção 3</option>
-                    </select>
+                    <label for="funcao">Função ou cargo</label>
+                    <input type="text" id="funcao" name="funcao" maxlength="100" required class="campo-input" value="{{ editar.funcao or '' }}" placeholder="Ex: Técnico de manutenção">
                 </div>
-
                 <div class="botoes-formulario">
-                    <button type="submit" class="botao botao-enviar">Enviar</button>
-                    <button type="reset" class="botao botao-redefinir">Redefinir</button>
+                    <button type="submit" class="botao botao-enviar">Salvar</button>
+                    <a href="{{ url_for('funcionarios') }}" class="botao botao-voltar">Cancelar</a>
                 </div>
             </form>
         </section>
     </div>
-    {% endif %}
-
-    <!-- CORREÇÃO: A tabela de listagem agora só renderiza se o formulário de cadastro estiver fechado -->
-    {% if request.endpoint != 'cadastro_funcionario' %}
+    {% else %}
     <section class="container-perfil">
         <h2>LISTA DE FUNCIONÁRIOS</h2>
         <form class="busca-lista" action="{{ url_for('funcionarios') }}" method="get" role="search">
@@ -67,7 +46,7 @@
             <button type="submit">Buscar</button>
             {% if termo %}<a href="{{ url_for('funcionarios') }}" class="limpar-busca">Limpar</a>{% endif %}
         </form>
-        {% if funcionarios %}
+        {% if usuarios %}
         <table>
             <thead>
                 <tr>
@@ -76,20 +55,22 @@
                     <th>CPF</th>
                     <th>Email</th>
                     <th>Setor</th>
-                    <th>Função</th>
+                    <th>Função/Cargo</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
-            {% for funcionario, setor in funcionarios %}
+            {% for usuario in usuarios %}
                 <tr>
-                    <td>{{ funcionario.id }}</td>
-                    <td>{{ funcionario.nome }}</td>
-                    <td>{{ funcionario.cpf }}</td>
-                    <td>{{ funcionario.email }}</td>
-                    <td>{{ setor.nome }}</td>
-                    <td>{{ funcionario.funcao }}</td>
-                    <td class="acoes"></td>
+                    <td>{{ usuario.id }}</td>
+                    <td>{{ usuario.nome }}</td>
+                    <td>{{ usuario.cpf or 'Não informado' }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td>{{ usuario.setor.nome if usuario.setor else 'Não atribuído' }}</td>
+                    <td>{{ usuario.funcao or 'Não atribuída' }}</td>
+                    <td class="acoes">
+                        <a href="{{ url_for('editar_funcionario', usuario_id=usuario.id) }}" class="design-btn-direita">Atribuir/Editar</a>
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

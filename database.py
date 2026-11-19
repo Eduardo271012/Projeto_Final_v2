@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, Column, Date, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import declarative_base, relationship, scoped_session, sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
 
-engine = create_engine("mysql+pymysql://root:senaisp@localhost:3306/quarks_solucoes")
+engine = create_engine("mysql+pymysql://edu:senaisp@10.135.232.32:3306/quarks_solucoes")
 db_session = scoped_session(sessionmaker(bind=engine))
 Base = declarative_base()
 

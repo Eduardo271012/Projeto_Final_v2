@@ -50,6 +50,12 @@
     {% if request.endpoint != 'cadastro_equipamento' and not editar %}
     <section class="container-perfil">
         <h2>{% if excluidos %}LISTA DE EQUIPAMENTOS EXCLUÍDOS{% else %}LISTA DE EQUIPAMENTOS{% endif %}</h2>
+        <form class="busca-lista" action="{{ url_for(request.endpoint) }}" method="get" role="search">
+            <label for="busca-equipamentos">Buscar equipamentos</label>
+            <input id="busca-equipamentos" type="search" name="q" value="{{ termo or '' }}" placeholder="Nome, modelo ou ID" maxlength="100">
+            <button type="submit">Buscar</button>
+            {% if termo %}<a href="{{ url_for(request.endpoint) }}" class="limpar-busca">Limpar</a>{% endif %}
+        </form>
         {% if equipamentos %}
         <table>
             <thead>

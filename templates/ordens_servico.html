@@ -103,6 +103,12 @@
     {% if request.endpoint != 'cadastro_ordem_view' and not editar %}
     <section class="container-perfil">
         <h2>LISTA DE ORDENS DE SERVIÇO</h2>
+        <form class="busca-lista" action="{{ url_for('ordens_servico_lista_view') }}" method="get" role="search">
+            <label for="busca-ordens">Buscar ordens de serviço</label>
+            <input id="busca-ordens" type="search" name="q" value="{{ termo or '' }}" placeholder="Descrição, funcionário, status, prioridade ou ID" maxlength="100">
+            <button type="submit">Buscar</button>
+            {% if termo %}<a href="{{ url_for('ordens_servico_lista_view') }}" class="limpar-busca">Limpar</a>{% endif %}
+        </form>
         {% if ordens %}
         <table>
             <thead>

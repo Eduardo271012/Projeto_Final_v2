@@ -61,6 +61,12 @@
     {% if request.endpoint != 'cadastro_funcionario' %}
     <section class="container-perfil">
         <h2>LISTA DE FUNCIONÁRIOS</h2>
+        <form class="busca-lista" action="{{ url_for('funcionarios') }}" method="get" role="search">
+            <label for="busca-funcionarios">Buscar funcionários</label>
+            <input id="busca-funcionarios" type="search" name="q" value="{{ termo or '' }}" placeholder="Nome, CPF, e-mail, função ou setor" maxlength="100">
+            <button type="submit">Buscar</button>
+            {% if termo %}<a href="{{ url_for('funcionarios') }}" class="limpar-busca">Limpar</a>{% endif %}
+        </form>
         {% if funcionarios %}
         <table>
             <thead>

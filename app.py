@@ -1,9 +1,9 @@
 from flask import Flask, flash, redirect, render_template, request, url_for
 from flask_login import LoginManager, login_required, logout_user, login_user, current_user
-from sqlalchemy import select
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from banco import tabela_equipamento, tabela_funcionario, tabela_ordens_servico, tabela_setor
-from database import Funcionario, Setor, db_session, Usuario
+from database import Equipamento, Funcionario, OrdemServico, Setor, db_session, Usuario
 from functools import wraps
 from datetime import datetime
 
@@ -111,15 +111,35 @@ def registro():
 @app.route('/equipamentos')
 @login_required
 def equipamentos():
-    lista_equipamentos = tabela_equipamento.select_ativos()
-    return render_template('equipamento.html', equipamentos=lista_equipamentos)
+    termo = request.args.get("q", "").strip()[:100]
+    consulta = select(Equipamento).where(Equipamento.status_delete == True)
+    if termo:
+        filtros = [
+            Equipamento.nome.icontains(termo, autoescape=True),
+            Equipamento.modelo.icontains(termo, autoescape=True),
+        ]
+        if termo.isdecimal() and len(termo) <= 10:
+            filtros.append(Equipamento.id == int(termo))
+        consulta = consulta.where(or_(*filtros))
+    lista_equipamentos = db_session.execute(consulta).scalars().all()
+    return render_template('equipamento.html', equipamentos=lista_equipamentos, termo=termo)
 
 
 @app.route('/equipamentos/excluidos')
 @login_required
 def listar_equipamentos_excluidos():
-    lista_equipamentos = tabela_equipamento.select_excluidos()
-    return render_template('equipamento.html', equipamentos=lista_equipamentos, excluidos=1)
+    termo = request.args.get("q", "").strip()[:100]
+    consulta = select(Equipamento).where(Equipamento.status_delete == False)
+    if termo:
+        filtros = [
+            Equipamento.nome.icontains(termo, autoescape=True),
+            Equipamento.modelo.icontains(termo, autoescape=True),
+        ]
+        if termo.isdecimal() and len(termo) <= 10:
+            filtros.append(Equipamento.id == int(termo))
+        consulta = consulta.where(or_(*filtros))
+    lista_equipamentos = db_session.execute(consulta).scalars().all()
+    return render_template('equipamento.html', equipamentos=lista_equipamentos, excluidos=1, termo=termo)
 
 
 @app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
@@ -192,8 +212,22 @@ def restaurar_equipamento(equipamento_id):
 @app.route('/ordens_servico', methods=['GET'])
 @login_required
 def ordens_servico_lista_view():
-    lista_ordens = tabela_ordens_servico.select_todas()
-    return render_template('ordens_servico.html', ordens=lista_ordens)
+    termo = request.args.get("q", "").strip()[:100]
+    consulta = select(OrdemServico)
+    if termo:
+        filtros = [
+            OrdemServico.descricao.icontains(termo, autoescape=True),
+            OrdemServico.status_os.icontains(termo, autoescape=True),
+            OrdemServico.prioridade.icontains(termo, autoescape=True),
+            Funcionario.nome.icontains(termo, autoescape=True),
+        ]
+        if termo.isdecimal() and len(termo) <= 10:
+            filtros.append(OrdemServico.id == int(termo))
+        consulta = consulta.outerjoin(
+            Funcionario, OrdemServico.responsavel_id == Funcionario.id
+        ).where(or_(*filtros))
+    lista_ordens = db_session.execute(consulta.order_by(OrdemServico.id.asc())).scalars().all()
+    return render_template('ordens_servico.html', ordens=lista_ordens, termo=termo)
 
 
 @app.route('/servico/ordens/cadastro', methods=['GET', 'POST'])
@@ -288,15 +322,35 @@ def editar_ordem_servico(ordem_id):
 @app.route('/setor', methods=['GET'])
 @login_required
 def setor():
-    lista_setores = tabela_setor.select_ativos()
-    return render_template('setor.html', setores=lista_setores)
+    termo = request.args.get("q", "").strip()[:100]
+    lista_setores = consultar_setores(True, termo)
+    return render_template('setor.html', setores=lista_setores, termo=termo)
 
 
 @app.route('/setor/excluidos', methods=['GET'])
 @login_required
 def listar_setores_excluidos():
-    lista_setores = tabela_setor.select_excluidos()
-    return render_template('setor.html', setores=lista_setores, excluidos=1)
+    termo = request.args.get("q", "").strip()[:100]
+    lista_setores = consultar_setores(False, termo)
+    return render_template('setor.html', setores=lista_setores, excluidos=1, termo=termo)
+
+
+def consultar_setores(ativos, termo):
+    consulta = (
+        select(Setor, func.count(Funcionario.id))
+        .outerjoin(Funcionario, Setor.id == Funcionario.setor_id)
+        .where(Setor.status_delete == ativos)
+        .group_by(Setor.id)
+    )
+    if termo:
+        filtros = [
+            Setor.nome.icontains(termo, autoescape=True),
+            Setor.descricao.icontains(termo, autoescape=True),
+        ]
+        if termo.isdecimal() and len(termo) <= 10:
+            filtros.append(Setor.id == int(termo))
+        consulta = consulta.where(or_(*filtros))
+    return db_session.execute(consulta).all()
 
 
 @app.route('/setor/cadastro', methods=['GET', 'POST'])
@@ -364,8 +418,25 @@ def restaurar_setor(setor_id):
 @login_required
 
 def funcionarios():
-    lista_funcionarios = tabela_funcionario.select_todos()
-    return render_template('funcionario.html', funcionarios=lista_funcionarios)
+    termo = request.args.get("q", "").strip()[:100]
+    consulta = (
+        select(Funcionario, Setor)
+        .join(Setor, Funcionario.setor_id == Setor.id)
+        .order_by(Funcionario.id.asc())
+    )
+    if termo:
+        filtros = [
+            Funcionario.nome.icontains(termo, autoescape=True),
+            Funcionario.email.icontains(termo, autoescape=True),
+            Funcionario.funcao.icontains(termo, autoescape=True),
+            cast(Funcionario.cpf, String).contains(termo, autoescape=True),
+            Setor.nome.icontains(termo, autoescape=True),
+        ]
+        if termo.isdecimal() and len(termo) <= 10:
+            filtros.append(Funcionario.id == int(termo))
+        consulta = consulta.where(or_(*filtros))
+    lista_funcionarios = db_session.execute(consulta).all()
+    return render_template('funcionario.html', funcionarios=lista_funcionarios, termo=termo)
 
 @app.route('/funcionarios/cadastro', methods=['GET', 'POST'])
 @login_required

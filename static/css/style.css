@@ -938,6 +938,50 @@ td.acoes {
     user-select: none;
 }
 
+.busca-lista {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0;
+}
+
+.busca-lista label {
+    font-weight: 600;
+}
+
+.busca-lista input {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 9px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font: inherit;
+}
+
+.busca-lista button {
+    padding: 9px 14px;
+    border: 0;
+    border-radius: 4px;
+    background: #0284c7;
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.busca-lista button:hover {
+    background: #0369a1;
+}
+
+.limpar-busca {
+    color: #0369a1;
+    text-decoration: none;
+}
+
+.limpar-busca:hover {
+    text-decoration: underline;
+}
+
 .container-perfil {
     max-width: 600px;
     margin: 40px auto;

@@ -2,7 +2,16 @@
 {% block conteudo %}
     <div class="cabecalho-pagina">
         <div class="barra-titulo-linha">
-            <p class="subtitulo">ORDEM DE SERVIÇO #{{ ordem.id }}</p>
+            <p class="subtitulo">
+                <span class="identificador-os identificador-os-detalhes">
+                    {% if ordem.identificacao.startswith('OS nº ') %}
+                        <span>OS nº</span>
+                        <strong>{{ ordem.identificacao[6:] }}</strong>
+                    {% else %}
+                        <strong>{{ ordem.identificacao }}</strong>
+                    {% endif %}
+                </span>
+            </p>
         </div>
         <div class="container-botao-direita">
             <a href="{{ url_for('ordens_servico_lista_view') }}" class="design-btn-direita">VOLTAR PARA LISTA DE ORDENS DE SERVIÇO</a>
@@ -25,7 +34,7 @@
             </thead>
             <tbody>
                 <tr>
-                    <th scope="row">Identificação</th>
+                    <th scope="row">Número da OS</th>
                     <td>{{ ordem.identificacao }}</td>
                 </tr>
                 <tr>
@@ -63,6 +72,32 @@
                     <td>{{ ordem.status_os }}</td>
                 </tr>
                 <tr>
+                    <th scope="row">Agendamento</th>
+                    <td>{{ ordem.agendada_para.strftime('%d/%m/%Y às %H:%M') if ordem.agendada_para else 'Não agendada' }}</td>
+                </tr>
+                {% if ordem.status_os == 'Pausada' %}
+                <tr>
+                    <th scope="row">Motivo da pausa</th>
+                    <td>{{ ordem.motivo_pausa or 'Não informado' }}{% if ordem.previsao_retomada %}<br>Previsão de retomada: {{ ordem.previsao_retomada.strftime('%d/%m/%Y') }}{% endif %}</td>
+                </tr>
+                {% endif %}
+                {% if ordem.relato_conclusao %}
+                <tr>
+                    <th scope="row">Relato de conclusão</th>
+                    <td>{{ ordem.relato_conclusao }}</td>
+                </tr>
+                {% endif %}
+                {% if ordem.aceite_status != 'nao_solicitado' %}
+                <tr>
+                    <th scope="row">Aceite do solicitante</th>
+                    <td>
+                        {{ {'pendente': 'Aguardando resposta', 'aceito': 'Aceito', 'contestado': 'Contestado'}.get(ordem.aceite_status, ordem.aceite_status) }}
+                        {% if ordem.aceite_em %}<span class="os-dado-secundario">{{ ordem.aceite_em.strftime('%d/%m/%Y às %H:%M') }}</span>{% endif %}
+                        {% if ordem.observacao_aceite %}<span class="os-dado-secundario">{{ ordem.observacao_aceite }}</span>{% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                <tr>
                     <th scope="row">Prioridade</th>
                     <td>{{ ordem.prioridade or '-' }}</td>
                 </tr>
@@ -90,6 +125,167 @@
                 </tr>
             </tbody>
         </table>
+    </section>
+
+    {% if pode_aceitar %}
+    <section class="container-perfil fluxo-os">
+        <h2>CONFIRMAR O ATENDIMENTO</h2>
+        <p>O técnico informou que o serviço foi concluído. Você pode confirmar ou contestar o resultado.</p>
+        <form class="resposta-aceite-os" method="POST" action="{{ url_for('responder_aceite_ordem_servico', ordem_id=ordem.id) }}">
+            <label for="observacao-aceite">Observação (obrigatória para contestar)</label>
+            <textarea id="observacao-aceite" name="observacao" maxlength="1000" rows="3" placeholder="Se contestar, explique o que ainda precisa ser corrigido."></textarea>
+            <div class="acoes-fluxo-os">
+                <button type="submit" name="decisao" value="aceitar" class="design-btn-direita">Confirmar conclusão</button>
+                <button type="submit" name="decisao" value="contestar" class="design-btn-direita excluir-btn">Contestar e reabrir</button>
+            </div>
+        </form>
+    </section>
+    {% endif %}
+
+    {% if pode_atualizar %}
+    <section class="container-perfil fluxo-os">
+        <h2>ETAPA DO ATENDIMENTO</h2>
+        {% if ordem.status_os == 'Aberta' %}
+            <form method="POST" action="{{ url_for('atualizar_fluxo_ordem_servico', ordem_id=ordem.id) }}">
+                <input type="hidden" name="acao" value="iniciar">
+                <button type="submit" class="design-btn-direita">Iniciar atendimento</button>
+            </form>
+        {% elif ordem.status_os == 'Em andamento' %}
+            <div class="acoes-fluxo-os">
+                <form method="POST" action="{{ url_for('atualizar_fluxo_ordem_servico', ordem_id=ordem.id) }}">
+                    <input type="hidden" name="acao" value="pausar">
+                    <label for="motivo-pausa">Motivo da pausa</label>
+                    <textarea id="motivo-pausa" name="motivo_pausa" maxlength="1000" rows="2" required placeholder="Informe o que está impedindo a continuidade."></textarea>
+                    <label for="previsao-retomada">Previsão de retomada (opcional)</label>
+                    <input id="previsao-retomada" type="date" name="previsao_retomada">
+                    <button type="submit" class="design-btn-direita">Pausar atendimento</button>
+                </form>
+                <form method="POST" action="{{ url_for('atualizar_fluxo_ordem_servico', ordem_id=ordem.id) }}">
+                    <input type="hidden" name="acao" value="concluir">
+                    <label for="relato-conclusao">Relato do serviço realizado</label>
+                    <textarea id="relato-conclusao" name="relato_conclusao" maxlength="4000" rows="3" required placeholder="Descreva o que foi feito e o resultado."></textarea>
+                    <button type="submit" class="design-btn-direita">Enviar para aceite</button>
+                </form>
+            </div>
+        {% elif ordem.status_os == 'Pausada' %}
+            <p><strong>Motivo:</strong> {{ ordem.motivo_pausa }}</p>
+            <form method="POST" action="{{ url_for('atualizar_fluxo_ordem_servico', ordem_id=ordem.id) }}">
+                <input type="hidden" name="acao" value="retomar">
+                <button type="submit" class="design-btn-direita">Retomar atendimento</button>
+            </form>
+        {% endif %}
+        {% if current_user.papel == 'admin' and ordem.status_os in ['Aberta', 'Em andamento', 'Pausada'] %}
+            <form method="POST" action="{{ url_for('atualizar_fluxo_ordem_servico', ordem_id=ordem.id) }}" class="cancelar-os-form">
+                <input type="hidden" name="acao" value="cancelar">
+                <label for="motivo-cancelamento">Motivo do cancelamento (opcional)</label>
+                <textarea id="motivo-cancelamento" name="motivo_cancelamento" maxlength="1000" rows="2"></textarea>
+                <button type="submit" class="design-btn-direita excluir-btn">Cancelar OS</button>
+            </form>
+        {% endif %}
+    </section>
+
+    <section class="container-perfil fluxo-os">
+        <h2>AGENDAMENTO</h2>
+        <form class="form-agendamento-os" method="POST" action="{{ url_for('agendar_ordem_servico', ordem_id=ordem.id) }}">
+            <label for="agendada-para">Data e horário</label>
+            <input id="agendada-para" type="datetime-local" name="agendada_para" value="{{ ordem.agendada_para.strftime('%Y-%m-%dT%H:%M') if ordem.agendada_para else '' }}">
+            <button type="submit" class="design-btn-direita">Salvar agendamento</button>
+        </form>
+    </section>
+
+    <section class="container-perfil fluxo-os">
+        <h2>REGISTRAR ATIVIDADE</h2>
+        <form class="form-atividade-os" method="POST" action="{{ url_for('registrar_atividade_ordem_servico', ordem_id=ordem.id) }}">
+            <label for="descricao-atividade">Observação ou etapa realizada</label>
+            <textarea id="descricao-atividade" name="descricao" maxlength="3000" rows="3" required placeholder="Registre testes, diagnóstico, etapas realizadas ou observações."></textarea>
+            <button type="submit" class="design-btn-direita">Adicionar ao diário</button>
+        </form>
+    </section>
+    {% endif %}
+
+    <section class="container-perfil fluxo-os">
+        <h2>MATERIAIS CONSUMIDOS</h2>
+        {% if materiais_consumidos %}
+            <div class="tabela-historico-os">
+                <table>
+                    <thead><tr><th>Material</th><th>Quantidade</th><th>Registrado por</th><th>Data</th></tr></thead>
+                    <tbody>
+                    {% for material in materiais_consumidos %}
+                        <tr>
+                            <td>{{ material.material_nome }}</td>
+                            <td>{{ material.quantidade }}</td>
+                            <td>{{ material.usuario_nome }}</td>
+                            <td>{{ material.criado_em.strftime('%d/%m/%Y %H:%M') if material.criado_em else '-' }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="historico-os-vazio">Nenhum material consumido registrado.</p>
+        {% endif %}
+        {% if pode_atualizar and materiais_disponiveis %}
+            <form class="form-material-os" method="POST" action="{{ url_for('registrar_material_consumido_os', ordem_id=ordem.id) }}">
+                <div class="form-material-campo">
+                    <label for="material-os">Item do estoque</label>
+                    <select id="material-os" name="equipamento_id" required>
+                        {% for material in materiais_disponiveis %}
+                            <option value="{{ material.id }}">{{ material.nome }} — estoque: {{ material.quantidade }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-material-campo">
+                    <label for="quantidade-material-os">Quantidade consumida</label>
+                    <input id="quantidade-material-os" type="number" name="quantidade" min="1" step="1" required>
+                </div>
+                <button type="submit" class="design-btn-direita">Registrar consumo</button>
+            </form>
+        {% elif pode_atualizar %}
+            <p class="historico-os-vazio">Não há itens ativos com estoque disponível.</p>
+        {% endif %}
+    </section>
+
+    <section class="container-perfil fluxo-os">
+        <h2>ANEXOS E EVIDÊNCIAS ({{ anexos|length }}/5)</h2>
+        {% if anexos %}
+            <ul class="lista-anexos-os">
+                {% for anexo in anexos %}
+                    <li>
+                        <a href="{{ url_for('baixar_anexo_ordem_servico', ordem_id=ordem.id, anexo_id=anexo.id) }}">{{ anexo.nome_original }}</a>
+                        <span>{{ anexo.usuario_nome }} · {{ anexo.criado_em.strftime('%d/%m/%Y %H:%M') if anexo.criado_em else '-' }} · {{ (anexo.tamanho_bytes / 1048576)|round(2) }} MB</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="historico-os-vazio">Nenhum anexo enviado.</p>
+        {% endif %}
+        {% if pode_atualizar and anexos|length < 5 %}
+            <form class="form-anexos-os" method="POST" enctype="multipart/form-data" action="{{ url_for('anexar_arquivo_ordem_servico', ordem_id=ordem.id) }}">
+                <label for="anexos-os">Imagens ou PDF (até 5 MB cada, máximo de 5)</label>
+                <input id="anexos-os" type="file" name="anexos" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf" multiple required>
+                <button type="submit" class="design-btn-direita">Enviar anexos</button>
+            </form>
+        {% endif %}
+    </section>
+
+    <section class="container-perfil fluxo-os">
+        <h2>DIÁRIO DE ATIVIDADES</h2>
+        {% if atividades %}
+            <ol class="linha-tempo-os">
+                {% for atividade in atividades %}
+                    <li>
+                        <div>
+                            <strong>{{ atividade.usuario_nome }}</strong>
+                            <span>{{ 'Administrador' if atividade.usuario_papel == 'admin' else 'Técnico' if atividade.usuario_papel == 'tecnico' else 'Funcionário' }}</span>
+                            <time>{{ atividade.criado_em.strftime('%d/%m/%Y às %H:%M') if atividade.criado_em else '-' }}</time>
+                        </div>
+                        <p>{{ atividade.descricao }}</p>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="historico-os-vazio">Nenhuma atividade registrada até o momento.</p>
+        {% endif %}
     </section>
 
     <section class="container-perfil atalho-conversa-os">

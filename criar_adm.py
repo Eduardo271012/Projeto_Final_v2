@@ -10,8 +10,8 @@ def criar_usuario():
 
     if admin is None:
         admin = Usuario(
-            nome="Admin",
-            email="adm.pagotto@gmail.com",
+            nome="Teste",
+            email="adm.teste@gmail.com",
             papel="admin",
         )
         admin.set_password("quarks26")

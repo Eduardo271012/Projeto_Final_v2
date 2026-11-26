@@ -1,8 +1,7 @@
 from datetime import datetime
-import unicodedata
-import re
 from flask import flash
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from banco.auditoria import registrar_evento
@@ -11,15 +10,23 @@ from database import (
     HistoricoOrdemServico,
     OrdemServico,
     OrdemServicoEquipamento,
+    SequenciaOSAnual,
     Setor,
     Usuario,
     db_session,
 )
 
 CATEGORIAS_OS = ("Manutenção", "Limpeza", "Elétrica", "Hidráulica", "Infraestrutura")
-STATUS_OS = ("Aberta", "Em andamento", "Pausada", "Concluída", "Cancelada")
+STATUS_OS = (
+    "Aberta",
+    "Em andamento",
+    "Pausada",
+    "Aguardando aceite",
+    "Concluída",
+    "Cancelada",
+)
 ROTULOS_HISTORICO = {
-    "identificacao": "Identificação",
+    "identificacao": "Número da OS",
     "responsavel_id": "Funcionário responsável",
     "tecnico_responsavel_id": "Técnico responsável",
     "setor_id": "Setor",
@@ -30,6 +37,12 @@ ROTULOS_HISTORICO = {
     "custo_total": "Custo estimado",
     "data_solicitacao": "Data da solicitação",
     "data_execucao": "Data da execução",
+    "agendada_para": "Agendamento",
+    "motivo_pausa": "Motivo da pausa",
+    "previsao_retomada": "Previsão de retomada",
+    "relato_conclusao": "Relato de conclusão",
+    "aceite_status": "Aceite do solicitante",
+    "observacao_aceite": "Observação do aceite",
     "equipamentos": "Equipamentos",
 }
 
@@ -122,12 +135,25 @@ def select_todas():
     ordens_sql = select(OrdemServico).order_by(OrdemServico.id.asc())
     return db_session.execute(ordens_sql).scalars().all()
 
-def gerar_identificacao(usuario):
-    data = datetime.now().strftime("%Y-%d-%H%S")
-    nfkd = unicodedata.normalize('NFKD', usuario)
-    sem_acento = "".join([c for c in nfkd if not unicodedata.combining(c)])
-    nome = re.sub(r'[^a-zA-Z0-9]', '', sem_acento).lower()
-    return f"{data}-{nome[:17]}"
+def gerar_identificacao(numero, ano=None):
+    ano = ano or datetime.now().year
+    return f"OS-{ano % 100:02d}-{int(numero):04d}"
+
+
+def proximo_numero_os(ano):
+    db_session.execute(
+        mysql_insert(SequenciaOSAnual)
+        .values(ano=ano, ultimo_numero=0)
+        .on_duplicate_key_update(ano=ano)
+    )
+    db_session.execute(
+        update(SequenciaOSAnual)
+        .where(SequenciaOSAnual.ano == ano)
+        .values(ultimo_numero=SequenciaOSAnual.ultimo_numero + 1)
+    )
+    return db_session.execute(
+        select(SequenciaOSAnual.ultimo_numero).where(SequenciaOSAnual.ano == ano)
+    ).scalar_one()
 
 
 def capturar_estado_historico(ordem, equipamentos_ids=None):
@@ -157,7 +183,9 @@ def capturar_estado_historico(ordem, equipamentos_ids=None):
     ]
 
     def formatar_data(data):
-        return data.strftime("%d/%m/%Y") if data else "-"
+        if not data:
+            return "-"
+        return data.strftime("%d/%m/%Y %H:%M" if isinstance(data, datetime) else "%d/%m/%Y")
 
     return {
         "identificacao": ordem.identificacao or "-",
@@ -171,6 +199,12 @@ def capturar_estado_historico(ordem, equipamentos_ids=None):
         "custo_total": f"R$ {ordem.custo_total if ordem.custo_total is not None else 0}",
         "data_solicitacao": formatar_data(ordem.data_solicitacao),
         "data_execucao": formatar_data(ordem.data_execucao),
+        "agendada_para": formatar_data(ordem.agendada_para),
+        "motivo_pausa": ordem.motivo_pausa or "-",
+        "previsao_retomada": formatar_data(ordem.previsao_retomada),
+        "relato_conclusao": ordem.relato_conclusao or "-",
+        "aceite_status": ordem.aceite_status or "-",
+        "observacao_aceite": ordem.observacao_aceite or "-",
         "equipamentos": ", ".join(nomes_equipamentos) if nomes_equipamentos else "Nenhum",
     }
 
@@ -182,6 +216,8 @@ def registrar_historico(
     estado_novo,
     acao="Edição",
 ):
+    ordem = db_session.get(OrdemServico, ordem_id)
+    identificacao = ordem.identificacao if ordem else f"OS interna #{ordem_id}"
     alteracoes = []
     for campo, rotulo in ROTULOS_HISTORICO.items():
         valor_anterior = estado_anterior.get(campo, "-")
@@ -201,7 +237,7 @@ def registrar_historico(
         usuario_id,
         "ordens_servico",
         acao,
-        f"OS #{ordem_id}",
+        identificacao,
         ordem_id,
         alteracoes,
     )
@@ -211,7 +247,6 @@ def salvar(
     os_id,
     responsavel_id,
     tecnico_responsavel_id,
-    identificacao,
     descricao,
     status_os,
     prioridade,
@@ -264,6 +299,8 @@ def salvar(
             flash("A data de execução não pode ser anterior à data da solicitação", "error")
             return False
 
+        ano_identificacao = datetime.now().year
+        numero = proximo_numero_os(ano_identificacao)
         ordem = OrdemServico(
             id=os_id or None,
             responsavel_id=int(responsavel_id) if responsavel_id not in (None, "") else None,
@@ -271,7 +308,7 @@ def salvar(
                 tecnico_responsavel_id
             ),
             setor_id=setor_id,
-            identificacao=identificacao,
+            identificacao=gerar_identificacao(numero, ano_identificacao),
             categoria=categoria,
             descricao=descricao.strip(),
             status_os=status_os or "Aberta",

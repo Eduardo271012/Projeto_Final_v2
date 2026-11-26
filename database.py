@@ -1,5 +1,5 @@
 from flask_login import UserMixin
-from sqlalchemy import Boolean, Column, Date, Float, ForeignKey, Index, Integer, String, Text, create_engine, \
+from sqlalchemy import Boolean, Column, Date, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, create_engine, \
     DateTime, func
 from sqlalchemy.orm import declarative_base, relationship, scoped_session, sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -46,6 +46,9 @@ class Recurso(Base):
 
 class OrdemServico(Base):
     __tablename__ = 'ordens_servico'
+    __table_args__ = (
+        UniqueConstraint('identificacao', name='uq_ordens_servico_identificacao'),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     responsavel_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
@@ -58,6 +61,13 @@ class OrdemServico(Base):
     status_os = Column(String(25), nullable=False)
     data_solicitacao = Column(Date)
     data_execucao = Column(Date)
+    agendada_para = Column(DateTime)
+    motivo_pausa = Column(Text)
+    previsao_retomada = Column(Date)
+    relato_conclusao = Column(Text)
+    aceite_status = Column(String(20), nullable=False, default="nao_solicitado")
+    observacao_aceite = Column(Text)
+    aceite_em = Column(DateTime)
     prioridade = Column(String(25))
     status_delete = Column(Boolean, default=True, nullable=False)
 
@@ -73,6 +83,13 @@ class OrdemServico(Base):
     )
     setor = relationship('Setor')
     equipamentos_associados = relationship('OrdemServicoEquipamento', back_populates='ordem_servico')
+
+
+class SequenciaOSAnual(Base):
+    __tablename__ = 'sequencias_os_anuais'
+
+    ano = Column(Integer, primary_key=True)
+    ultimo_numero = Column(Integer, nullable=False, default=0)
 
 
 class OrdemServicoEquipamento(Base):
@@ -179,6 +196,87 @@ class MensagemOrdemServico(Base):
 
     ordem_servico = relationship("OrdemServico")
     usuario = relationship("Usuario", foreign_keys=[usuario_id])
+
+
+class AtividadeOrdemServico(Base):
+    __tablename__ = "atividades_ordens_servico"
+    __table_args__ = (
+        Index("ix_atividade_os_ordem_data", "ordem_servico_id", "criado_em"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ordem_servico_id = Column(
+        Integer,
+        ForeignKey("ordens_servico.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
+    usuario_nome = Column(String(50), nullable=False)
+    usuario_papel = Column(String(20), nullable=False)
+    tipo = Column(String(30), nullable=False, default="atividade")
+    descricao = Column(Text, nullable=False)
+    criado_em = Column(DateTime, nullable=False, server_default=func.now())
+
+    usuario = relationship("Usuario", foreign_keys=[usuario_id])
+
+
+class MaterialConsumidoOS(Base):
+    __tablename__ = "materiais_consumidos_os"
+    __table_args__ = (
+        Index("ix_material_consumido_os", "ordem_servico_id", "criado_em"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ordem_servico_id = Column(
+        Integer,
+        ForeignKey("ordens_servico.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
+    equipamento_id = Column(
+        Integer,
+        ForeignKey("equipamentos.id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
+    usuario_nome = Column(String(50), nullable=False)
+    material_nome = Column(String(50), nullable=False)
+    quantidade = Column(Integer, nullable=False)
+    criado_em = Column(DateTime, nullable=False, server_default=func.now())
+
+    equipamento = relationship("Equipamento")
+
+
+class AnexoOrdemServico(Base):
+    __tablename__ = "anexos_ordens_servico"
+    __table_args__ = (
+        Index("ix_anexo_os_ordem_data", "ordem_servico_id", "criado_em"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ordem_servico_id = Column(
+        Integer,
+        ForeignKey("ordens_servico.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
+    usuario_nome = Column(String(50), nullable=False)
+    nome_original = Column(String(255), nullable=False)
+    nome_armazenado = Column(String(80), nullable=False, unique=True)
+    mimetype = Column(String(100), nullable=False)
+    tamanho_bytes = Column(Integer, nullable=False)
+    criado_em = Column(DateTime, nullable=False, server_default=func.now())
 
 
 class AuditoriaSistema(Base):

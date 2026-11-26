@@ -66,6 +66,7 @@
                         {% endif %}
                     </select>
                 </div>
+                {% endif %}
                 {% if current_user.papel in ['admin', 'usuario'] %}
                 <div class="campo-formulario">
                     <label for="tecnico_responsavel_id">Técnico responsável</label>
@@ -78,7 +79,6 @@
                         {% endfor %}
                     </select>
                 </div>
-                {% endif %}
                 {% endif %}
                 <div class="campo-formulario">
                     <label for="categoria">Categoria</label>
@@ -157,23 +157,14 @@
                 </div>
                 <div class="campo-formulario">
                     <label for="status_os">Status</label>
-                    {% if current_user.papel == 'usuario' %}
+                    {% if editar %}
+                        <input id="status_os" class="campo-input" value="{{ editar.status_os }}" disabled>
+                        <small>As etapas do atendimento são atualizadas nos detalhes da OS.</small>
+                    {% elif current_user.papel == 'usuario' %}
                         <input id="status_os" class="campo-input" value="Aberta" disabled>
                     {% else %}
-                        <select id="status_os" name="status_os" class="campo-input">
-                            {% if editar %}
-                                <option value="Aberta" {% if editar.status_os == "Aberta" %}selected{% endif %}>Aberta: Aguardando técnico</option>
-                                <option value="Em andamento" {% if editar.status_os == "Em andamento" %}selected{% endif %}>Em andamento: Técnico trabalhando</option>
-                                <option value="Pausada" {% if editar.status_os == "Pausada" %}selected{% endif %}>Pausada: Aguardando peça</option>
-                                <option value="Concluída" {% if editar.status_os == "Concluída" %}selected{% endif %}>Concluída</option>
-                                <option value="Cancelada" {% if editar.status_os == "Cancelada" %}selected{% endif %}>Cancelada</option>
-                            {% else %}
-                                <option value="Em andamento">Em andamento: Técnico trabalhando</option>
-                                <option value="Pausada">Pausada: Aguardando peça</option>
-                                <option value="Aberta">Aberta: Aguardando técnico</option>
-                                <option value="Concluída">Concluída</option>
-                                <option value="Cancelada">Cancelada</option>
-                            {% endif %}
+                        <select id="status_os" name="status_os" class="campo-input" required>
+                            <option value="Aberta" selected>Aberta: Aguardando técnico</option>
                         </select>
                     {% endif %}
                 </div>
@@ -255,7 +246,7 @@
         <h2>{% if excluidos %}LISTA DE ORDEM DE SERVIÇO EXCLUÍDAS{% else %}LISTA DE ORDEM DE SERVIÇO{% endif %}</h2>
         <form class="busca-lista" action="{{ url_for(request.endpoint) }}" method="get" role="search">
             <label for="busca-ordens">Buscar ordens de serviço</label>
-            <input id="busca-ordens" type="search" name="q" value="{{ termo or '' }}" placeholder="Descrição, categoria, setor, equipamento ou ID" maxlength="100">
+            <input id="busca-ordens" type="search" name="q" value="{{ termo or '' }}" placeholder="Número da OS, descrição, categoria, setor ou equipamento" maxlength="100">
             <button type="submit">Buscar</button>
             {% if termo %}<a href="{{ url_for(request.endpoint) }}" class="limpar-busca">Limpar</a>{% endif %}
         </form>
@@ -272,7 +263,7 @@
                     <th>Status e prioridade</th>
                     <th>Excluída por</th>
                     {% else %}
-                    <th>Identificação</th>
+                    <th>Número da OS</th>
                     <th>Funcionário</th>
                     <th>Técnico</th>
                     <th>Categoria</th>
@@ -319,7 +310,15 @@
                         {% endif %}
                     </td>
                     {% else %}
-                    <td><a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}">{{ os.identificacao }}</a></td>
+                    <td>
+                        <a class="identificador-os" href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}" title="{{ os.identificacao }}" aria-label="Abrir {{ os.identificacao }}">
+                            {% if os.identificacao.startswith('OS nº ') %}
+                                <strong>{{ os.identificacao[6:] }}</strong>
+                            {% else %}
+                                <strong>{{ os.identificacao }}</strong>
+                            {% endif %}
+                        </a>
+                    </td>
                     <td>
                         {% if os.responsavel %}
                             {{ os.responsavel.nome }}{% if not os.responsavel.ativo %} <strong>(INATIVO)</strong>{% endif %}
@@ -369,17 +368,19 @@
                                 {% endif %}
                             {% endif %}
                         {% else %}
-                            <a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Detalhes</a>
-                            {% if current_user.papel == 'tecnico' %}
-                                {% if os.tecnico_responsavel_id == current_user.id %}
-                                    <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita botao-atualizar-os">Atualizar OS</a>
+                            <div class="acoes-os-conteudo">
+                                <a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Detalhes</a>
+                                {% if current_user.papel == 'tecnico' %}
+                                    {% if os.tecnico_responsavel_id == current_user.id and os.status_os in ['Aberta', 'Em andamento', 'Pausada'] %}
+                                        <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita botao-atualizar-os">Atualizar OS</a>
+                                    {% endif %}
+                                {% elif current_user.papel == 'admin' %}
+                                    <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Editar</a>
+                                    <form method="POST" action="{{ url_for('excluir_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline" onsubmit="return confirm('Deseja excluir esta ordem de serviço?');">
+                                        <button type="submit" class="design-btn-direita excluir-btn">Excluir</button>
+                                    </form>
                                 {% endif %}
-                            {% elif current_user.papel == 'admin' %}
-                                <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Editar</a>
-                                <form method="POST" action="{{ url_for('excluir_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline" onsubmit="return confirm('Deseja excluir esta ordem de serviço?');">
-                                    <button type="submit" class="design-btn-direita excluir-btn">Excluir</button>
-                                </form>
-                            {% endif %}
+                            </div>
                         {% endif %}
                     </td>
                 </tr>

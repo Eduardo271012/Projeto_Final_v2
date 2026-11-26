@@ -67,9 +67,17 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
     status_os VARCHAR(25),
     data_solicitacao DATE,
     data_execucao DATE,
+    agendada_para DATETIME,
+    motivo_pausa TEXT,
+    previsao_retomada DATE,
+    relato_conclusao TEXT,
+    aceite_status VARCHAR(20) NOT NULL DEFAULT 'nao_solicitado',
+    observacao_aceite TEXT,
+    aceite_em DATETIME,
     prioridade VARCHAR(25),
     status_delete BOOL DEFAULT 1,
 
+    CONSTRAINT uq_ordens_servico_identificacao UNIQUE (identificacao),
 	CONSTRAINT fk_ordem_servico_usuario
 		FOREIGN KEY (responsavel_id) REFERENCES usuarios(id)
 		ON UPDATE CASCADE
@@ -82,6 +90,11 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
         FOREIGN KEY (tecnico_responsavel_id) REFERENCES usuarios(id)
         ON UPDATE CASCADE
         ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS sequencias_os_anuais (
+    ano INT NOT NULL PRIMARY KEY,
+    ultimo_numero INT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS historico_ordens_servico (
@@ -122,6 +135,64 @@ CREATE TABLE IF NOT EXISTS mensagens_ordens_servico (
         ON UPDATE CASCADE
         ON DELETE SET NULL,
     INDEX ix_mensagem_os_ordem_data (ordem_servico_id, criado_em)
+);
+
+CREATE TABLE IF NOT EXISTS atividades_ordens_servico (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ordem_servico_id INT NOT NULL,
+    usuario_id INT NULL,
+    usuario_nome VARCHAR(50) NOT NULL,
+    usuario_papel VARCHAR(20) NOT NULL,
+    tipo VARCHAR(30) NOT NULL DEFAULT 'atividade',
+    descricao TEXT NOT NULL,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_atividade_os_ordem
+        FOREIGN KEY (ordem_servico_id) REFERENCES ordens_servico(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_atividade_os_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    INDEX ix_atividade_os_ordem_data (ordem_servico_id, criado_em)
+);
+
+CREATE TABLE IF NOT EXISTS materiais_consumidos_os (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ordem_servico_id INT NOT NULL,
+    equipamento_id INT NULL,
+    usuario_id INT NULL,
+    usuario_nome VARCHAR(50) NOT NULL,
+    material_nome VARCHAR(50) NOT NULL,
+    quantidade INT NOT NULL,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_material_consumido_os_ordem
+        FOREIGN KEY (ordem_servico_id) REFERENCES ordens_servico(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_material_consumido_os_equipamento
+        FOREIGN KEY (equipamento_id) REFERENCES equipamentos(id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_material_consumido_os_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    INDEX ix_material_consumido_os (ordem_servico_id, criado_em)
+);
+
+CREATE TABLE IF NOT EXISTS anexos_ordens_servico (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ordem_servico_id INT NOT NULL,
+    usuario_id INT NULL,
+    usuario_nome VARCHAR(50) NOT NULL,
+    nome_original VARCHAR(255) NOT NULL,
+    nome_armazenado VARCHAR(80) NOT NULL UNIQUE,
+    mimetype VARCHAR(100) NOT NULL,
+    tamanho_bytes INT NOT NULL,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_anexo_os_ordem
+        FOREIGN KEY (ordem_servico_id) REFERENCES ordens_servico(id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_anexo_os_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    INDEX ix_anexo_os_ordem_data (ordem_servico_id, criado_em)
 );
 
 CREATE TABLE IF NOT EXISTS auditoria_sistema (
@@ -327,3 +398,31 @@ WHERE os.descricao = 'Calibração da prensa hidráulica'
       WHERE ose.os_id = os.id AND ose.equipamento_id = e.id
   )
 LIMIT 1;
+
+CREATE TEMPORARY TABLE os_identificacoes_seed AS
+SELECT
+    id,
+    COALESCE(YEAR(data_solicitacao), YEAR(CURRENT_DATE())) AS ano,
+    ROW_NUMBER() OVER (
+        PARTITION BY COALESCE(YEAR(data_solicitacao), YEAR(CURRENT_DATE()))
+        ORDER BY id
+    ) AS numero
+FROM ordens_servico;
+
+UPDATE ordens_servico os
+JOIN os_identificacoes_seed seed ON seed.id = os.id
+SET os.identificacao = CONCAT(
+    'OS-',
+    LPAD(MOD(seed.ano, 100), 2, '0'),
+    '-',
+    LPAD(seed.numero, 4, '0')
+);
+
+INSERT INTO sequencias_os_anuais (ano, ultimo_numero)
+SELECT ano, MAX(numero)
+FROM os_identificacoes_seed
+GROUP BY ano
+ON DUPLICATE KEY UPDATE
+    ultimo_numero = GREATEST(ultimo_numero, VALUES(ultimo_numero));
+
+DROP TEMPORARY TABLE os_identificacoes_seed;

@@ -1,12 +1,19 @@
-from flask import Flask, flash, redirect, render_template, request, url_for
+import os
+import uuid
+
+from flask import Flask, flash, redirect, render_template, request, send_from_directory, url_for
 from flask_login import LoginManager, login_required, logout_user, login_user, current_user
 from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.utils import secure_filename
 from banco import tabela_equipamento, tabela_ordens_servico, tabela_setor, tabela_usuario
 from database import (
+    AnexoOrdemServico,
     AuditoriaSistema,
+    AtividadeOrdemServico,
     Equipamento,
     HistoricoOrdemServico,
+    MaterialConsumidoOS,
     MensagemOrdemServico,
     OrdemServico,
     OrdemServicoEquipamento,
@@ -23,6 +30,23 @@ from validate_docbr import CPF
 
 app = Flask(__name__)
 app.secret_key = "quarks-solucoes"
+app.config["MAX_CONTENT_LENGTH"] = 26 * 1024 * 1024
+app.config["UPLOAD_FOLDER"] = os.path.join(
+    app.instance_path,
+    "uploads",
+    "ordens_servico",
+)
+
+TAMANHO_MAXIMO_ANEXO = 5 * 1024 * 1024
+QUANTIDADE_MAXIMA_ANEXOS_OS = 5
+TIPOS_ANEXO_OS = {
+    ".jpg": ("image/jpeg", lambda dados: dados.startswith(b"\xff\xd8\xff")),
+    ".jpeg": ("image/jpeg", lambda dados: dados.startswith(b"\xff\xd8\xff")),
+    ".png": ("image/png", lambda dados: dados.startswith(b"\x89PNG\r\n\x1a\n")),
+    ".gif": ("image/gif", lambda dados: dados.startswith((b"GIF87a", b"GIF89a"))),
+    ".webp": ("image/webp", lambda dados: len(dados) >= 12 and dados[:4] == b"RIFF" and dados[8:12] == b"WEBP"),
+    ".pdf": ("application/pdf", lambda dados: dados.startswith(b"%PDF-")),
+}
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -62,6 +86,15 @@ def solicitacoes_restauracao_pendentes():
     return {"total_solicitacoes_restauracao": 0}
 
 
+@app.errorhandler(413)
+def request_entity_too_large(_error):
+    ordem_id = (request.view_args or {}).get("ordem_id")
+    flash("O envio excede o limite permitido. Cada arquivo pode ter até 5 MB.", "error")
+    if ordem_id:
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+    return "O envio excede o limite permitido.", 413
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -82,7 +115,7 @@ def login():
             return redirect(url_for("login"))
         if usuario_resultado and usuario_resultado.check_password(senha):
             login_user(usuario_resultado)
-            flash(f"BEM-VINDO(A), {usuario_resultado.nome} ({usuario_resultado.papel})!😁", "welcome")
+            flash(f"BEM-VINDO(A), {usuario_resultado.nome}!", "welcome")
             return redirect(url_for("index"))
         else:
             flash("Falha na autenticação: E-mail e senha não encontrado", "error")
@@ -352,6 +385,7 @@ def listar_ordens_servico(excluidos):
                 )
             ),
         ]
+        filtros.append(OrdemServico.identificacao.icontains(termo, autoescape=True))
         if termo.isdecimal() and len(termo) <= 10:
             filtros.append(OrdemServico.id == int(termo))
         consulta = consulta.outerjoin(
@@ -415,19 +449,16 @@ def cadastro_ordem_view():
         categoria = request.form.get("categoria", "")
         setor_id = request.form.get("setor_id", "")
         equipamentos_ids = [] if funcionario else request.form.getlist("equipamentos_ids")
-        status_os = "Aberta" if funcionario else request.form.get("status_os")
+        status_os = "Aberta"
         prioridade = "Média" if funcionario else request.form.get("prioridade")
         custo_total = 0 if funcionario else request.form.get("custo_total")
         data_solicitacao = request.form.get("data_solicitacao")
         data_execucao = None
 
-        identificacao = tabela_ordens_servico.gerar_identificacao(current_user.nome)
-
         if tabela_ordens_servico.salvar(
             0,
             responsavel_id,
             tecnico_responsavel_id,
-            identificacao,
             descricao,
             status_os,
             prioridade,
@@ -484,11 +515,494 @@ def detalhes_ordem_servico(ordem_id):
             MensagemOrdemServico.ordem_servico_id == ordem_id
         )
     ).scalar_one()
+    atividades = db_session.execute(
+        select(AtividadeOrdemServico)
+        .where(AtividadeOrdemServico.ordem_servico_id == ordem_id)
+        .order_by(
+            AtividadeOrdemServico.criado_em.asc(),
+            AtividadeOrdemServico.id.asc(),
+        )
+    ).scalars().all()
+    materiais_consumidos = db_session.execute(
+        select(MaterialConsumidoOS)
+        .where(MaterialConsumidoOS.ordem_servico_id == ordem_id)
+        .order_by(MaterialConsumidoOS.criado_em.asc(), MaterialConsumidoOS.id.asc())
+    ).scalars().all()
+    anexos = db_session.execute(
+        select(AnexoOrdemServico)
+        .where(AnexoOrdemServico.ordem_servico_id == ordem_id)
+        .order_by(AnexoOrdemServico.criado_em.asc(), AnexoOrdemServico.id.asc())
+    ).scalars().all()
+    materiais_disponiveis = db_session.execute(
+        select(Equipamento)
+        .where(
+            Equipamento.status_delete.is_(True),
+            Equipamento.quantidade > 0,
+        )
+        .order_by(Equipamento.nome.asc())
+    ).scalars().all()
+    pode_operar = usuario_pode_operar_os(ordem_servico)
+    pode_atualizar = pode_operar and os_aceita_atualizacoes(ordem_servico)
+    pode_aceitar = (
+        current_user.papel == "usuario"
+        and ordem_servico.responsavel_id == current_user.id
+        and ordem_servico.status_os == "Aguardando aceite"
+        and ordem_servico.aceite_status == "pendente"
+    )
     return render_template(
         "ordem_servico_detalhes.html",
         ordem=ordem_servico,
         historico=historico,
         total_mensagens=total_mensagens,
+        atividades=atividades,
+        materiais_consumidos=materiais_consumidos,
+        anexos=anexos,
+        materiais_disponiveis=materiais_disponiveis,
+        pode_operar=pode_operar,
+        pode_atualizar=pode_atualizar,
+        pode_aceitar=pode_aceitar,
+    )
+
+
+def obter_os_ativa_autorizada(ordem_id):
+    consulta = restringir_ordens_por_perfil(
+        select(OrdemServico).where(
+            OrdemServico.id == ordem_id,
+            OrdemServico.status_delete.is_(True),
+        )
+    )
+    return db_session.execute(consulta).scalar_one_or_none()
+
+
+def usuario_pode_operar_os(ordem):
+    return current_user.papel == "admin" or (
+        current_user.papel == "tecnico"
+        and ordem.tecnico_responsavel_id == current_user.id
+    )
+
+
+def os_aceita_atualizacoes(ordem):
+    return ordem.status_os in {"Aberta", "Em andamento", "Pausada"}
+
+
+def adicionar_atividade_os(ordem_id, tipo, descricao):
+    db_session.add(
+        AtividadeOrdemServico(
+            ordem_servico_id=ordem_id,
+            usuario_id=current_user.id,
+            usuario_nome=current_user.nome,
+            usuario_papel=current_user.papel,
+            tipo=tipo,
+            descricao=descricao,
+        )
+    )
+
+
+@app.route('/servico/ordens/<int:ordem_id>/atividades', methods=['POST'])
+@login_required
+def registrar_atividade_ordem_servico(ordem_id):
+    ordem = obter_os_ativa_autorizada(ordem_id)
+    if (
+        not ordem
+        or not usuario_pode_operar_os(ordem)
+        or not os_aceita_atualizacoes(ordem)
+    ):
+        flash("Você não tem permissão para registrar atividades nesta OS.", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    descricao = request.form.get("descricao", "").strip()
+    if not descricao or len(descricao) > 3000:
+        flash("A atividade é obrigatória e deve ter até 3.000 caracteres.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+    adicionar_atividade_os(ordem_id, "atividade", descricao)
+    try:
+        db_session.commit()
+        flash("Atividade registrada.", "success")
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao registrar atividade na OS %s", ordem.identificacao)
+        flash("Não foi possível registrar a atividade.", "error")
+    return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+
+@app.route('/servico/ordens/<int:ordem_id>/agendamento', methods=['POST'])
+@login_required
+def agendar_ordem_servico(ordem_id):
+    ordem = obter_os_ativa_autorizada(ordem_id)
+    if (
+        not ordem
+        or not usuario_pode_operar_os(ordem)
+        or not os_aceita_atualizacoes(ordem)
+    ):
+        flash("Você não tem permissão para alterar o agendamento desta OS.", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    valor_agendamento = request.form.get("agendada_para", "").strip()
+    if valor_agendamento:
+        try:
+            agendada_para = datetime.strptime(valor_agendamento, "%Y-%m-%dT%H:%M")
+        except ValueError:
+            flash("Informe uma data e horário válidos.", "error")
+            return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+    else:
+        agendada_para = None
+
+    anterior = tabela_ordens_servico.capturar_estado_historico(ordem)
+    ordem.agendada_para = agendada_para
+    adicionar_atividade_os(
+        ordem_id,
+        "agendamento",
+        f"Agendamento atualizado para {agendada_para.strftime('%d/%m/%Y às %H:%M') if agendada_para else 'sem data definida'}.",
+    )
+    try:
+        novo = tabela_ordens_servico.capturar_estado_historico(ordem)
+        tabela_ordens_servico.registrar_historico(
+            ordem_id, current_user.id, anterior, novo
+        )
+        db_session.commit()
+        flash("Agendamento atualizado.", "success")
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao atualizar agendamento da OS %s", ordem.identificacao)
+        flash("Não foi possível atualizar o agendamento.", "error")
+    return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+
+@app.route('/servico/ordens/<int:ordem_id>/fluxo', methods=['POST'])
+@login_required
+def atualizar_fluxo_ordem_servico(ordem_id):
+    ordem = obter_os_ativa_autorizada(ordem_id)
+    if not ordem or not usuario_pode_operar_os(ordem):
+        flash("Você não tem permissão para atualizar esta OS.", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    acao = request.form.get("acao", "")
+    anterior = tabela_ordens_servico.capturar_estado_historico(ordem)
+    if acao == "iniciar" and ordem.status_os == "Aberta":
+        ordem.status_os = "Em andamento"
+        descricao_atividade = "Atendimento iniciado."
+    elif acao == "pausar" and ordem.status_os == "Em andamento":
+        motivo = request.form.get("motivo_pausa", "").strip()
+        previsao_str = request.form.get("previsao_retomada", "").strip()
+        if not motivo or len(motivo) > 1000:
+            flash("Informe o motivo da pausa (até 1.000 caracteres).", "error")
+            return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+        if previsao_str:
+            try:
+                previsao = datetime.strptime(previsao_str, "%Y-%m-%d").date()
+            except ValueError:
+                flash("Informe uma previsão de retomada válida.", "error")
+                return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+        else:
+            previsao = None
+        ordem.status_os = "Pausada"
+        ordem.motivo_pausa = motivo
+        ordem.previsao_retomada = previsao
+        descricao_atividade = (
+            f"Atendimento pausado: {motivo}"
+            + (f" Previsão de retomada: {previsao.strftime('%d/%m/%Y')}." if previsao else "")
+        )
+    elif acao == "retomar" and ordem.status_os == "Pausada":
+        motivo_anterior = ordem.motivo_pausa
+        ordem.status_os = "Em andamento"
+        ordem.motivo_pausa = None
+        ordem.previsao_retomada = None
+        descricao_atividade = (
+            f"Atendimento retomado. Motivo da pausa: {motivo_anterior}"
+            if motivo_anterior
+            else "Atendimento retomado."
+        )
+    elif acao == "concluir" and ordem.status_os == "Em andamento":
+        relato = request.form.get("relato_conclusao", "").strip()
+        if not relato or len(relato) > 4000:
+            flash("Descreva a conclusão do serviço (até 4.000 caracteres).", "error")
+            return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+        ordem.status_os = "Aguardando aceite"
+        ordem.relato_conclusao = relato
+        ordem.aceite_status = "pendente"
+        ordem.observacao_aceite = None
+        ordem.aceite_em = None
+        ordem.data_execucao = datetime.now().date()
+        descricao_atividade = f"Serviço enviado para aceite do solicitante: {relato}"
+    elif acao == "cancelar" and current_user.papel == "admin" and ordem.status_os in {
+        "Aberta", "Em andamento", "Pausada"
+    }:
+        motivo = request.form.get("motivo_cancelamento", "").strip()
+        if len(motivo) > 1000:
+            flash("O motivo do cancelamento deve ter até 1.000 caracteres.", "error")
+            return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+        ordem.status_os = "Cancelada"
+        descricao_atividade = f"OS cancelada pelo administrador. {motivo}".strip()
+    else:
+        flash("Essa transição de status não é permitida.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+    adicionar_atividade_os(ordem_id, "fluxo", descricao_atividade)
+    try:
+        novo = tabela_ordens_servico.capturar_estado_historico(ordem)
+        tabela_ordens_servico.registrar_historico(
+            ordem_id, current_user.id, anterior, novo
+        )
+        db_session.commit()
+        flash("Etapa da ordem de serviço atualizada.", "success")
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao atualizar fluxo da OS %s", ordem.identificacao)
+        flash("Não foi possível atualizar a etapa da OS.", "error")
+    return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+
+@app.route('/servico/ordens/<int:ordem_id>/aceite', methods=['POST'])
+@login_required
+def responder_aceite_ordem_servico(ordem_id):
+    ordem = obter_os_ativa_autorizada(ordem_id)
+    if (
+        not ordem
+        or current_user.papel != "usuario"
+        or ordem.responsavel_id != current_user.id
+        or ordem.status_os != "Aguardando aceite"
+        or ordem.aceite_status != "pendente"
+    ):
+        flash("Esta OS não está disponível para aceite pela sua conta.", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    decisao = request.form.get("decisao", "")
+    observacao = request.form.get("observacao", "").strip()
+    if decisao not in {"aceitar", "contestar"} or len(observacao) > 1000:
+        flash("Resposta inválida. A observação deve ter até 1.000 caracteres.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+    if decisao == "contestar" and not observacao:
+        flash("Explique o motivo da contestação.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+    anterior = tabela_ordens_servico.capturar_estado_historico(ordem)
+    ordem.aceite_em = datetime.now()
+    ordem.observacao_aceite = observacao or None
+    if decisao == "aceitar":
+        ordem.aceite_status = "aceito"
+        ordem.status_os = "Concluída"
+        texto_atividade = "Solicitante aceitou a conclusão do serviço."
+        if observacao:
+            texto_atividade += f" Observação: {observacao}"
+    else:
+        ordem.aceite_status = "contestado"
+        ordem.status_os = "Em andamento"
+        texto_atividade = f"Solicitante contestou a conclusão: {observacao}"
+        ordem.relato_conclusao = (
+            f"{ordem.relato_conclusao or ''}\n\nContestação: {observacao}".strip()
+        )
+
+    adicionar_atividade_os(ordem_id, "aceite", texto_atividade)
+    try:
+        novo = tabela_ordens_servico.capturar_estado_historico(ordem)
+        tabela_ordens_servico.registrar_historico(
+            ordem_id, current_user.id, anterior, novo
+        )
+        db_session.commit()
+        flash(
+            "Conclusão aceita." if decisao == "aceitar" else "Contestação enviada; a OS foi reaberta.",
+            "success",
+        )
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao registrar aceite da OS %s", ordem.identificacao)
+        flash("Não foi possível registrar sua resposta.", "error")
+    return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+
+@app.route('/servico/ordens/<int:ordem_id>/materiais', methods=['POST'])
+@login_required
+def registrar_material_consumido_os(ordem_id):
+    ordem = obter_os_ativa_autorizada(ordem_id)
+    if (
+        not ordem
+        or not usuario_pode_operar_os(ordem)
+        or not os_aceita_atualizacoes(ordem)
+    ):
+        flash("Você não tem permissão para registrar materiais nesta OS.", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    try:
+        equipamento_id = int(request.form.get("equipamento_id", ""))
+        quantidade = int(request.form.get("quantidade", ""))
+    except ValueError:
+        flash("Selecione um item e informe uma quantidade válida.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+    if quantidade < 1:
+        flash("A quantidade deve ser maior que zero.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+    equipamento = db_session.execute(
+        select(Equipamento)
+        .where(
+            Equipamento.id == equipamento_id,
+            Equipamento.status_delete.is_(True),
+        )
+        .with_for_update()
+    ).scalar_one_or_none()
+    if not equipamento:
+        flash("Item de estoque não encontrado ou inativo.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+    if equipamento.quantidade is None or equipamento.quantidade < quantidade:
+        flash("Estoque insuficiente para registrar esse consumo.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+    estoque_anterior = equipamento.quantidade
+    equipamento.quantidade -= quantidade
+    db_session.add(
+        MaterialConsumidoOS(
+            ordem_servico_id=ordem_id,
+            equipamento_id=equipamento.id,
+            usuario_id=current_user.id,
+            usuario_nome=current_user.nome,
+            material_nome=equipamento.nome,
+            quantidade=quantidade,
+        )
+    )
+    adicionar_atividade_os(
+        ordem_id,
+        "material",
+        f"Material consumido: {equipamento.nome} — {quantidade} unidade(s).",
+    )
+    registrar_evento(
+        current_user.id,
+        "ordens_servico",
+        "edicao",
+        ordem.identificacao,
+        ordem.id,
+        [("Material consumido", "0", str(quantidade))],
+    )
+    registrar_evento(
+        current_user.id,
+        "equipamentos",
+        "edicao",
+        equipamento.nome,
+        equipamento.id,
+        [("Quantidade em estoque", str(estoque_anterior), str(equipamento.quantidade))],
+    )
+    try:
+        db_session.commit()
+        flash("Consumo registrado e estoque atualizado.", "success")
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao registrar material na OS %s", ordem.identificacao)
+        flash("Não foi possível registrar o consumo.", "error")
+    return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+
+@app.route('/servico/ordens/<int:ordem_id>/anexos', methods=['POST'])
+@login_required
+def anexar_arquivo_ordem_servico(ordem_id):
+    ordem = obter_os_ativa_autorizada(ordem_id)
+    if (
+        not ordem
+        or not usuario_pode_operar_os(ordem)
+        or not os_aceita_atualizacoes(ordem)
+    ):
+        flash("Você não tem permissão para anexar arquivos nesta OS.", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+
+    arquivos = [arquivo for arquivo in request.files.getlist("anexos") if arquivo.filename]
+    db_session.execute(
+        select(OrdemServico.id)
+        .where(OrdemServico.id == ordem_id)
+        .with_for_update()
+    ).scalar_one()
+    anexos_existentes = db_session.execute(
+        select(func.count(AnexoOrdemServico.id)).where(
+            AnexoOrdemServico.ordem_servico_id == ordem_id
+        )
+    ).scalar_one()
+    if not arquivos or len(arquivos) + anexos_existentes > QUANTIDADE_MAXIMA_ANEXOS_OS:
+        flash("Anexe arquivos; cada OS pode ter no máximo 5 anexos.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+    arquivos_validados = []
+    for arquivo in arquivos:
+        nome_original = secure_filename(arquivo.filename)
+        extensao = os.path.splitext(nome_original)[1].lower()
+        tipo = TIPOS_ANEXO_OS.get(extensao)
+        if not nome_original or not tipo:
+            flash("Use apenas imagens PNG, JPG, GIF, WEBP ou arquivos PDF.", "error")
+            return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+        dados = arquivo.stream.read(TAMANHO_MAXIMO_ANEXO + 1)
+        if len(dados) > TAMANHO_MAXIMO_ANEXO:
+            flash("Cada anexo pode ter no máximo 5 MB.", "error")
+            return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+        mimetype, validar_assinatura = tipo
+        if not validar_assinatura(dados):
+            flash(f"O arquivo {nome_original} não corresponde ao formato informado.", "error")
+            return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+        arquivos_validados.append(
+            (
+                nome_original[:255],
+                f"{uuid.uuid4().hex}{extensao}",
+                mimetype,
+                dados,
+            )
+        )
+
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    caminhos_criados = []
+    try:
+        for nome_original, nome_armazenado, mimetype, dados in arquivos_validados:
+            caminho = os.path.join(app.config["UPLOAD_FOLDER"], nome_armazenado)
+            with open(caminho, "wb") as arquivo_destino:
+                arquivo_destino.write(dados)
+            caminhos_criados.append(caminho)
+            db_session.add(
+                AnexoOrdemServico(
+                    ordem_servico_id=ordem_id,
+                    usuario_id=current_user.id,
+                    usuario_nome=current_user.nome,
+                    nome_original=nome_original,
+                    nome_armazenado=nome_armazenado,
+                    mimetype=mimetype,
+                    tamanho_bytes=len(dados),
+                )
+            )
+            adicionar_atividade_os(
+                ordem_id,
+                "anexo",
+                f"Anexo enviado: {nome_original}.",
+            )
+        db_session.commit()
+        flash("Anexo(s) enviado(s) com sucesso.", "success")
+    except (OSError, SQLAlchemyError):
+        db_session.rollback()
+        for caminho in caminhos_criados:
+            try:
+                os.remove(caminho)
+            except OSError:
+                app.logger.exception("Falha ao remover anexo não persistido: %s", caminho)
+        app.logger.exception("Erro ao salvar anexos da OS %s", ordem.identificacao)
+        flash("Não foi possível salvar os anexos.", "error")
+    return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
+
+@app.route('/servico/ordens/<int:ordem_id>/anexos/<int:anexo_id>')
+@login_required
+def baixar_anexo_ordem_servico(ordem_id, anexo_id):
+    ordem = obter_os_ativa_autorizada(ordem_id)
+    if not ordem:
+        flash("Ordem de serviço não encontrada.", "error")
+        return redirect(url_for("ordens_servico_lista_view"))
+    anexo = db_session.execute(
+        select(AnexoOrdemServico).where(
+            AnexoOrdemServico.id == anexo_id,
+            AnexoOrdemServico.ordem_servico_id == ordem_id,
+        )
+    ).scalar_one_or_none()
+    if not anexo:
+        flash("Anexo não encontrado.", "error")
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+    return send_from_directory(
+        app.config["UPLOAD_FOLDER"],
+        anexo.nome_armazenado,
+        as_attachment=True,
+        download_name=anexo.nome_original,
+        mimetype=anexo.mimetype,
     )
 
 
@@ -578,7 +1092,7 @@ def excluir_ordem_servico(ordem_id):
             current_user.id,
             "ordens_servico",
             "exclusao",
-            f"OS #{ordem_servico.id}",
+            ordem_servico.identificacao,
             ordem_servico.id,
             [("Status", "Ativa", "Excluída")],
         )
@@ -614,7 +1128,7 @@ def restaurar_ordem_servico(ordem_id):
             current_user.id,
             "ordens_servico",
             "restauracao",
-            f"OS #{ordem_servico.id}",
+            ordem_servico.identificacao,
             ordem_servico.id,
             [("Status", "Excluída", "Ativa")],
         )
@@ -769,9 +1283,19 @@ def editar_ordem_servico(ordem_id):
         flash("Ordem de serviço não encontrada", "error")
         return redirect(url_for("ordens_servico_lista_view"))
 
+    if (
+        current_user.papel == "tecnico"
+        and not os_aceita_atualizacoes(ordem_servico)
+    ):
+        flash(
+            "Esta OS não aceita mais atualizações diretas. Consulte os detalhes do atendimento.",
+            "error",
+        )
+        return redirect(url_for("detalhes_ordem_servico", ordem_id=ordem_id))
+
     if request.method == "POST":
         if current_user.papel == "tecnico":
-            status_os = request.form.get("status_os", "")
+            status_os = ordem_servico.status_os
             prioridade = request.form.get("prioridade", "")
             data_execucao_str = request.form.get("data_execucao", "").strip()
             if data_execucao_str:
@@ -801,9 +1325,6 @@ def editar_ordem_servico(ordem_id):
 
             if custo_total < 0:
                 flash("O custo estimado não pode ser negativo", "error")
-                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
-            if status_os not in tabela_ordens_servico.STATUS_OS:
-                flash("Selecione um status válido", "error")
                 return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
             if prioridade not in {"Baixa", "Média", "Alta"}:
                 flash("Selecione uma prioridade válida", "error")
@@ -873,7 +1394,7 @@ def editar_ordem_servico(ordem_id):
         categoria = request.form.get("categoria", "")
         setor_id = request.form.get("setor_id", "")
         equipamentos_ids = request.form.getlist("equipamentos_ids")
-        status_os = request.form.get("status_os")
+        status_os = ordem_servico.status_os
         prioridade = request.form.get("prioridade")
         custo_total = request.form.get("custo_total")
         data_execucao = ordem_servico.data_execucao
@@ -881,10 +1402,6 @@ def editar_ordem_servico(ordem_id):
         if not descricao:
             flash("Preencha a descrição da ordem de serviço", "error")
             return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
-        if status_os not in tabela_ordens_servico.STATUS_OS:
-            flash("Selecione um status válido", "error")
-            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
-
         try:
             responsavel_id = int(responsavel_id) if responsavel_id else None
             custo_total = int(custo_total) if custo_total else 0

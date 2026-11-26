@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
     tecnico_responsavel_id INT,
     setor_id INT,
 
+    identificacao VARCHAR(30) NOT NULL,
     categoria VARCHAR(30) NOT NULL DEFAULT 'Manutenção',
     custo_total INT,
     descricao TEXT(1000),
@@ -81,6 +82,97 @@ CREATE TABLE IF NOT EXISTS ordens_servico (
         FOREIGN KEY (tecnico_responsavel_id) REFERENCES usuarios(id)
         ON UPDATE CASCADE
         ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS historico_ordens_servico (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ordem_servico_id INT NOT NULL,
+    usuario_id INT NULL,
+    campo VARCHAR(100) NOT NULL,
+    valor_anterior TEXT,
+    valor_novo TEXT,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_historico_os_ordem
+        FOREIGN KEY (ordem_servico_id) REFERENCES ordens_servico(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_historico_os_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    INDEX ix_historico_ordens_servico_ordem_data (ordem_servico_id, criado_em)
+);
+
+CREATE TABLE IF NOT EXISTS mensagens_ordens_servico (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ordem_servico_id INT NOT NULL,
+    usuario_id INT NULL,
+    usuario_nome VARCHAR(50) NOT NULL,
+    usuario_papel VARCHAR(20) NOT NULL,
+    mensagem TEXT NOT NULL,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_mensagem_os_ordem
+        FOREIGN KEY (ordem_servico_id) REFERENCES ordens_servico(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_mensagem_os_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    INDEX ix_mensagem_os_ordem_data (ordem_servico_id, criado_em)
+);
+
+CREATE TABLE IF NOT EXISTS auditoria_sistema (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NULL,
+    usuario_nome VARCHAR(50) NOT NULL,
+    usuario_papel VARCHAR(20) NOT NULL,
+    area VARCHAR(50) NOT NULL,
+    acao VARCHAR(30) NOT NULL,
+    registro VARCHAR(150) NOT NULL,
+    registro_id INT NULL,
+    campo VARCHAR(100) NOT NULL,
+    valor_anterior TEXT,
+    valor_novo TEXT,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_auditoria_sistema_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    INDEX ix_auditoria_sistema_criado_em (criado_em),
+    INDEX ix_auditoria_sistema_area_acao (area, acao)
+);
+
+CREATE TABLE IF NOT EXISTS solicitacoes_restauracao_os (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ordem_servico_id INT NOT NULL,
+    usuario_id INT NULL,
+    usuario_nome VARCHAR(50) NOT NULL,
+    usuario_papel VARCHAR(20) NOT NULL,
+    mensagem VARCHAR(500) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pendente',
+    resposta_administrador VARCHAR(500),
+    administrador_id INT NULL,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolvido_em DATETIME NULL,
+
+    CONSTRAINT fk_solicitacao_restauracao_os
+        FOREIGN KEY (ordem_servico_id) REFERENCES ordens_servico(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_solicitacao_restauracao_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_solicitacao_restauracao_administrador
+        FOREIGN KEY (administrador_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    INDEX ix_solicitacao_restauracao_status_data (status, criado_em),
+    INDEX ix_solicitacao_restauracao_os_usuario (ordem_servico_id, usuario_id)
 );
 
 CREATE TABLE IF NOT EXISTS ordens_servico_equipamentos (
@@ -173,23 +265,23 @@ WHERE e.nome = 'Compressor de Ar' AND e.modelo = 'CA-50'
 LIMIT 1;
 
 INSERT INTO ordens_servico
-    (responsavel_id, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
-SELECT NULL, 850, 'Revisão preventiva do torno mecânico', 'Aberta', '2026-11-10', NULL, 'Baixa', 1
+    (responsavel_id, identificacao, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
+SELECT NULL, 'seed-torno', 850, 'Revisão preventiva do torno mecânico', 'Aberta', '2026-11-10', NULL, 'Baixa', 1
 WHERE NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Revisão preventiva do torno mecânico');
 
 INSERT INTO ordens_servico
-    (responsavel_id, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
-SELECT NULL, 2400, 'Substituição de sensor da esteira', 'Em andamento', '2026-11-12', NULL, 'Alta', 1
+    (responsavel_id, identificacao, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
+SELECT NULL, 'seed-esteira', 2400, 'Substituição de sensor da esteira', 'Em andamento', '2026-11-12', NULL, 'Alta', 1
 WHERE NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Substituição de sensor da esteira');
 
 INSERT INTO ordens_servico
-    (responsavel_id, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
-SELECT NULL, 620, 'Inspeção do compressor de ar', 'Pausada', '2026-11-14', NULL, 'Média', 1
+    (responsavel_id, identificacao, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
+SELECT NULL, 'seed-compressor', 620, 'Inspeção do compressor de ar', 'Pausada', '2026-11-14', NULL, 'Média', 1
 WHERE NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Inspeção do compressor de ar');
 
 INSERT INTO ordens_servico
-    (responsavel_id, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
-SELECT NULL, 1350, 'Calibração da prensa hidráulica', 'Concluída', '2026-11-01', '2026-11-03', 'Baixa', 1
+    (responsavel_id, identificacao, custo_total, descricao, status_os, data_solicitacao, data_execucao, prioridade, status_delete)
+SELECT NULL, 'seed-prensa', 1350, 'Calibração da prensa hidráulica', 'Concluída', '2026-11-01', '2026-11-03', 'Baixa', 1
 WHERE NOT EXISTS (SELECT 1 FROM ordens_servico WHERE descricao = 'Calibração da prensa hidráulica');
 
 INSERT INTO ordens_servico_equipamentos (os_id, equipamento_id, quantidade)

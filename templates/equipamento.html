@@ -6,7 +6,7 @@
         </div>
         {% if not editar %}
         <div class="container-botao-direita">
-            {% if current_user.papel == 'admin' %}
+            {% if current_user.papel in ['admin', 'tecnico'] %}
                 <a href="{{ url_for('listar_equipamentos_excluidos') if not excluidos else url_for('equipamentos') }}" class="design-btn-direita">EQUIPAMENTOS {% if excluidos %}ATIVOS{% else %}EXCLUÍDOS{% endif %}</a>
                 {% if not excluidos %}<a href="{{ url_for('cadastro_equipamento') }}" class="design-btn-direita">CADASTRAR</a>{% endif %}
             {% endif %}
@@ -79,7 +79,7 @@
                     <td>{{ equipamento.quantidade if equipamento.quantidade else 0 }}</td>
                     <td>R$ {{ equipamento.custo_equipamento if equipamento.custo_equipamento else 0 }}</td>
                     <td class="acoes">
-                        {% if current_user.papel == 'admin' %}
+                        {% if current_user.papel in ['admin', 'tecnico'] %}
                             {% if excluidos %}
                                 <a href="{{ url_for('restaurar_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita">Restaurar</a>
                             {% else %}

@@ -5,6 +5,7 @@ from flask import flash
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 
+from banco.auditoria import registrar_evento
 from database import (
     Equipamento,
     HistoricoOrdemServico,
@@ -174,11 +175,19 @@ def capturar_estado_historico(ordem, equipamentos_ids=None):
     }
 
 
-def registrar_historico(ordem_id, usuario_id, estado_anterior, estado_novo):
+def registrar_historico(
+    ordem_id,
+    usuario_id,
+    estado_anterior,
+    estado_novo,
+    acao="Edição",
+):
+    alteracoes = []
     for campo, rotulo in ROTULOS_HISTORICO.items():
         valor_anterior = estado_anterior.get(campo, "-")
         valor_novo = estado_novo.get(campo, "-")
         if valor_anterior != valor_novo:
+            alteracoes.append((rotulo, valor_anterior, valor_novo))
             db_session.add(
                 HistoricoOrdemServico(
                     ordem_servico_id=ordem_id,
@@ -188,6 +197,14 @@ def registrar_historico(ordem_id, usuario_id, estado_anterior, estado_novo):
                     valor_novo=valor_novo,
                 )
             )
+    registrar_evento(
+        usuario_id,
+        "ordens_servico",
+        acao,
+        f"OS #{ordem_id}",
+        ordem_id,
+        alteracoes,
+    )
 
 
 def salvar(
@@ -280,6 +297,7 @@ def salvar(
             usuario_id,
             {},
             estado_inicial,
+            acao="Criação",
         )
         db_session.commit()
         flash("Ordem de serviço cadastrada com sucesso", "success")

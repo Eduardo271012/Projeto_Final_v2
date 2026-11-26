@@ -1,4 +1,5 @@
 from flask import flash
+from banco.auditoria import registrar_evento
 from database import *
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
@@ -45,10 +46,22 @@ def validar_setor(nome, descricao):
 
     return False
 
-def salvar(nome, descricao):
+def salvar(nome, descricao, usuario_id=None):
     try:
         setor = Setor(nome=nome, descricao=descricao)
         db_session.add(setor)
+        db_session.flush()
+        registrar_evento(
+            usuario_id,
+            "setores",
+            "criacao",
+            setor.nome,
+            setor.id,
+            [
+                ("Nome", "-", setor.nome),
+                ("Descrição", "-", setor.descricao),
+            ],
+        )
         db_session.commit()
         flash("Setor cadastrado com sucesso", "success")
         return True  # CORREÇÃO 2: Retorna apenas True indicando que salvou no banco local

@@ -51,7 +51,7 @@ class OrdemServico(Base):
     responsavel_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     tecnico_responsavel_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     setor_id = Column(Integer, ForeignKey('setores.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
-    identificacao = Column(String(15), nullable=False)
+    identificacao = Column(String(30), nullable=False)
     categoria = Column(String(30), nullable=False)
     custo_total = Column(Integer)
     descricao = Column(String(500), nullable=False)
@@ -149,6 +149,97 @@ class HistoricoOrdemServico(Base):
     criado_em = Column(DateTime, nullable=False, server_default=func.now())
 
     usuario = relationship("Usuario", foreign_keys=[usuario_id])
+
+
+class MensagemOrdemServico(Base):
+    __tablename__ = "mensagens_ordens_servico"
+    __table_args__ = (
+        Index(
+            "ix_mensagem_os_ordem_data",
+            "ordem_servico_id",
+            "criado_em",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ordem_servico_id = Column(
+        Integer,
+        ForeignKey("ordens_servico.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
+    usuario_nome = Column(String(50), nullable=False)
+    usuario_papel = Column(String(20), nullable=False)
+    mensagem = Column(Text, nullable=False)
+    criado_em = Column(DateTime, nullable=False, server_default=func.now())
+
+    ordem_servico = relationship("OrdemServico")
+    usuario = relationship("Usuario", foreign_keys=[usuario_id])
+
+
+class AuditoriaSistema(Base):
+    __tablename__ = "auditoria_sistema"
+    __table_args__ = (
+        Index("ix_auditoria_sistema_criado_em", "criado_em"),
+        Index("ix_auditoria_sistema_area_acao", "area", "acao"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
+    usuario_nome = Column(String(50), nullable=False)
+    usuario_papel = Column(String(20), nullable=False)
+    area = Column(String(50), nullable=False)
+    acao = Column(String(30), nullable=False)
+    registro = Column(String(150), nullable=False)
+    registro_id = Column(Integer)
+    campo = Column(String(100), nullable=False)
+    valor_anterior = Column(Text)
+    valor_novo = Column(Text)
+    criado_em = Column(DateTime, nullable=False, server_default=func.now())
+
+
+class SolicitacaoRestauracaoOS(Base):
+    __tablename__ = "solicitacoes_restauracao_os"
+    __table_args__ = (
+        Index("ix_solicitacao_restauracao_status_data", "status", "criado_em"),
+        Index("ix_solicitacao_restauracao_os_usuario", "ordem_servico_id", "usuario_id"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ordem_servico_id = Column(
+        Integer,
+        ForeignKey("ordens_servico.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
+    usuario_nome = Column(String(50), nullable=False)
+    usuario_papel = Column(String(20), nullable=False)
+    mensagem = Column(String(500), nullable=False)
+    status = Column(String(20), nullable=False, default="pendente")
+    resposta_administrador = Column(String(500))
+    administrador_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
+    criado_em = Column(DateTime, nullable=False, server_default=func.now())
+    resolvido_em = Column(DateTime)
+
+    ordem_servico = relationship("OrdemServico")
+    usuario = relationship("Usuario", foreign_keys=[usuario_id])
+    administrador = relationship("Usuario", foreign_keys=[administrador_id])
 
 
 Base.metadata.create_all(bind=engine)

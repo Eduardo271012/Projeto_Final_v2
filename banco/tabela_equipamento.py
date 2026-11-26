@@ -1,6 +1,7 @@
 import math
 
 from flask import flash
+from banco.auditoria import registrar_evento
 from database import Equipamento, db_session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, func
@@ -66,7 +67,7 @@ def validar_equipamento(nome, quantidade, modelo, custo_equipamento):
 
 
 # CORREÇÃO: Trocado 'numero_serie' por 'custo_equipamento' para bater com o database.py
-def salvar(nome, modelo, quantidade, custo_equipamento):
+def salvar(nome, modelo, quantidade, custo_equipamento, usuario_id=None):
     try:
         equipamento_novo = Equipamento(
             nome=nome,
@@ -75,6 +76,20 @@ def salvar(nome, modelo, quantidade, custo_equipamento):
             custo_equipamento=float(custo_equipamento)
         )
         db_session.add(equipamento_novo)
+        db_session.flush()
+        registrar_evento(
+            usuario_id,
+            "equipamentos",
+            "criacao",
+            equipamento_novo.nome,
+            equipamento_novo.id,
+            [
+                ("Nome", "-", equipamento_novo.nome),
+                ("Modelo", "-", equipamento_novo.modelo),
+                ("Quantidade em estoque", "-", equipamento_novo.quantidade),
+                ("Custo unitário", "-", equipamento_novo.custo_equipamento),
+            ],
+        )
         db_session.commit()
         flash("Equipamento cadastrado com sucesso", "success")
         return True

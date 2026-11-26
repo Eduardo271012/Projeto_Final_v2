@@ -9,6 +9,11 @@
             <a href="{{ url_for('listar_ordens_servico_excluidos') if not excluidos else url_for('ordens_servico_lista_view') }}" class="design-btn-direita">
                 {{ 'ORDENS DE SERVIÇO ATIVAS' if excluidos else 'ORDENS DE SERVIÇO EXCLUÍDAS' }}
             </a>
+            {% if excluidos and current_user.papel == 'admin' %}
+                <a href="{{ url_for('listar_solicitacoes_restauracao') }}" class="design-btn-direita">
+                    PEDIDOS DE RESTAURAÇÃO{% if total_solicitacoes_restauracao %} ({{ total_solicitacoes_restauracao }}){% endif %}
+                </a>
+            {% endif %}
             {% if not excluidos and current_user.papel != 'tecnico' %}
                 <a href="{{ url_for('cadastro_ordem_view') }}" class="design-btn-direita">CADASTRAR</a>
             {% endif %}
@@ -29,6 +34,11 @@
                 <div class="campo-formulario">
                     <label for="tecnico_responsavel">Técnico responsável</label>
                     <input id="tecnico_responsavel" class="campo-input" value="{{ editar.tecnico_responsavel.nome if editar.tecnico_responsavel else current_user.nome }}" disabled>
+                </div>
+                {% elif current_user.papel == 'usuario' %}
+                <div class="campo-formulario">
+                    <label for="responsavel_id">Solicitante</label>
+                    <input id="responsavel_id" class="campo-input" value="{{ current_user.nome }}" disabled>
                 </div>
                 {% else %}
                 <div class="campo-formulario">
@@ -241,7 +251,7 @@
 
     <!-- Esconde a listagem enquanto o cadastro ou a edição estiver aberto -->
     {% if request.endpoint != 'cadastro_ordem_view' and not editar %}
-    <section class="container-perfil">
+    <section class="container-perfil lista-os-panel">
         <h2>{% if excluidos %}LISTA DE ORDEM DE SERVIÇO EXCLUÍDAS{% else %}LISTA DE ORDEM DE SERVIÇO{% endif %}</h2>
         <form class="busca-lista" action="{{ url_for(request.endpoint) }}" method="get" role="search">
             <label for="busca-ordens">Buscar ordens de serviço</label>
@@ -250,10 +260,19 @@
             {% if termo %}<a href="{{ url_for(request.endpoint) }}" class="limpar-busca">Limpar</a>{% endif %}
         </form>
         {% if ordens %}
+        <div class="tabela-os-scroll{% if excluidos %} tabela-os-excluidas{% endif %}">
         <table>
             <thead>
                 <tr>
-                    <th>Identificacão</th>
+                    {% if excluidos %}
+                    <th>Ordem de serviço</th>
+                    <th>Solicitante</th>
+                    <th>Técnico</th>
+                    <th>Categoria e setor</th>
+                    <th>Status e prioridade</th>
+                    <th>Excluída por</th>
+                    {% else %}
+                    <th>Identificação</th>
                     <th>Funcionário</th>
                     <th>Técnico</th>
                     <th>Categoria</th>
@@ -265,12 +284,41 @@
                     <th>Custo</th>
                     <th>Solicitação</th>
                     <th>Execução</th>
+                    {% endif %}
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
             {% for os in ordens %}
                 <tr>
+                    {% if excluidos %}
+                    <td>
+                        <strong>{{ os.identificacao }}</strong>
+                        <span class="os-resumo-descricao">{{ os.descricao }}</span>
+                    </td>
+                    <td>
+                        {% if os.responsavel %}
+                            {{ os.responsavel.nome }}
+                        {% else %}
+                            Não atribuído
+                        {% endif %}
+                    </td>
+                    <td>{{ os.tecnico_responsavel.nome if os.tecnico_responsavel else 'Não atribuído' }}</td>
+                    <td>{{ os.categoria or '-' }}<span class="os-dado-secundario">{{ os.setor.nome if os.setor else 'Setor não informado' }}</span></td>
+                    <td>{{ os.status_os }}<span class="os-dado-secundario">Prioridade: {{ os.prioridade or '-' }}</span></td>
+                    {% set exclusao = exclusoes_por_os.get(os.id) %}
+                    <td>
+                        {% if exclusao %}
+                            {{ exclusao.usuario_nome }}
+                            <span class="os-dado-secundario">
+                                {{ 'Administrador' if exclusao.usuario_papel == 'admin' else 'Técnico' if exclusao.usuario_papel == 'tecnico' else 'Funcionário' if exclusao.usuario_papel == 'usuario' else exclusao.usuario_papel }}
+                            </span>
+                            <span class="os-dado-secundario">{{ exclusao.criado_em.strftime('%d/%m/%Y às %H:%M') if exclusao.criado_em else '-' }}</span>
+                        {% else %}
+                            Informação não disponível
+                        {% endif %}
+                    </td>
+                    {% else %}
                     <td><a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}">{{ os.identificacao }}</a></td>
                     <td>
                         {% if os.responsavel %}
@@ -295,12 +343,30 @@
                     <td>R$ {{ os.custo_total if os.custo_total else 0 }}</td>
                     <td>{{ os.data_solicitacao.strftime('%d/%m/%Y') if os.data_solicitacao else '-' }}</td>
                     <td>{{ os.data_execucao.strftime('%d/%m/%Y') if os.data_execucao else '-' }}</td>
+                    {% endif %}
                     <td class="acoes">
                         {% if excluidos %}
                             {% if current_user.papel == 'admin' %}
                                 <form method="POST" action="{{ url_for('restaurar_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline">
                                     <button type="submit" class="design-btn-direita">Restaurar</button>
                                 </form>
+                            {% else %}
+                                {% set solicitacao = solicitacoes_por_os.get(os.id) %}
+                                {% if solicitacao and solicitacao.status == 'pendente' %}
+                                    <div class="os-pedido-pendente">
+                                        <strong>Pedido enviado</strong>
+                                        <span>{{ solicitacao.criado_em.strftime('%d/%m/%Y às %H:%M') if solicitacao.criado_em else '-' }}</span>
+                                    </div>
+                                {% else %}
+                                    {% if solicitacao and solicitacao.status == 'recusada' %}
+                                        <p class="os-pedido-recusado">Pedido anterior recusado. Você pode enviar outro.</p>
+                                    {% endif %}
+                                    <form class="form-solicitar-restauracao" method="POST" action="{{ url_for('solicitar_restauracao_ordem_servico', ordem_id=os.id) }}">
+                                        <label for="mensagem-restauracao-{{ os.id }}">Justificativa para o administrador</label>
+                                        <textarea id="mensagem-restauracao-{{ os.id }}" name="mensagem" maxlength="500" required rows="3" class="campo-input" placeholder="Explique por que esta OS precisa ser restaurada."></textarea>
+                                        <button type="submit" class="design-btn-direita">Enviar pedido</button>
+                                    </form>
+                                {% endif %}
                             {% endif %}
                         {% else %}
                             <a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Detalhes</a>
@@ -320,6 +386,7 @@
             {% endfor %}
             </tbody>
         </table>
+        </div>
         {% else %}
             <p class="vazio">Nenhuma ordem de serviço cadastrada ainda</p>
         {% endif %}

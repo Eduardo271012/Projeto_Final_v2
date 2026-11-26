@@ -122,11 +122,11 @@ def select_todas():
     return db_session.execute(ordens_sql).scalars().all()
 
 def gerar_identificacao(usuario):
-    data = datetime.now().strftime("%Y-%m-%d")
+    data = datetime.now().strftime("%Y-%d-%H%S")
     nfkd = unicodedata.normalize('NFKD', usuario)
     sem_acento = "".join([c for c in nfkd if not unicodedata.combining(c)])
     nome = re.sub(r'[^a-zA-Z0-9]', '', sem_acento).lower()
-    return f"{data}-{nome[:19]}"
+    return f"{data}-{nome[:17]}"
 
 
 def capturar_estado_historico(ordem, equipamentos_ids=None):

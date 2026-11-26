@@ -1,6 +1,6 @@
 from flask_login import UserMixin
-from sqlalchemy import Boolean, Column, Date, Float, ForeignKey, Integer, String, create_engine, DateTime, \
-    func
+from sqlalchemy import Boolean, Column, Date, Float, ForeignKey, Index, Integer, String, Text, create_engine, \
+    DateTime, func
 from sqlalchemy.orm import declarative_base, relationship, scoped_session, sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -120,6 +120,35 @@ class Usuario(Base, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.senha_hash, password)
+
+
+class HistoricoOrdemServico(Base):
+    __tablename__ = "historico_ordens_servico"
+    __table_args__ = (
+        Index(
+            "ix_historico_ordens_servico_ordem_data",
+            "ordem_servico_id",
+            "criado_em",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ordem_servico_id = Column(
+        Integer,
+        ForeignKey("ordens_servico.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"),
+        nullable=True,
+    )
+    campo = Column(String(100), nullable=False)
+    valor_anterior = Column(Text)
+    valor_novo = Column(Text)
+    criado_em = Column(DateTime, nullable=False, server_default=func.now())
+
+    usuario = relationship("Usuario", foreign_keys=[usuario_id])
 
 
 Base.metadata.create_all(bind=engine)

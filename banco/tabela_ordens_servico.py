@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from database import (
     Equipamento,
+    HistoricoOrdemServico,
     OrdemServico,
     OrdemServicoEquipamento,
     Setor,
@@ -16,6 +17,20 @@ from database import (
 
 CATEGORIAS_OS = ("Manutenção", "Limpeza", "Elétrica", "Hidráulica", "Infraestrutura")
 STATUS_OS = ("Aberta", "Em andamento", "Pausada", "Concluída", "Cancelada")
+ROTULOS_HISTORICO = {
+    "identificacao": "Identificação",
+    "responsavel_id": "Funcionário responsável",
+    "tecnico_responsavel_id": "Técnico responsável",
+    "setor_id": "Setor",
+    "categoria": "Categoria",
+    "descricao": "Descrição",
+    "status_os": "Status",
+    "prioridade": "Prioridade",
+    "custo_total": "Custo estimado",
+    "data_solicitacao": "Data da solicitação",
+    "data_execucao": "Data da execução",
+    "equipamentos": "Equipamentos",
+}
 
 
 def validar_vinculos(
@@ -113,6 +128,68 @@ def gerar_identificacao(usuario):
     nome = re.sub(r'[^a-zA-Z0-9]', '', sem_acento).lower()
     return f"{data}-{nome[:19]}"
 
+
+def capturar_estado_historico(ordem, equipamentos_ids=None):
+    if equipamentos_ids is None:
+        equipamentos_ids = [
+            associacao.equipamento_id
+            for associacao in ordem.equipamentos_associados
+        ]
+    equipamentos_ids = sorted(set(equipamentos_ids))
+
+    responsavel = db_session.get(Usuario, ordem.responsavel_id) if ordem.responsavel_id else None
+    tecnico = (
+        db_session.get(Usuario, ordem.tecnico_responsavel_id)
+        if ordem.tecnico_responsavel_id
+        else None
+    )
+    setor = db_session.get(Setor, ordem.setor_id) if ordem.setor_id else None
+    equipamentos = db_session.execute(
+        select(Equipamento).where(Equipamento.id.in_(equipamentos_ids))
+    ).scalars().all() if equipamentos_ids else []
+    equipamentos_por_id = {equipamento.id: equipamento for equipamento in equipamentos}
+    nomes_equipamentos = [
+        equipamentos_por_id[equipamento_id].nome
+        if equipamento_id in equipamentos_por_id
+        else f"Equipamento #{equipamento_id}"
+        for equipamento_id in equipamentos_ids
+    ]
+
+    def formatar_data(data):
+        return data.strftime("%d/%m/%Y") if data else "-"
+
+    return {
+        "identificacao": ordem.identificacao or "-",
+        "responsavel_id": responsavel.nome if responsavel else "Não atribuído",
+        "tecnico_responsavel_id": tecnico.nome if tecnico else "Não atribuído",
+        "setor_id": setor.nome if setor else "Não atribuído",
+        "categoria": ordem.categoria or "-",
+        "descricao": ordem.descricao or "-",
+        "status_os": ordem.status_os or "-",
+        "prioridade": ordem.prioridade or "-",
+        "custo_total": f"R$ {ordem.custo_total if ordem.custo_total is not None else 0}",
+        "data_solicitacao": formatar_data(ordem.data_solicitacao),
+        "data_execucao": formatar_data(ordem.data_execucao),
+        "equipamentos": ", ".join(nomes_equipamentos) if nomes_equipamentos else "Nenhum",
+    }
+
+
+def registrar_historico(ordem_id, usuario_id, estado_anterior, estado_novo):
+    for campo, rotulo in ROTULOS_HISTORICO.items():
+        valor_anterior = estado_anterior.get(campo, "-")
+        valor_novo = estado_novo.get(campo, "-")
+        if valor_anterior != valor_novo:
+            db_session.add(
+                HistoricoOrdemServico(
+                    ordem_servico_id=ordem_id,
+                    usuario_id=usuario_id,
+                    campo=rotulo,
+                    valor_anterior=valor_anterior,
+                    valor_novo=valor_novo,
+                )
+            )
+
+
 def salvar(
     os_id,
     responsavel_id,
@@ -128,6 +205,7 @@ def salvar(
     setor_id,
     equipamentos_ids,
     permitir_sem_equipamentos=False,
+    usuario_id=None,
 ):
     try:
         if not descricao or not descricao.strip():
@@ -195,6 +273,13 @@ def salvar(
                 quantidade=1,
             )
             for equipamento_id in equipamentos_ids
+        )
+        estado_inicial = capturar_estado_historico(ordem, equipamentos_ids)
+        registrar_historico(
+            ordem.id,
+            usuario_id,
+            {},
+            estado_inicial,
         )
         db_session.commit()
         flash("Ordem de serviço cadastrada com sucesso", "success")

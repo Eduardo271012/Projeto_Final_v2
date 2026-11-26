@@ -708,6 +708,46 @@ body.tela-listas .container-perfil.detalhes-os {
     max-width: 900px !important; /* Deixa o painel mais elegante e proporcional para 2 colunas */
 }
 
+body.tela-listas .container-perfil.historico-os {
+    max-width: 1200px !important;
+}
+
+.tabela-historico-os {
+    overflow-x: auto;
+}
+
+.tabela-historico-os th,
+.tabela-historico-os td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(203, 213, 225, 0.55);
+    text-align: left;
+    vertical-align: top;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.tabela-historico-os thead th {
+    background-color: rgba(248, 250, 252, 0.75);
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.tabela-historico-os tbody th {
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+
+.tabela-historico-os tbody td {
+    color: #0f172a;
+    font-size: 0.82rem;
+}
+
+.historico-os-vazio {
+    color: #475569;
+    margin: 0;
+}
+
 .detalhes-os th,
 .detalhes-os td {
     padding: 12px 16px; /* Respiro mais confortável nas linhas */

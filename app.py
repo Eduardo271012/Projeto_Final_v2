@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from banco import tabela_equipamento, tabela_ordens_servico, tabela_setor, tabela_usuario
 from database import (
     Equipamento,
+    HistoricoOrdemServico,
     OrdemServico,
     OrdemServicoEquipamento,
     Setor,
@@ -315,6 +316,7 @@ def cadastro_ordem_view():
             setor_id,
             equipamentos_ids,
             permitir_sem_equipamentos=funcionario,
+            usuario_id=current_user.id,
         ):
             return redirect(url_for("ordens_servico_lista_view"))
 
@@ -343,7 +345,19 @@ def detalhes_ordem_servico(ordem_id):
         flash("Ordem de serviço não encontrada", "error")
         return redirect(url_for("ordens_servico_lista_view"))
 
-    return render_template("ordem_servico_detalhes.html", ordem=ordem_servico)
+    historico = db_session.execute(
+        select(HistoricoOrdemServico)
+        .where(HistoricoOrdemServico.ordem_servico_id == ordem_id)
+        .order_by(
+            HistoricoOrdemServico.criado_em.desc(),
+            HistoricoOrdemServico.id.desc(),
+        )
+    ).scalars().all()
+    return render_template(
+        "ordem_servico_detalhes.html",
+        ordem=ordem_servico,
+        historico=historico,
+    )
 
 
 @app.route('/servico/ordens/excluir/<int:ordem_id>', methods=['POST'])
@@ -356,6 +370,15 @@ def excluir_ordem_servico(ordem_id):
 
     ordem_servico.status_delete = False
     try:
+        db_session.add(
+            HistoricoOrdemServico(
+                ordem_servico_id=ordem_id,
+                usuario_id=current_user.id,
+                campo="Registro da OS",
+                valor_anterior="Ativa",
+                valor_novo="Excluída",
+            )
+        )
         db_session.commit()
         flash("Ordem de serviço excluída com sucesso", "success")
     except SQLAlchemyError:
@@ -375,6 +398,15 @@ def restaurar_ordem_servico(ordem_id):
 
     ordem_servico.status_delete = True
     try:
+        db_session.add(
+            HistoricoOrdemServico(
+                ordem_servico_id=ordem_id,
+                usuario_id=current_user.id,
+                campo="Registro da OS",
+                valor_anterior="Excluída",
+                valor_novo="Ativa",
+            )
+        )
         db_session.commit()
         flash("Ordem de serviço restaurada com sucesso", "success")
     except SQLAlchemyError:
@@ -456,6 +488,10 @@ def editar_ordem_servico(ordem_id):
             if equipamentos_ids is None:
                 return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
+            estado_anterior = tabela_ordens_servico.capturar_estado_historico(
+                ordem_servico,
+                equipamentos_atuais,
+            )
             ordem_servico.status_os = status_os
             ordem_servico.prioridade = prioridade
             ordem_servico.custo_total = custo_total
@@ -469,6 +505,17 @@ def editar_ordem_servico(ordem_id):
                         quantidade=1,
                     )
                     for equipamento_id in novos_equipamentos
+                )
+                db_session.flush()
+                estado_novo = tabela_ordens_servico.capturar_estado_historico(
+                    ordem_servico,
+                    equipamentos_ids,
+                )
+                tabela_ordens_servico.registrar_historico(
+                    ordem_servico.id,
+                    current_user.id,
+                    estado_anterior,
+                    estado_novo,
                 )
                 db_session.commit()
                 flash("Ordem de serviço atualizada com sucesso", "success")
@@ -530,6 +577,14 @@ def editar_ordem_servico(ordem_id):
         if tecnico_responsavel_id is False:
             return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
+        equipamentos_anteriores_ids = [
+            associacao.equipamento_id
+            for associacao in ordem_servico.equipamentos_associados
+        ]
+        estado_anterior = tabela_ordens_servico.capturar_estado_historico(
+            ordem_servico,
+            equipamentos_anteriores_ids,
+        )
         ordem_servico.responsavel_id = responsavel_id
         ordem_servico.tecnico_responsavel_id = tecnico_responsavel_id
         ordem_servico.categoria = categoria
@@ -556,6 +611,17 @@ def editar_ordem_servico(ordem_id):
                     quantidade=quantidades_anteriores.get(equipamento_id, 1),
                 )
                 for equipamento_id in equipamentos_ids
+            )
+            db_session.flush()
+            estado_novo = tabela_ordens_servico.capturar_estado_historico(
+                ordem_servico,
+                equipamentos_ids,
+            )
+            tabela_ordens_servico.registrar_historico(
+                ordem_servico.id,
+                current_user.id,
+                estado_anterior,
+                estado_novo,
             )
             db_session.commit()
             flash("Ordem de Serviço editada com sucesso", "success")

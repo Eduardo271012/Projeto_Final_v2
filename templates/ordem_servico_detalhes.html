@@ -91,4 +91,36 @@
             </tbody>
         </table>
     </section>
+
+    <section class="container-perfil historico-os">
+        <h2>HISTÓRICO DE MOVIMENTAÇÕES</h2>
+        {% if historico %}
+            <div class="tabela-historico-os">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Data e hora</th>
+                            <th scope="col">Responsável</th>
+                            <th scope="col">Alteração</th>
+                            <th scope="col">Antes</th>
+                            <th scope="col">Depois</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for movimentacao in historico %}
+                            <tr>
+                                <td>{{ movimentacao.criado_em.strftime('%d/%m/%Y %H:%M') if movimentacao.criado_em else '-' }}</td>
+                                <td>{{ movimentacao.usuario.nome if movimentacao.usuario else 'Usuário removido' }}</td>
+                                <th scope="row">{{ movimentacao.campo }}</th>
+                                <td>{{ movimentacao.valor_anterior or '-' }}</td>
+                                <td>{{ movimentacao.valor_novo or '-' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="historico-os-vazio">Ainda não há movimentações registradas para esta ordem de serviço.</p>
+        {% endif %}
+    </section>
 {% endblock %}

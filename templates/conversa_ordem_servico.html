@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+    <div class="cabecalho-pagina">
+        <div class="barra-titulo-linha">
+            <p class="subtitulo">CONVERSA — {{ ordem.identificacao }}</p>
+        </div>
+        <div class="container-botao-direita">
+            <a href="{{ url_for('detalhes_ordem_servico', ordem_id=ordem.id) }}" class="design-btn-direita">VOLTAR AOS DETALHES DA OS</a>
+        </div>
+    </div>
+
+    <section class="container-perfil conversa-os">
+        <div class="conversa-os-cabecalho">
+            <div>
+                <h2>CONVERSA DA ORDEM DE SERVIÇO</h2>
+                <p>Mensagens visíveis ao solicitante, ao técnico responsável e aos administradores.</p>
+            </div>
+            <span class="conversa-os-contagem">{{ mensagens|length }} {{ 'mensagem' if mensagens|length == 1 else 'mensagens' }}</span>
+        </div>
+
+        {% if mensagens %}
+            <ol class="conversa-os-lista">
+                {% for mensagem in mensagens %}
+                    <li class="conversa-os-mensagem{% if mensagem.usuario_id == current_user.id %} conversa-os-mensagem-propria{% endif %}">
+                        <div class="conversa-os-mensagem-meta">
+                            <strong>{{ mensagem.usuario_nome }}</strong>
+                            <span>{{ 'Administrador' if mensagem.usuario_papel == 'admin' else 'Técnico' if mensagem.usuario_papel == 'tecnico' else 'Funcionário' if mensagem.usuario_papel == 'usuario' else mensagem.usuario_papel }}</span>
+                            <time datetime="{{ mensagem.criado_em.isoformat() if mensagem.criado_em else '' }}">{{ mensagem.criado_em.strftime('%d/%m/%Y às %H:%M') if mensagem.criado_em else '-' }}</time>
+                        </div>
+                        <p>{{ mensagem.mensagem }}</p>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="conversa-os-vazia">Ainda não há mensagens. Comece a conversa para compartilhar informações sobre este atendimento.</p>
+        {% endif %}
+
+        <form class="conversa-os-formulario" method="POST" action="{{ url_for('enviar_mensagem_ordem_servico', ordem_id=ordem.id) }}">
+            <label for="mensagem-os">Escreva uma mensagem</label>
+            <textarea id="mensagem-os" name="mensagem" maxlength="2000" rows="3" required placeholder="Digite uma atualização ou uma dúvida sobre esta ordem de serviço."></textarea>
+            <div class="conversa-os-formulario-rodape">
+                <span>Até 2.000 caracteres</span>
+                <button type="submit" class="design-btn-direita">Enviar mensagem</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

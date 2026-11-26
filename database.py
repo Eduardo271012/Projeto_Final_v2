@@ -51,6 +51,7 @@ class OrdemServico(Base):
     responsavel_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     tecnico_responsavel_id = Column(Integer, ForeignKey('usuarios.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
     setor_id = Column(Integer, ForeignKey('setores.id', ondelete='SET NULL', onupdate='CASCADE'), nullable=True)
+    identificacao = Column(String(15), nullable=False)
     categoria = Column(String(30), nullable=False)
     custo_total = Column(Integer)
     descricao = Column(String(500), nullable=False)

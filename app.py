@@ -301,10 +301,13 @@ def cadastro_ordem_view():
         data_solicitacao = request.form.get("data_solicitacao")
         data_execucao = request.form.get("data_execucao")
 
+        identificacao = tabela_ordens_servico.gerar_identificacao(current_user.nome)
+
         if tabela_ordens_servico.salvar(
             0,
             responsavel_id,
             tecnico_responsavel_id,
+            identificacao,
             descricao,
             status_os,
             prioridade,
@@ -807,4 +810,4 @@ def dashboard():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5002)

@@ -426,6 +426,14 @@ main {
     background-color: rgb(175 12 12);
 }
 
+.botao-atualizar-os {
+    background-color: #0284c7;
+}
+
+.botao-atualizar-os:hover {
+    background-color: #0369a1;
+}
+
 .barra-titulo-linha {
     background-color: #0f172a;
     text-align: center;
@@ -510,6 +518,14 @@ main {
     border-color: #1e3a8a;
     box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12); /* Anel de foco suave */
     outline: none;
+}
+
+.campo-input:disabled {
+    color: #64748b;
+    background-color: #e2e8f0;
+    border-color: #cbd5e1;
+    cursor: not-allowed;
+    opacity: 1;
 }
 
 /* Área dos botões com hierarquia visual */

@@ -21,6 +21,7 @@
                 </div>
             </div>
 
+            {% if current_user.papel != 'usuario' %}
             <!-- Cartão 2: Equipamentos -->
             <div class="cartao-dashboard cartao-menu-wrapper">
                 <div class="cartao-valor">{{ total_equipamentos }}</div>
@@ -33,7 +34,9 @@
                     <a href="{{ url_for('equipamentos') }}" class="perfil-card-link">Ver lista de equipamentos →</a>
                 </div>
             </div>
+            {% endif %}
 
+            {% if current_user.papel == 'admin' %}
             <!-- Cartão 3: Setores -->
             <div class="cartao-dashboard cartao-menu-wrapper">
                 <div class="cartao-valor">{{ total_setores }}</div>
@@ -46,6 +49,7 @@
                     <a href="{{ url_for('setor') }}" class="perfil-card-link">Ver lista de setores →</a>
                 </div>
             </div>
+            {% endif %}
 
             <!-- Cartão 4: Funcionários -->
             {% if current_user.papel == 'admin' %}

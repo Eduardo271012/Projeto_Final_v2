@@ -22,8 +22,14 @@
             <h2 class="card-titulo">{% if editar %}EDITAR{% else %}CADASTRAR{% endif %} OS</h2>
             <form method="POST" action="{{ url_for('cadastro_ordem_view') if not editar else url_for('editar_ordem_servico', ordem_id=editar.id)}}">
                 {% if current_user.papel == 'tecnico' %}
-                <p><strong>Solicitante:</strong> {{ editar.responsavel.nome if editar.responsavel else 'Não atribuído' }}</p>
-                <p><strong>Técnico responsável:</strong> {{ current_user.nome }}</p>
+                <div class="campo-formulario">
+                    <label for="responsavel_tecnico">Funcionário responsável</label>
+                    <input id="responsavel_tecnico" class="campo-input" value="{{ editar.responsavel.nome if editar.responsavel else 'Não atribuído' }}" disabled>
+                </div>
+                <div class="campo-formulario">
+                    <label for="tecnico_responsavel">Técnico responsável</label>
+                    <input id="tecnico_responsavel" class="campo-input" value="{{ editar.tecnico_responsavel.nome if editar.tecnico_responsavel else current_user.nome }}" disabled>
+                </div>
                 {% else %}
                 <div class="campo-formulario">
                     <label for="responsavel_id">Solicitante</label>
@@ -50,7 +56,7 @@
                         {% endif %}
                     </select>
                 </div>
-                {% if current_user.papel == 'admin' %}
+                {% if current_user.papel in ['admin', 'usuario'] %}
                 <div class="campo-formulario">
                     <label for="tecnico_responsavel_id">Técnico responsável</label>
                     <select id="tecnico_responsavel_id" name="tecnico_responsavel_id" class="campo-input">
@@ -67,7 +73,7 @@
                 <div class="campo-formulario">
                     <label for="categoria">Categoria</label>
                     {% if current_user.papel == 'tecnico' %}
-                        <p>{{ editar.categoria }}</p>
+                        <input id="categoria" class="campo-input" value="{{ editar.categoria }}" disabled>
                     {% else %}
                         <select id="categoria" name="categoria" required class="campo-input">
                             <option value="" disabled {% if not editar %}selected{% endif %}>Selecione uma categoria</option>
@@ -80,7 +86,7 @@
                 <div class="campo-formulario">
                     <label for="setor_id">Setor</label>
                     {% if current_user.papel == 'tecnico' %}
-                        <p>{{ editar.setor.nome if editar.setor else 'Não atribuído' }}</p>
+                        <input id="setor_id" class="campo-input" value="{{ editar.setor.nome if editar.setor else 'Não atribuído' }}" disabled>
                     {% else %}
                         <select id="setor_id" name="setor_id" required class="campo-input">
                             <option value="" disabled {% if not editar %}selected{% endif %}>Selecione um setor</option>
@@ -95,60 +101,97 @@
                     {% endif %}
                 </div>
                 <div class="campo-formulario">
-                    <label for="equipamentos_ids">Equipamentos (selecione um ou mais)</label>
-                    <select id="equipamentos_ids" name="equipamentos_ids" required multiple size="4" class="campo-input">
-                        {% for equipamento in equipamentos %}
-                            <option value="{{ equipamento.id }}"
-                                {% if editar and equipamento.id in equipamentos_selecionados %}selected{% endif %}>
-                                {{ equipamento.nome }}{% if equipamento.modelo %} — {{ equipamento.modelo }}{% endif %}{% if not equipamento.status_delete %} (INATIVO){% endif %}
-                            </option>
-                        {% else %}
-                            <option value="" disabled>Nenhum equipamento ativo cadastrado</option>
-                        {% endfor %}
-                    </select>
+                    {% if current_user.papel == 'tecnico' %}
+                        <p><strong>Equipamentos vinculados:</strong>
+                            {% for associacao in editar.equipamentos_associados %}
+                                {{ associacao.equipamento.nome if associacao.equipamento else 'Equipamento removido' }}{% if not loop.last %}, {% endif %}
+                            {% else %}
+                                Nenhum equipamento vinculado
+                            {% endfor %}
+                        </p>
+                        <label for="equipamentos_ids">Adicionar equipamentos</label>
+                        <select id="equipamentos_ids" name="equipamentos_ids" multiple size="4" class="campo-input">
+                            {% for equipamento in equipamentos %}
+                                {% if equipamento.id not in equipamentos_selecionados %}
+                                    <option value="{{ equipamento.id }}">
+                                        {{ equipamento.nome }}{% if equipamento.modelo %} — {{ equipamento.modelo }}{% endif %}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    {% elif current_user.papel == 'usuario' %}
+                        <label>Equipamentos</label>
+                        <input class="campo-input" value="Serão definidos pelo técnico responsável" disabled>
+                    {% else %}
+                        <label for="equipamentos_ids">Equipamentos (selecione um ou mais)</label>
+                        <select id="equipamentos_ids" name="equipamentos_ids" required multiple size="4" class="campo-input">
+                            {% for equipamento in equipamentos %}
+                                <option value="{{ equipamento.id }}"
+                                    {% if editar and equipamento.id in equipamentos_selecionados %}selected{% endif %}>
+                                    {{ equipamento.nome }}{% if equipamento.modelo %} — {{ equipamento.modelo }}{% endif %}{% if not equipamento.status_delete %} (INATIVO){% endif %}
+                                </option>
+                            {% else %}
+                                <option value="" disabled>Nenhum equipamento ativo cadastrado</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
                 </div>
 
                 <div class="campo-formulario">
                     <label for="descricao">Descrição do Problema / Serviço</label>
                     {% if current_user.papel == 'tecnico' %}
-                        <p>{{ editar.descricao }}</p>
+                        <textarea id="descricao" class="campo-input" disabled>{{ editar.descricao }}</textarea>
                     {% else %}
                         <textarea id="descricao" name="descricao" required placeholder="Ex: Substituir o óleo hidráulico e limpar os filtros." class="campo-input">{{ editar.descricao if editar else '' }}</textarea>
                     {% endif %}
                 </div>
                 <div class="campo-formulario">
                     <label for="status_os">Status</label>
-                    <select id="status_os" name="status_os" class="campo-input">
-                        {% if editar %}
-                            <option value="Aberta" {% if editar.status_os == "Aberta" %}selected{% endif %}>Aberta: Aguardando técnico</option>
-                            <option value="Em andamento" {% if editar.status_os == "Em andamento" %}selected{% endif %}>Em andamento: Técnico trabalhando</option>
-                            <option value="Pausada" {% if editar.status_os == "Pausada" %}selected{% endif %}>Pausada: Aguardando peça</option>
-                            <option value="Concluída" {% if editar.status_os == "Concluída" %}selected{% endif %}>Concluída</option>
-                        {% else %}
-                            <option value="Em andamento">Em andamento: Técnico trabalhando</option>
-                            <option value="Pausada">Pausada: Aguardando peça</option>
-                            <option value="Aberta">Aberta: Aguardando técnico</option>
-                            <option value="Concluída">Concluída</option>
-                        {% endif %}
-                    </select>
+                    {% if current_user.papel == 'usuario' %}
+                        <input id="status_os" class="campo-input" value="Aberta" disabled>
+                    {% else %}
+                        <select id="status_os" name="status_os" class="campo-input">
+                            {% if editar %}
+                                <option value="Aberta" {% if editar.status_os == "Aberta" %}selected{% endif %}>Aberta: Aguardando técnico</option>
+                                <option value="Em andamento" {% if editar.status_os == "Em andamento" %}selected{% endif %}>Em andamento: Técnico trabalhando</option>
+                                <option value="Pausada" {% if editar.status_os == "Pausada" %}selected{% endif %}>Pausada: Aguardando peça</option>
+                                <option value="Concluída" {% if editar.status_os == "Concluída" %}selected{% endif %}>Concluída</option>
+                                <option value="Cancelada" {% if editar.status_os == "Cancelada" %}selected{% endif %}>Cancelada</option>
+                            {% else %}
+                                <option value="Em andamento">Em andamento: Técnico trabalhando</option>
+                                <option value="Pausada">Pausada: Aguardando peça</option>
+                                <option value="Aberta">Aberta: Aguardando técnico</option>
+                                <option value="Concluída">Concluída</option>
+                                <option value="Cancelada">Cancelada</option>
+                            {% endif %}
+                        </select>
+                    {% endif %}
                 </div>
                 <div class="campo-formulario">
                     <label for="prioridade">Prioridade</label>
-                    <select id="prioridade" name="prioridade" class="campo-input">
-                        {% if editar %}
-                            <option value="Baixa" {% if editar.prioridade == "Baixa" %}selected{% endif %}>Baixa</option>
-                            <option value="Média" {% if editar.prioridade == "Média" %}selected{% endif %}>Média</option>
-                            <option value="Alta" {% if editar.prioridade == "Alta" %}selected{% endif %}>Alta</option>
-                        {% else %}
-                            <option value="Baixa">Baixa</option>
-                            <option value="Média">Média</option>
-                            <option value="Alta">Alta</option>
-                        {% endif %}
-                    </select>
+                    {% if current_user.papel == 'usuario' %}
+                        <input id="prioridade" class="campo-input" value="Definida pelo técnico responsável" disabled>
+                    {% else %}
+                        <select id="prioridade" name="prioridade" class="campo-input">
+                            {% if editar %}
+                                <option value="Baixa" {% if editar.prioridade == "Baixa" %}selected{% endif %}>Baixa</option>
+                                <option value="Média" {% if editar.prioridade == "Média" %}selected{% endif %}>Média</option>
+                                <option value="Alta" {% if editar.prioridade == "Alta" %}selected{% endif %}>Alta</option>
+                            {% else %}
+                                <option value="Baixa">Baixa</option>
+                                <option value="Média">Média</option>
+                                <option value="Alta">Alta</option>
+                            {% endif %}
+                        </select>
+                    {% endif %}
                 </div>
                 <div class="campo-formulario">
                     <label for="custo_total">Custo Estimado (R$)</label>
-                    <input type="number" id="custo_total" name="custo_total" min="0" step="1" placeholder="Ex: 500" class="campo-input" value="{{ editar.custo_total if editar else '' }}">
+                    {% if current_user.papel == 'usuario' %}
+                        <input id="custo_total" class="campo-input" value="Definido pelo técnico responsável" disabled>
+                    {% else %}
+                        <input type="number" id="custo_total" name="custo_total" min="0" step="1" placeholder="Ex: 500" class="campo-input" value="{{ editar.custo_total if editar else '' }}">
+                    {% endif %}
                 </div>
             {% if not editar %}
                 <div class="campo-formulario">
@@ -157,12 +200,17 @@
                 </div>
             {% endif %}
                 <div class="campo-formulario">
-                    <label for="data_execucao">Data da execução/entrega</label>
                     {% if current_user.papel == 'tecnico' %}
-                        <p><strong>Solicitação:</strong> {{ editar.data_solicitacao.strftime('%d/%m/%Y') if editar.data_solicitacao else '-' }}</p>
-                        <p><strong>Execução/entrega:</strong> {{ editar.data_execucao.strftime('%d/%m/%Y') if editar.data_execucao else '-' }}</p>
+                        <label for="data_solicitacao_tecnico">Data da solicitação</label>
+                        <input type="date" id="data_solicitacao_tecnico" class="campo-input" value="{{ editar.data_solicitacao.strftime('%Y-%m-%d') if editar.data_solicitacao else '' }}" disabled>
+                        <label for="data_execucao">Data da execução/entrega</label>
+                        <input type="date" id="data_execucao" name="data_execucao" class="campo-input" min="{{ editar.data_solicitacao.strftime('%Y-%m-%d') if editar.data_solicitacao else '' }}" value="{{ editar.data_execucao.strftime('%Y-%m-%d') if editar.data_execucao else '' }}">
+                    {% elif current_user.papel == 'usuario' %}
+                        <label for="data_execucao_usuario">Data da execução/entrega</label>
+                        <input id="data_execucao_usuario" class="campo-input" value="Definida pelo técnico responsável" disabled>
                     {% else %}
-                        <input type="date" id="data_execucao" name="data_execucao" class="campo-input" min="{{ editar.data_solicitacao.strftime('%Y-%m-%d') if editar and editar.data_solicitacao else '' }}" value="{{ editar.data_execucao.strftime('%Y-%m-%d') if editar and editar.data_execucao else '' }}">
+                        <label for="data_execucao_admin">Data da execução/entrega</label>
+                        <input id="data_execucao_admin" class="campo-input" value="{{ editar.data_execucao.strftime('%d/%m/%Y') if editar and editar.data_execucao else 'Definida pelo técnico responsável' }}" disabled>
                     {% endif %}
                 </div>
 
@@ -249,7 +297,7 @@
                     <td>{{ os.data_execucao.strftime('%d/%m/%Y') if os.data_execucao else '-' }}</td>
                     <td class="acoes">
                         {% if excluidos %}
-                            {% if current_user.papel != 'tecnico' %}
+                            {% if current_user.papel == 'admin' %}
                                 <form method="POST" action="{{ url_for('restaurar_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline">
                                     <button type="submit" class="design-btn-direita">Restaurar</button>
                                 </form>
@@ -257,8 +305,10 @@
                         {% else %}
                             <a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Detalhes</a>
                             {% if current_user.papel == 'tecnico' %}
-                                <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Atualizar OS</a>
-                            {% else %}
+                                {% if os.tecnico_responsavel_id == current_user.id %}
+                                    <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita botao-atualizar-os">Atualizar OS</a>
+                                {% endif %}
+                            {% elif current_user.papel == 'admin' %}
                                 <a href="{{ url_for('editar_ordem_servico', ordem_id=os.id) }}" class="design-btn-direita">Editar</a>
                                 <form method="POST" action="{{ url_for('excluir_ordem_servico', ordem_id=os.id) }}" class="form-acao-inline" onsubmit="return confirm('Deseja excluir esta ordem de serviço?');">
                                     <button type="submit" class="design-btn-direita excluir-btn">Excluir</button>

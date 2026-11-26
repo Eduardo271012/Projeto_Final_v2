@@ -29,9 +29,13 @@
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('index') }}" class="link-principal">INÍCIO</a>
                 <a href="{{ url_for('dashboard') }}" class="link-principal">DASHBOARD</a>
-                <a href="{{ url_for('setor') }}" class="link-principal">SETORES</a>
+                {% if current_user.papel == 'admin' %}
+                    <a href="{{ url_for('setor') }}" class="link-principal">SETORES</a>
+                {% endif %}
                 <a href="{{ url_for('ordens_servico_lista_view') }}" class="link-principal">ORDEM DE SERVIÇO</a>
-                <a href="{{ url_for('equipamentos') }}" class="link-principal">EQUIPAMENTOS</a>
+                {% if current_user.papel != 'usuario' %}
+                    <a href="{{ url_for('equipamentos') }}" class="link-principal">EQUIPAMENTOS</a>
+                {% endif %}
                 {% if current_user.papel == 'admin' %}
                     <a href="{{ url_for('funcionarios') }}" class="link-principal">FUNCIONÁRIOS</a>
                 {% endif %}

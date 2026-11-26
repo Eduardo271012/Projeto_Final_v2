@@ -14,9 +14,16 @@ from database import (
 )
 
 CATEGORIAS_OS = ("Manutenção", "Limpeza", "Elétrica", "Hidráulica", "Infraestrutura")
+STATUS_OS = ("Aberta", "Em andamento", "Pausada", "Concluída", "Cancelada")
 
 
-def validar_vinculos(categoria, setor_id, equipamentos_ids, ordem_atual=None):
+def validar_vinculos(
+    categoria,
+    setor_id,
+    equipamentos_ids,
+    ordem_atual=None,
+    permitir_sem_equipamentos=False,
+):
     if categoria not in CATEGORIAS_OS:
         flash("Selecione uma categoria válida para a ordem de serviço", "error")
         return None
@@ -37,9 +44,12 @@ def validar_vinculos(categoria, setor_id, equipamentos_ids, ordem_atual=None):
         associacao.equipamento_id
         for associacao in ordem_atual.equipamentos_associados
     } if ordem_atual else set()
-    equipamentos_ids = validar_equipamentos(equipamentos_ids, equipamentos_atuais)
-    if equipamentos_ids is None:
-        return None
+    if permitir_sem_equipamentos and not equipamentos_ids:
+        equipamentos_ids = []
+    else:
+        equipamentos_ids = validar_equipamentos(equipamentos_ids, equipamentos_atuais)
+        if equipamentos_ids is None:
+            return None
 
     return setor_id, equipamentos_ids
 
@@ -109,13 +119,22 @@ def salvar(
     categoria,
     setor_id,
     equipamentos_ids,
+    permitir_sem_equipamentos=False,
 ):
     try:
         if not descricao or not descricao.strip():
             flash("Preencha a descrição da ordem de serviço", "error")
             return False
+        if status_os not in STATUS_OS:
+            flash("Selecione um status válido para a ordem de serviço", "error")
+            return False
 
-        vinculos = validar_vinculos(categoria, setor_id, equipamentos_ids)
+        vinculos = validar_vinculos(
+            categoria,
+            setor_id,
+            equipamentos_ids,
+            permitir_sem_equipamentos=permitir_sem_equipamentos,
+        )
         if vinculos is None:
             return False
         setor_id, equipamentos_ids = vinculos

@@ -131,7 +131,7 @@ def registro():
 
 
 @app.route('/equipamentos')
-@login_required
+@roles_required("admin", "tecnico")
 def equipamentos():
     termo = request.args.get("q", "").strip()[:100]
     consulta = select(Equipamento).where(Equipamento.status_delete.is_(True))
@@ -148,7 +148,7 @@ def equipamentos():
 
 
 @app.route('/equipamentos/excluidos')
-@login_required
+@roles_required("admin", "tecnico")
 def listar_equipamentos_excluidos():
     termo = request.args.get("q", "").strip()[:100]
     consulta = select(Equipamento).where(Equipamento.status_delete == False)
@@ -165,7 +165,7 @@ def listar_equipamentos_excluidos():
 
 
 @app.route('/equipamentos/cadastro', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin")
 def cadastro_equipamento():
     if request.method == "POST":
         nome = request.form.get("nome_equipamento", "").strip()
@@ -184,7 +184,7 @@ def cadastro_equipamento():
 
 
 @app.route('/equipamentos/editar/<int:equipamento_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin")
 def editar_equipamento(equipamento_id):
     equipamento = tabela_equipamento.select_id(equipamento_id)
     if not equipamento or not equipamento.status_delete:
@@ -212,7 +212,7 @@ def editar_equipamento(equipamento_id):
 
 
 @app.route('/equipamentos/excluir/<int:equipamento_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin")
 def excluir_equipamento(equipamento_id):
     equipamento = tabela_equipamento.select_id(equipamento_id)
     if equipamento and equipamento.status_delete:
@@ -222,7 +222,7 @@ def excluir_equipamento(equipamento_id):
 
 
 @app.route('/equipamentos/restaurar/<int:equipamento_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required("admin")
 def restaurar_equipamento(equipamento_id):
     equipamento = tabela_equipamento.select_id(equipamento_id)
     if equipamento and not equipamento.status_delete:
@@ -246,10 +246,6 @@ def listar_ordens_servico_excluidos():
 def listar_ordens_servico(excluidos):
     termo = request.args.get("q", "").strip()[:100]
     consulta = select(OrdemServico).where(OrdemServico.status_delete.is_(not excluidos))
-    if current_user.papel == "tecnico":
-        consulta = consulta.where(
-            OrdemServico.tecnico_responsavel_id == current_user.id
-        )
     if termo:
         filtros = [
             OrdemServico.descricao.icontains(termo, autoescape=True),
@@ -285,21 +281,22 @@ def listar_ordens_servico(excluidos):
 @roles_required("admin", "usuario")
 def cadastro_ordem_view():
     if request.method == "POST":
+        funcionario = current_user.papel == "usuario"
         responsavel_id = request.form.get("responsavel_id")
         tecnico_responsavel_id = (
             request.form.get("tecnico_responsavel_id")
-            if current_user.papel == "admin"
+            if current_user.papel in {"admin", "usuario"}
             else None
         )
         descricao = request.form.get("descricao", "").strip()
         categoria = request.form.get("categoria", "")
         setor_id = request.form.get("setor_id", "")
-        equipamentos_ids = request.form.getlist("equipamentos_ids")
-        status_os = request.form.get("status_os")
-        prioridade = request.form.get("prioridade")
-        custo_total = request.form.get("custo_total")
+        equipamentos_ids = [] if funcionario else request.form.getlist("equipamentos_ids")
+        status_os = "Aberta" if funcionario else request.form.get("status_os")
+        prioridade = "Média" if funcionario else request.form.get("prioridade")
+        custo_total = 0 if funcionario else request.form.get("custo_total")
         data_solicitacao = request.form.get("data_solicitacao")
-        data_execucao = request.form.get("data_execucao")
+        data_execucao = None
 
         if tabela_ordens_servico.salvar(
             0,
@@ -314,6 +311,7 @@ def cadastro_ordem_view():
             categoria,
             setor_id,
             equipamentos_ids,
+            permitir_sem_equipamentos=funcionario,
         ):
             return redirect(url_for("ordens_servico_lista_view"))
 
@@ -338,10 +336,6 @@ def detalhes_ordem_servico(ordem_id):
     if (
         not ordem_servico
         or not ordem_servico.status_delete
-        or (
-            current_user.papel == "tecnico"
-            and ordem_servico.tecnico_responsavel_id != current_user.id
-        )
     ):
         flash("Ordem de serviço não encontrada", "error")
         return redirect(url_for("ordens_servico_lista_view"))
@@ -350,7 +344,7 @@ def detalhes_ordem_servico(ordem_id):
 
 
 @app.route('/servico/ordens/excluir/<int:ordem_id>', methods=['POST'])
-@roles_required("admin", "usuario")
+@roles_required("admin")
 def excluir_ordem_servico(ordem_id):
     ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
     if not ordem_servico or not ordem_servico.status_delete:
@@ -369,7 +363,7 @@ def excluir_ordem_servico(ordem_id):
 
 
 @app.route('/servico/ordens/restaurar/<int:ordem_id>', methods=['POST'])
-@roles_required("admin", "usuario")
+@roles_required("admin")
 def restaurar_ordem_servico(ordem_id):
     ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
     if not ordem_servico or ordem_servico.status_delete:
@@ -388,7 +382,7 @@ def restaurar_ordem_servico(ordem_id):
 
 
 @app.route('/servico/ordens/editar/<int:ordem_id>', methods=['GET', 'POST'])
-@roles_required("admin", "usuario", "tecnico")
+@roles_required("admin", "tecnico")
 def editar_ordem_servico(ordem_id):
     ordem_servico = tabela_ordens_servico.select_ordem_id(ordem_id)
     if (
@@ -409,6 +403,26 @@ def editar_ordem_servico(ordem_id):
         if current_user.papel == "tecnico":
             status_os = request.form.get("status_os", "")
             prioridade = request.form.get("prioridade", "")
+            data_execucao_str = request.form.get("data_execucao", "").strip()
+            if data_execucao_str:
+                try:
+                    data_execucao = datetime.strptime(
+                        data_execucao_str, "%Y-%m-%d"
+                    ).date()
+                except ValueError:
+                    flash("Informe uma data de execução válida", "error")
+                    return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+            else:
+                data_execucao = None
+
+            if (
+                ordem_servico.data_solicitacao
+                and data_execucao
+                and data_execucao < ordem_servico.data_solicitacao
+            ):
+                flash("A data de execução não pode ser anterior à solicitação", "error")
+                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+
             try:
                 custo_total = int(request.form.get("custo_total") or 0)
             except ValueError:
@@ -418,7 +432,7 @@ def editar_ordem_servico(ordem_id):
             if custo_total < 0:
                 flash("O custo estimado não pode ser negativo", "error")
                 return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
-            if status_os not in {"Aberta", "Em andamento", "Pausada", "Concluída"}:
+            if status_os not in tabela_ordens_servico.STATUS_OS:
                 flash("Selecione um status válido", "error")
                 return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
             if prioridade not in {"Baixa", "Média", "Alta"}:
@@ -442,6 +456,7 @@ def editar_ordem_servico(ordem_id):
             ordem_servico.status_os = status_os
             ordem_servico.prioridade = prioridade
             ordem_servico.custo_total = custo_total
+            ordem_servico.data_execucao = data_execucao
             try:
                 novos_equipamentos = set(equipamentos_ids) - equipamentos_atuais
                 db_session.add_all(
@@ -466,7 +481,7 @@ def editar_ordem_servico(ordem_id):
         responsavel_id = request.form.get("responsavel_id")
         tecnico_responsavel_id = (
             request.form.get("tecnico_responsavel_id")
-            if current_user.papel == "admin"
+            if current_user.papel in {"admin", "usuario"}
             else ordem_servico.tecnico_responsavel_id
         )
         descricao = request.form.get("descricao", "").strip()
@@ -476,10 +491,13 @@ def editar_ordem_servico(ordem_id):
         status_os = request.form.get("status_os")
         prioridade = request.form.get("prioridade")
         custo_total = request.form.get("custo_total")
-        data_execucao = request.form.get("data_execucao")
+        data_execucao = ordem_servico.data_execucao
 
         if not descricao:
             flash("Preencha a descrição da ordem de serviço", "error")
+            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
+        if status_os not in tabela_ordens_servico.STATUS_OS:
+            flash("Selecione um status válido", "error")
             return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
         try:
@@ -491,23 +509,6 @@ def editar_ordem_servico(ordem_id):
 
         if custo_total < 0:
             flash("O custo estimado não pode ser negativo", "error")
-            return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
-
-        if data_execucao:
-            try:
-                data_execucao = datetime.strptime(data_execucao, "%Y-%m-%d").date()
-            except ValueError:
-                flash("Informe uma data de execução válida", "error")
-                return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
-        else:
-            data_execucao = None
-
-        if (
-            ordem_servico.data_solicitacao
-            and data_execucao
-            and data_execucao < ordem_servico.data_solicitacao
-        ):
-            flash("A data de execução não pode ser anterior à data da solicitação", "error")
             return redirect(url_for("editar_ordem_servico", ordem_id=ordem_id))
 
         vinculos = tabela_ordens_servico.validar_vinculos(
@@ -589,7 +590,7 @@ def editar_ordem_servico(ordem_id):
     )
 
 @app.route('/setor', methods=['GET'])
-@login_required
+@roles_required("admin")
 def setor():
     termo = request.args.get("q", "").strip()[:100]
     lista_setores = consultar_setores(True, termo)
@@ -597,7 +598,7 @@ def setor():
 
 
 @app.route('/setor/excluidos', methods=['GET'])
-@login_required
+@roles_required("admin")
 def listar_setores_excluidos():
     termo = request.args.get("q", "").strip()[:100]
     lista_setores = consultar_setores(False, termo)

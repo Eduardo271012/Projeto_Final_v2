@@ -6,8 +6,10 @@
         </div>
         {% if not editar %}
         <div class="container-botao-direita">
-            <a href="{{ url_for('listar_equipamentos_excluidos') if not excluidos else url_for('equipamentos') }}" class="design-btn-direita">EQUIPAMENTOS {% if excluidos %}ATIVOS{% else %}EXCLUÍDOS{% endif %}</a>
-            {% if not excluidos %}<a href="{{ url_for('cadastro_equipamento') }}" class="design-btn-direita">CADASTRAR</a>{% endif %}
+            {% if current_user.papel == 'admin' %}
+                <a href="{{ url_for('listar_equipamentos_excluidos') if not excluidos else url_for('equipamentos') }}" class="design-btn-direita">EQUIPAMENTOS {% if excluidos %}ATIVOS{% else %}EXCLUÍDOS{% endif %}</a>
+                {% if not excluidos %}<a href="{{ url_for('cadastro_equipamento') }}" class="design-btn-direita">CADASTRAR</a>{% endif %}
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -76,7 +78,18 @@
                     <td>{{ equipamento.modelo if equipamento.modelo else '-' }}</td>
                     <td>{{ equipamento.quantidade if equipamento.quantidade else 0 }}</td>
                     <td>R$ {{ equipamento.custo_equipamento if equipamento.custo_equipamento else 0 }}</td>
-                    <td class="acoes">{% if excluidos %}<a href="{{ url_for('restaurar_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita">Restaurar</a>{% else %}<a href="{{ url_for('excluir_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita excluir-btn">Excluir</a><a href="{{ url_for('editar_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita">Editar</a>{% endif %}</td>
+                    <td class="acoes">
+                        {% if current_user.papel == 'admin' %}
+                            {% if excluidos %}
+                                <a href="{{ url_for('restaurar_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita">Restaurar</a>
+                            {% else %}
+                                <a href="{{ url_for('excluir_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita excluir-btn">Excluir</a>
+                                <a href="{{ url_for('editar_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita">Editar</a>
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>

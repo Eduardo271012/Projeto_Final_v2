@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block conteudo %}
+    <div class="cabecalho-pagina">
+        <div class="barra-titulo-linha">
+            <p class="subtitulo">PEDIDOS DE RESTAURAÇÃO</p>
+        </div>
+        <div class="container-botao-direita">
+            <a href="{{ url_for('listar_ordens_servico_excluidos') }}" class="design-btn-direita">ORDENS DE SERVIÇO EXCLUÍDAS</a>
+        </div>
+    </div>
+
+    <section class="container-perfil painel-solicitacoes-restauracao">
+        <h2>SOLICITAÇÕES RECEBIDAS</h2>
+        {% if solicitacoes %}
+            <div class="tabela-solicitacoes-restauracao">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data do pedido</th>
+                            <th>Solicitante</th>
+                            <th>Ordem de serviço</th>
+                            <th>Justificativa</th>
+                            <th>Status</th>
+                            <th>Resposta</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitacao in solicitacoes %}
+                            <tr>
+                                <td>{{ solicitacao.criado_em.strftime('%d/%m/%Y %H:%M') if solicitacao.criado_em else '-' }}</td>
+                                <td>{{ solicitacao.usuario_nome }} ({{ 'Técnico' if solicitacao.usuario_papel == 'tecnico' else 'Funcionário' }})</td>
+                                <td>
+                                    <span class="solicitacao-os-id">{{ solicitacao.ordem_servico.identificacao if solicitacao.ordem_servico else 'OS removida' }}</span>
+                                </td>
+                                <td>{{ solicitacao.mensagem }}</td>
+                                <td>
+                                    {% if solicitacao.status == 'pendente' %}
+                                        <span class="solicitacao-status solicitacao-status-pendente">Pendente</span>
+                                    {% elif solicitacao.status == 'restaurada' %}
+                                        <span class="solicitacao-status solicitacao-status-restaurada">Restaurada</span>
+                                    {% else %}
+                                        <span class="solicitacao-status solicitacao-status-recusada">Recusada</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ solicitacao.resposta_administrador or '-' }}</td>
+                                <td class="acoes solicitacao-acoes">
+                                    {% if solicitacao.status == 'pendente' %}
+                                        <form method="POST" action="{{ url_for('restaurar_ordem_servico', ordem_id=solicitacao.ordem_servico_id) }}" class="form-restaurar-solicitacao">
+                                            <button type="submit" class="design-btn-direita">Restaurar ordem</button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('recusar_solicitacao_restauracao', solicitacao_id=solicitacao.id) }}" class="form-recusar-solicitacao">
+                                            <label for="resposta-{{ solicitacao.id }}">Resposta ao solicitante (opcional)</label>
+                                            <textarea id="resposta-{{ solicitacao.id }}" name="resposta" maxlength="500" rows="2" placeholder="Se recusar, informe o motivo."></textarea>
+                                            <button type="submit" class="design-btn-direita excluir-btn">Recusar pedido</button>
+                                        </form>
+                                    {% else %}
+                                        <span class="solicitacao-resolvida-por">
+                                            {{ solicitacao.administrador.nome if solicitacao.administrador else 'Administrador' }}
+                                            {% if solicitacao.resolvido_em %}
+                                                <span>{{ solicitacao.resolvido_em.strftime('%d/%m/%Y às %H:%M') }}</span>
+                                            {% endif %}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="vazio">Nenhum pedido de restauração foi enviado.</p>
+        {% endif %}
+    </section>
+{% endblock %}

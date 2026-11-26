@@ -1,5 +1,6 @@
 from datetime import datetime
-
+import unicodedata
+import re
 from flask import flash
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -105,11 +106,18 @@ def select_todas():
     ordens_sql = select(OrdemServico).order_by(OrdemServico.id.asc())
     return db_session.execute(ordens_sql).scalars().all()
 
+def gerar_identificacao(usuario):
+    data = datetime.now().strftime("%Y-%m-%d")
+    nfkd = unicodedata.normalize('NFKD', usuario)
+    sem_acento = "".join([c for c in nfkd if not unicodedata.combining(c)])
+    nome = re.sub(r'[^a-zA-Z0-9]', '', sem_acento).lower()
+    return f"{data}-{nome[:19]}"
 
 def salvar(
     os_id,
     responsavel_id,
     tecnico_responsavel_id,
+    identificacao,
     descricao,
     status_os,
     prioridade,
@@ -168,6 +176,7 @@ def salvar(
                 tecnico_responsavel_id
             ),
             setor_id=setor_id,
+            identificacao=identificacao,
             categoria=categoria,
             descricao=descricao.strip(),
             status_os=status_os or "Aberta",
@@ -222,3 +231,19 @@ def select_ordem_id(ordem_id):
     ordem_sql = select(OrdemServico).where(OrdemServico.id == int(ordem_id))
     ordem = db_session.execute(ordem_sql).scalar()
     return ordem
+
+def select_ordens_ativas():
+    ordens_sql = (
+        select(OrdemServico).
+        where(OrdemServico.status_delete == 1)
+    )
+    ordens_ativas = db_session.execute(ordens_sql).scalars().all()
+    return ordens_ativas
+
+def select_ordens_excluidas():
+    ordens_sql = (
+        select(OrdemServico).
+        where(OrdemServico.status_delete == 0)
+    )
+    ordens_excluidas = db_session.execute(ordens_sql).scalars().all()
+    return ordens_excluidas

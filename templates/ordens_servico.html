@@ -253,7 +253,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>Id</th>
+                    <th>Identificacão</th>
                     <th>Funcionário</th>
                     <th>Técnico</th>
                     <th>Categoria</th>
@@ -271,7 +271,7 @@
             <tbody>
             {% for os in ordens %}
                 <tr>
-                    <td><a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}">{{ os.id }}</a></td>
+                    <td><a href="{{ url_for('detalhes_ordem_servico', ordem_id=os.id) }}">{{ os.identificacao }}</a></td>
                     <td>
                         {% if os.responsavel %}
                             {{ os.responsavel.nome }}{% if not os.responsavel.ativo %} <strong>(INATIVO)</strong>{% endif %}

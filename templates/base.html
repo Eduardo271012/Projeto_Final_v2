@@ -80,7 +80,7 @@
     </div>
 </header>
 
-    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'listar_ordens_servico_excluidos', 'detalhes_ordem_servico', 'conversa_ordem_servico', 'funcionarios', 'editar_funcionario', 'auditoria_sistema', 'listar_solicitacoes_restauracao', 'perfil', 'cadastro_equipamento', 'cadastro_ordem_view', 'cadastro_setor', 'dashboard', 'registro', 'login', 'editar_setor', 'editar_equipamento', 'editar_ordem_servico'] %}
+    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'listar_ordens_servico_excluidos', 'detalhes_ordem_servico', 'conversa_ordem_servico', 'funcionarios', 'editar_funcionario', 'auditoria_sistema', 'listar_solicitacoes_restauracao', 'perfil', 'cadastro_equipamento', 'cadastro_ordem_view', 'cadastro_setor', 'dashboard', 'registro', 'login', 'editar_setor', 'editar_equipamento', 'editar_ordem_servico', 'equipamento_detalhes'] %}
         <div class="carrossel-listas" aria-hidden="true">
             <img class="ativa" src="{{ url_for('static', filename='imagem/foto7.png') }}" alt="">
             <img src="{{ url_for('static', filename='imagem/foto8.png') }}" alt="">
@@ -100,7 +100,7 @@
         {% endwith %}
         {% block conteudo %}{% endblock %}
     </main>
-    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'listar_ordens_servico_excluidos', 'detalhes_ordem_servico', 'conversa_ordem_servico', 'funcionarios', 'editar_funcionario', 'auditoria_sistema', 'listar_solicitacoes_restauracao', 'perfil', 'cadastro_equipamento', 'cadastro_ordem_view', 'cadastro_setor', 'dashboard', 'registro', 'login', 'editar_setor', 'editar_equipamento', 'editar_ordem_servico'] %}
+    {% if request.endpoint in ['equipamentos', 'listar_equipamentos_excluidos', 'setor', 'listar_setores_excluidos', 'ordens_servico_lista_view', 'listar_ordens_servico_excluidos', 'detalhes_ordem_servico', 'conversa_ordem_servico', 'funcionarios', 'editar_funcionario', 'auditoria_sistema', 'listar_solicitacoes_restauracao', 'perfil', 'cadastro_equipamento', 'cadastro_ordem_view', 'cadastro_setor', 'dashboard', 'registro', 'login', 'editar_setor', 'editar_equipamento', 'editar_ordem_servico', 'equipamento_detalhes'] %}
         <script>
             document.addEventListener("DOMContentLoaded", () => {
                 // 1. Carrossel da tela de Listas (Setores, Equipamentos, etc.)

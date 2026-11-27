@@ -7,62 +7,59 @@
     {% if current_user.is_authenticated and current_user.papel == 'usuario' %}
     <section class="dropdown-coluna-texto">
         <span class="guia-etapa">OLÁ, {{ current_user.nome | upper }}!</span>
-        <h2>Comece pelo seu perfil</h2>
-        <p>Seu CPF já está associado à sua conta. O administrador define seu setor e sua função ou cargo.</p>
-        <p>Confira seus dados no perfil. Se algo estiver incorreto ou faltando, peça a atualização ao administrador.</p>
+        <h2>Confira seu perfil</h2>
+        <p>Veja seus dados e confirme se o setor e a função ou cargo estão corretos.</p>
+        <p>Se precisar de alguma alteração, solicite ao administrador. Seu perfil determina quais ordens aparecem para você.</p>
     </section>
     <section class="dropdown-coluna-texto">
-        <span class="guia-etapa">01 · SETORES</span>
-        <h2>Encontre seu setor</h2>
-        <p>Acesse “Setores” para ver as áreas da empresa e ler suas descrições. Isso pode ajudar você a identificar a área relacionada ao seu atendimento.</p>
-        <p>Você pode consultar a lista; somente o administrador pode cadastrar, alterar ou excluir setores.</p>
+        <span class="guia-etapa">01 · ABRIR UMA OS</span>
+        <h2>Solicite atendimento</h2>
+        <p>Em “Ordem de Serviço”, escolha “Cadastrar” e informe a descrição do problema, a categoria e o setor relacionado. Você pode indicar um técnico, se souber quem deve atender.</p>
+        <p>A OS é criada como “Aberta”. O técnico define a prioridade e os equipamentos necessários para o atendimento.</p>
     </section>
     <section class="dropdown-coluna-texto">
-        <span class="guia-etapa">02 · ORDENS DE SERVIÇO</span>
-        <h2>Registre um atendimento</h2>
-        <p>Em “Ordem de Serviço”, descreva o problema ou serviço com detalhes que ajudem no atendimento. Depois, selecione o funcionário responsável e informe prioridade e status.</p>
-        <p>Se tiver essas informações, inclua custo estimado e datas. Após salvar, encontre a ordem na lista para consultar seus dados ou editá-la.</p>
-        <p>Na página de detalhes, acompanhe o diário, os materiais e as evidências anexadas. Quando a OS aguardar seu aceite, confirme a conclusão ou conteste informando o que precisa ser corrigido.</p>
-        <p>Use a conversa para trocar mensagens com o técnico responsável ou com o administrador.</p>
-    </section>
-    <section class="dropdown-coluna-texto">
-        <span class="guia-etapa">03 · ACOMPANHAMENTO</span>
-        <h2>Acompanhe suas solicitações</h2>
-        <p>Consulte “Ordem de Serviço” para rever responsável, prioridade, status e datas. O “Dashboard” mostra um resumo das ordens por status.</p>
-        <p>Em “Equipamentos”, consulte os itens cadastrados. As opções de administração são exclusivas do administrador.</p>
+        <span class="guia-etapa">02 · ACOMPANHAR</span>
+        <h2>Siga o andamento</h2>
+        <p>Em “Ordem de Serviço”, consulte suas solicitações e abra os detalhes para ver atualizações, materiais, anexos, histórico e conversar com o técnico ou administrador.</p>
+        <p>Quando o serviço estiver aguardando aceite, confirme a conclusão ou conteste explicando o que ainda precisa ser corrigido. Funcionários podem acompanhar as OS, mas não editá-las após o cadastro.</p>
     </section>
     {% elif current_user.is_authenticated and current_user.papel == 'tecnico' %}
     <section class="dropdown-coluna-texto">
         <span class="guia-etapa">OLÁ, {{ current_user.nome | upper }}!</span>
         <h2>Ordens atribuídas</h2>
-        <p>Acesse “Ordem de Serviço” para acompanhar as ordens atribuídas a você.</p>
-        <p>Nos detalhes da OS, registre atividades, agendamento, materiais consumidos e evidências. O consumo de materiais atualiza o estoque.</p>
-        <p>Pause informando o motivo; ao concluir, descreva o serviço e envie para o aceite do solicitante. Use a conversa para esclarecer dúvidas e compartilhar atualizações.</p>
+        <p>Em “Ordem de Serviço”, você vê as OS atribuídas à sua conta. Abra uma ordem para conferir a solicitação e consultar o histórico.</p>
+        <p>O “Dashboard” apresenta um resumo das ordens disponíveis para o seu perfil.</p>
     </section>
     <section class="dropdown-coluna-texto">
-        <span class="guia-etapa">DADOS DA SOLICITAÇÃO</span>
-        <h2>Informações preservadas</h2>
-        <p>A descrição, solicitante, categoria, setor e datas da ordem são definidos na abertura.</p>
-        <p>Essas informações não podem ser alteradas pelo perfil técnico.</p>
+        <span class="guia-etapa">01 · ATENDER</span>
+        <h2>Atualize o serviço</h2>
+        <p>Inicie o atendimento; se precisar interrompê-lo, registre o motivo e a previsão de retomada. Depois, você pode retomar o trabalho.</p>
+        <p>Enquanto a OS estiver aberta para atualizações, registre atividades, agendamento, custo, prioridade, data de execução e equipamentos associados. O consumo de material disponível atualiza o estoque.</p>
+    </section>
+    <section class="dropdown-coluna-texto">
+        <span class="guia-etapa">02 · CONCLUIR</span>
+        <h2>Envie para aceite</h2>
+        <p>Descreva o serviço realizado e envie a OS para o aceite do solicitante. Ele poderá confirmar a conclusão ou contestá-la, reabrindo o atendimento.</p>
+        <p>Use os detalhes para anexar imagens ou PDFs, consultar o diário e o histórico e conversar com o solicitante ou administrador. As informações originais da solicitação — como descrição, solicitante, categoria e setor — são preservadas.</p>
     </section>
     {% else %}
     <section class="dropdown-coluna-texto">
         <span class="guia-etapa">ANTES DE ENTRAR</span>
         <h2>O que você encontra aqui</h2>
-        <p>Este sistema ajuda você a consultar informações sobre equipamentos e setores e a acompanhar ordens de serviço.</p>
-        <p>Entre com sua conta para acessar as ferramentas disponíveis para o seu perfil.</p>
+        <p>O sistema organiza solicitações de manutenção e atendimento, com acompanhamento das etapas da ordem de serviço.</p>
+        <p>Entre com sua conta para acessar as funções disponíveis para seu perfil de funcionário ou técnico.</p>
     </section>
     <section class="dropdown-coluna-texto">
         <span class="guia-etapa">AINDA NÃO TEM CONTA?</span>
         <h2>Prepare seu primeiro acesso</h2>
-        <p>Selecione “Cadastrar” e informe seu nome, CPF, e-mail e uma senha. Você usará o e-mail e a senha para entrar depois.</p>
-        <p>Após o cadastro, o administrador atribuirá seu setor e sua função ou cargo.</p>
+        <p>Selecione “Cadastrar” e informe seus dados e uma senha. Use o e-mail e a senha cadastrados para entrar no sistema.</p>
+        <p>Depois, o administrador configura seu setor, função ou cargo e, quando aplicável, seu perfil de acesso.</p>
     </section>
     <section class="dropdown-coluna-texto">
         <span class="guia-etapa">DEPOIS DO LOGIN</span>
-        <h2>Use o sistema no seu cotidiano</h2>
-        <p>Você poderá consultar setores e equipamentos, registrar ou acompanhar ordens de serviço e ver um resumo no dashboard.</p>
-        <p>O administrador cuida dos cadastros e das atribuições de setor e função.</p>
+        <h2>Comece pelo seu perfil</h2>
+        <p>Funcionários podem abrir e acompanhar suas solicitações. Técnicos podem consultar e atender as ordens atribuídas a eles.</p>
+        <p>O menu e as ações disponíveis variam conforme seu perfil; o administrador gerencia os cadastros e as permissões.</p>
     </section>
     {% endif %}
 </div>

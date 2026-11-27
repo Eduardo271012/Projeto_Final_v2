@@ -74,7 +74,11 @@
             {% for equipamento in equipamentos %}
                 <tr>
                     <td>{{ equipamento.id }}</td>
-                    <td>{{ equipamento.nome }}</td>
+                    <td>
+                        <a class="equipamento-detalhes-link" href="{{ url_for('equipamento_detalhes', equipamento_id=equipamento.id) }}">
+                            {{ equipamento.nome }}
+                        </a>
+                    </td>
                     <td>{{ equipamento.modelo if equipamento.modelo else '-' }}</td>
                     <td>{{ equipamento.quantidade if equipamento.quantidade else 0 }}</td>
                     <td>R$ {{ equipamento.custo_equipamento if equipamento.custo_equipamento else 0 }}</td>

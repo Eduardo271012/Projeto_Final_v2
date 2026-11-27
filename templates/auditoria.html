@@ -4,6 +4,11 @@
         <div class="barra-titulo-linha">
             <p class="subtitulo">AUDITORIA DO SISTEMA</p>
         </div>
+        <div class="container-botao-direita">
+            <form method="post" action="{{ url_for('limpar_auditoria') }}" onsubmit="return confirm('Tem certeza que deseja apagar permanentemente todo o histórico de auditoria? Esta ação não pode ser desfeita.');">
+                <button type="submit" class="design-btn-direita excluir-btn">LIMPAR HISTÓRICO</button>
+            </form>
+        </div>
     </div>
 
     <section class="container-perfil">
@@ -68,8 +73,8 @@
                             <tr>
                                 <td>{{ movimentacao.criado_em.strftime('%d/%m/%Y %H:%M') if movimentacao.criado_em else '-' }}</td>
                                 <td>{{ movimentacao.usuario_nome }} ({{ 'Administrador' if movimentacao.usuario_papel == 'admin' else 'Técnico' if movimentacao.usuario_papel == 'tecnico' else 'Funcionário' if movimentacao.usuario_papel == 'usuario' else movimentacao.usuario_papel }})</td>
-                                <td>{{ {'ordens_servico': 'Ordens de serviço', 'equipamentos': 'Equipamentos/estoque', 'usuarios': 'Usuários', 'setores': 'Setores'}.get(movimentacao.area, movimentacao.area) }}</td>
-                                <td>{{ {'criacao': 'Criação', 'edicao': 'Edição', 'exclusao': 'Exclusão', 'restauracao': 'Restauração', 'ativacao': 'Ativação', 'inativacao': 'Inativação'}.get(movimentacao.acao, movimentacao.acao) }}</td>
+                                <td>{{ {'ordens_servico': 'Ordens de serviço', 'equipamentos': 'Equipamentos/estoque', 'usuarios': 'Usuários', 'setores': 'Setores', 'autenticacao': 'Autenticação'}.get(movimentacao.area, movimentacao.area) }}</td>
+                                <td>{{ {'criacao': 'Criação', 'edicao': 'Edição', 'exclusao': 'Exclusão', 'restauracao': 'Restauração', 'ativacao': 'Ativação', 'inativacao': 'Inativação', 'bloqueio_login': 'Bloqueio de login', 'desbloqueio_login': 'Desbloqueio de login'}.get(movimentacao.acao, movimentacao.acao) }}</td>
                                 <td>{{ movimentacao.registro }}</td>
                                 <th scope="row">{{ movimentacao.campo }}</th>
                                 <td>{{ movimentacao.valor_anterior or '-' }}</td>

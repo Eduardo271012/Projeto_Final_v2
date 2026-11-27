@@ -1,10 +1,12 @@
+import hashlib
 import os
 import uuid
 
 from flask import Flask, flash, redirect, render_template, request, send_from_directory, url_for
 from flask_login import LoginManager, login_required, logout_user, login_user, current_user
-from sqlalchemy import String, cast, func, or_, select
+from sqlalchemy import String, and_, case, cast, delete, func, or_, select, update
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 from werkzeug.utils import secure_filename
 from banco import tabela_equipamento, tabela_ordens_servico, tabela_setor, tabela_usuario
 from database import (
@@ -19,6 +21,7 @@ from database import (
     OrdemServicoEquipamento,
     SolicitacaoRestauracaoOS,
     Setor,
+    TentativaLogin,
     Usuario,
     db_session,
 )
@@ -47,6 +50,13 @@ TIPOS_ANEXO_OS = {
     ".webp": ("image/webp", lambda dados: len(dados) >= 12 and dados[:4] == b"RIFF" and dados[8:12] == b"WEBP"),
     ".pdf": ("application/pdf", lambda dados: dados.startswith(b"%PDF-")),
 }
+JANELA_TENTATIVAS_LOGIN = timedelta(minutes=15)
+TEMPO_BLOQUEIO_LOGIN = timedelta(minutes=5)
+LIMITE_TENTATIVAS_EMAIL = 5
+LIMITE_TENTATIVAS_IP = 20
+MENSAGEM_BLOQUEIO_LOGIN = (
+    "Acesso bloqueado por excesso de tentativas. Tente novamente em 5 minutos."
+)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -86,6 +96,157 @@ def solicitacoes_restauracao_pendentes():
     return {"total_solicitacoes_restauracao": 0}
 
 
+def chaves_limite_login(email, endereco_ip):
+    email_normalizado = email.strip().casefold()
+    return (
+        (
+            hashlib.sha256(f"email:{email_normalizado}".encode("utf-8")).hexdigest(),
+            LIMITE_TENTATIVAS_EMAIL,
+        ),
+        (
+            hashlib.sha256(f"ip:{endereco_ip or 'desconhecido'}".encode("utf-8")).hexdigest(),
+            LIMITE_TENTATIVAS_IP,
+        ),
+    )
+
+
+def mascarar_email(email):
+    local, separador, dominio = email.partition("@")
+    if not separador:
+        return "não informado"
+    return f"{local[:1]}***@{dominio}"[:150]
+
+
+def login_bloqueado(chaves, agora):
+    return db_session.execute(
+        select(TentativaLogin.chave)
+        .where(
+            TentativaLogin.chave.in_([chave for chave, _limite in chaves]),
+            TentativaLogin.bloqueado_ate > agora,
+        )
+        .limit(1)
+    ).first() is not None
+
+
+def registrar_desbloqueio_expirado(chaves, agora, email, endereco_ip):
+    resultado = db_session.execute(
+        update(TentativaLogin)
+        .where(
+            TentativaLogin.chave.in_([chave for chave, _limite in chaves]),
+            TentativaLogin.bloqueado_ate.is_not(None),
+            TentativaLogin.bloqueado_ate <= agora,
+        )
+        .values(
+            tentativas=0,
+            inicio_janela=agora,
+            bloqueado_ate=None,
+        )
+    )
+    if not resultado.rowcount:
+        return False
+
+    db_session.add(
+        AuditoriaSistema(
+            usuario_id=None,
+            usuario_nome="Tentativa não autenticada",
+            usuario_papel="sistema",
+            area="autenticacao",
+            acao="desbloqueio_login",
+            registro=mascarar_email(email),
+            registro_id=None,
+            campo="Bloqueio de acesso",
+            valor_anterior="Bloqueado por excesso de tentativas",
+            valor_novo=(
+                f"Acesso desbloqueado após 5 minutos. "
+                f"Origem: {endereco_ip or 'desconhecida'}."
+            ),
+        )
+    )
+    db_session.commit()
+    return True
+
+
+def registrar_falha_login(chaves, agora, email, endereco_ip):
+    db_session.execute(
+        delete(TentativaLogin).where(
+            TentativaLogin.inicio_janela < agora - timedelta(days=1)
+        )
+    )
+    limite_janela = agora - JANELA_TENTATIVAS_LOGIN
+
+    for chave, limite in chaves:
+        janela_expirada = or_(
+            TentativaLogin.inicio_janela <= limite_janela,
+            and_(
+                TentativaLogin.bloqueado_ate.is_not(None),
+                TentativaLogin.bloqueado_ate <= agora,
+            ),
+        )
+        inserir = mysql_insert(TentativaLogin).values(
+            chave=chave,
+            tentativas=1,
+            inicio_janela=agora,
+            bloqueado_ate=None,
+        )
+        db_session.execute(
+            inserir.on_duplicate_key_update(
+                [
+                    (
+                        "bloqueado_ate",
+                        case(
+                            (janela_expirada, None),
+                            (
+                                TentativaLogin.tentativas >= limite - 1,
+                                agora + TEMPO_BLOQUEIO_LOGIN,
+                            ),
+                            else_=TentativaLogin.bloqueado_ate,
+                        ),
+                    ),
+                    (
+                        "tentativas",
+                        case(
+                            (janela_expirada, 1),
+                            else_=TentativaLogin.tentativas + 1,
+                        ),
+                    ),
+                    (
+                        "inicio_janela",
+                        case(
+                            (janela_expirada, agora),
+                            (
+                                TentativaLogin.tentativas >= limite,
+                                agora - JANELA_TENTATIVAS_LOGIN,
+                            ),
+                            else_=TentativaLogin.inicio_janela,
+                        ),
+                    ),
+                ]
+            )
+        )
+
+    bloqueado = login_bloqueado(chaves, agora)
+    if bloqueado:
+        db_session.add(
+            AuditoriaSistema(
+                usuario_id=None,
+                usuario_nome="Tentativa não autenticada",
+                usuario_papel="sistema",
+                area="autenticacao",
+                acao="bloqueio_login",
+                registro=mascarar_email(email),
+                registro_id=None,
+                campo="Bloqueio de acesso",
+                valor_anterior="-",
+                valor_novo=(
+                    f"Bloqueado por 5 minutos após exceder o limite de tentativas. "
+                    f"Origem: {endereco_ip or 'desconhecida'}."
+                ),
+            )
+        )
+    db_session.commit()
+    return bloqueado
+
+
 @app.errorhandler(413)
 def request_entity_too_large(_error):
     ordem_id = (request.view_args or {}).get("ordem_id")
@@ -104,21 +265,48 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip()
         senha = request.form.get("senha", "").strip()
-        usuario_sql = select(Usuario).where(Usuario.email == email)
-        usuario_resultado = db_session.execute(usuario_sql).scalar()
+        agora = datetime.now()
+        chaves = chaves_limite_login(email, request.remote_addr)
 
-        if not usuario_resultado:
-            flash("Falha na autenticação: E-mail não encontrado", "error")
+        try:
+            registrar_desbloqueio_expirado(
+                chaves, agora, email, request.remote_addr
+            )
+            if login_bloqueado(chaves, agora):
+                flash(MENSAGEM_BLOQUEIO_LOGIN, "error")
+                return redirect(url_for("login"))
+
+            usuario_resultado = db_session.execute(
+                select(Usuario).where(Usuario.email == email)
+            ).scalar_one_or_none()
+            if (
+                usuario_resultado
+                and usuario_resultado.ativo
+                and usuario_resultado.check_password(senha)
+            ):
+                chave_email = chaves[0][0]
+                db_session.execute(
+                    delete(TentativaLogin).where(TentativaLogin.chave == chave_email)
+                )
+                db_session.commit()
+                login_user(usuario_resultado)
+                flash(f"BEM-VINDO(A), {usuario_resultado.nome}!", "welcome")
+                return redirect(url_for("index"))
+
+            bloqueado = registrar_falha_login(
+                chaves, agora, email, request.remote_addr
+            )
+        except SQLAlchemyError:
+            db_session.rollback()
+            app.logger.exception("Erro ao verificar ou registrar tentativas de login")
+            flash("Não foi possível autenticar neste momento. Tente novamente.", "error")
             return redirect(url_for("login"))
-        if not usuario_resultado.ativo:
-            flash("Este usuário está inativo e não pode acessar o sistema", "error")
-            return redirect(url_for("login"))
-        if usuario_resultado and usuario_resultado.check_password(senha):
-            login_user(usuario_resultado)
-            flash(f"BEM-VINDO(A), {usuario_resultado.nome}!", "welcome")
-            return redirect(url_for("index"))
+
+        if bloqueado:
+            flash(MENSAGEM_BLOQUEIO_LOGIN, "error")
         else:
-            flash("Falha na autenticação: E-mail e senha não encontrado", "error")
+            flash("E-mail ou senha inválidos.", "error")
+        return redirect(url_for("login"))
 
     return render_template(
         "login.html",
@@ -208,6 +396,64 @@ def equipamentos():
         consulta = consulta.where(or_(*filtros))
     lista_equipamentos = db_session.execute(consulta).scalars().all()
     return render_template('equipamento.html', equipamentos=lista_equipamentos, termo=termo)
+
+
+@app.route('/equipamentos/<int:equipamento_id>/detalhes')
+@roles_required("admin", "tecnico")
+def equipamento_detalhes(equipamento_id):
+    equipamento = db_session.execute(
+        select(Equipamento).where(Equipamento.id == equipamento_id)
+    ).scalar_one_or_none()
+    if not equipamento:
+        flash("Equipamento não encontrado", "error")
+        return redirect(url_for("equipamentos"))
+
+    associacoes = db_session.execute(
+        select(OrdemServicoEquipamento)
+        .where(
+            OrdemServicoEquipamento.equipamento_id == equipamento_id,
+            OrdemServicoEquipamento.ordem_servico.has(
+                OrdemServico.status_delete.is_(True)
+            ),
+        )
+        .order_by(OrdemServicoEquipamento.os_id.desc())
+    ).scalars().all()
+
+    historico = db_session.execute(
+        select(AuditoriaSistema)
+        .where(
+            AuditoriaSistema.area == "equipamentos",
+            AuditoriaSistema.registro_id == equipamento_id,
+        )
+        .order_by(
+            AuditoriaSistema.criado_em.desc(),
+            AuditoriaSistema.id.desc(),
+        )
+    ).scalars().all()
+
+    materiais_consumidos = db_session.execute(
+        select(MaterialConsumidoOS)
+        .where(MaterialConsumidoOS.equipamento_id == equipamento_id)
+        .order_by(
+            MaterialConsumidoOS.criado_em.desc(),
+            MaterialConsumidoOS.id.desc(),
+        )
+    ).scalars().all()
+    ordens_consumo = {
+        material.ordem_servico_id: db_session.get(
+            OrdemServico, material.ordem_servico_id
+        )
+        for material in materiais_consumidos
+    }
+
+    return render_template(
+        "equipamento_detalhes.html",
+        equipamento=equipamento,
+        associacoes=associacoes,
+        historico=historico,
+        materiais_consumidos=materiais_consumidos,
+        ordens_consumo=ordens_consumo,
+    )
 
 
 @app.route('/equipamentos/excluidos')
@@ -1788,6 +2034,7 @@ def auditoria_sistema():
         ("equipamentos", "Equipamentos/estoque"),
         ("usuarios", "Usuários"),
         ("setores", "Setores"),
+        ("autenticacao", "Autenticação"),
     )
     acoes = (
         ("criacao", "Criação"),
@@ -1796,6 +2043,8 @@ def auditoria_sistema():
         ("restauracao", "Restauração"),
         ("ativacao", "Ativação"),
         ("inativacao", "Inativação"),
+        ("bloqueio_login", "Bloqueio de login"),
+        ("desbloqueio_login", "Desbloqueio de login"),
     )
     filtros = {
         "inicio": request.args.get("inicio", "").strip(),
@@ -1864,6 +2113,24 @@ def auditoria_sistema():
         total_paginas=total_paginas,
         total=total,
     )
+
+
+@app.route('/auditoria/limpar', methods=['POST'])
+@roles_required("admin")
+def limpar_auditoria():
+    try:
+        resultado = db_session.execute(delete(AuditoriaSistema))
+        total_removido = resultado.rowcount or 0
+        db_session.commit()
+        flash(
+            f"Histórico de auditoria limpo. {total_removido} movimentações removidas.",
+            "success",
+        )
+    except SQLAlchemyError:
+        db_session.rollback()
+        app.logger.exception("Erro ao limpar o histórico de auditoria")
+        flash("Não foi possível limpar o histórico de auditoria.", "error")
+    return redirect(url_for("auditoria_sistema"))
 
 
 @app.route('/dashboard', methods=['GET', 'POST'])

@@ -1,61 +1,163 @@
-{#{% extends "base.html" %}#}
-{#{% block titulo %}{{ time.nome }}{% endblock %}#}
-{#{% block conteudo %}#}
-{#<div class="cabecalho-pagina">#}
-{#    <div>#}
-{#        <a href="{{ url_for('equipamentos') }}" class="voltar">#}
-{#            &larr; Voltar para Equipamentos#}
-{#        </a>#}
-{#        <h1>{{ nome_equipamento }}</h1>#}
-{#        <p class="subtitulo">Ordem de serviço: {{ nome_equipamento or '-' }}</p>#}
-{#        <p class="subtitulo">Responsável: {{ responsavel_id or '-' }}</p>#}
-{#    </div>#}
-{#    <a href="{{ url_for('equipamento_detalhes', id_equipamento=equipamento.id) }}"#}
-{#       class="botao botao-secundario">Editar equipamento</a>#}
-{#</div>#}
-{#<!-- Resumo de desempenho -->#}
-{#<div class="cartoes cartoes-compactos">-#}
-{#    <div class="cartao">#}
-{#        <div class="cartao-label">Nome do equipamento</div>#}
-{#    </div>#}
-{#    <div class="cartao">#}
-{#        <div class="cartao-valor">0</div>#}
-{#        <div class="cartao-label">Quantidade equipamentos</div>#}
-{#    </div>#}
-{#    <div class="cartao">#}
-{#        <div class="cartao-label">Descrição</div>#}
-{#    </div>#}
-{#</div>#}
-{##}
-{#    {% if request.endpoint != 'cadastro_equipamento' %}#}
-{#    <section class="painel">#}
-{#        <h2>LISTA DE EQUIPAMENTOS</h2>#}
-{#        {% if equipamentos %}#}
-{#        <table>#}
-{#            <thead>#}
-{#                <tr>#}
-{#                    <th>Id</th>#}
-{#                    <th>Nome</th>#}
-{#                    <th>Modelo</th>#}
-{#                    <th>Quantidade</th>#}
-{#                    <th>Custo Unitário</th>#}
-{#                </tr>#}
-{#            </thead>#}
-{#            <tbody>#}
-{#            {% for equipamento in equipamentos %}#}
-{#                <tr>#}
-{#                    <td>{{ equipamento.id }}</td>#}
-{#                    <td>{{ equipamento.nome }}</td>#}
-{#                    <td>{{ equipamento.modelo if equipamento.modelo else '-' }}</td>#}
-{#                    <td>{{ equipamento.quantidade if equipamento.quantidade else 0 }}</td>#}
-{#                    <td>R$ {{ equipamento.custo_equipamento if equipamento.custo_equipamento else 0 }}</td>#}
-{#                </tr>#}
-{#            {% endfor %}#}
-{#            </tbody>#}
-{#        </table>#}
-{#        {% else %}#}
-{#            <p class="vazio">Nenhum equipamento cadastrado ainda</p>#}
-{#        {% endif %}#}
-{#    </section>#}
-{#    {% endif %}#}
-{#{% endblock %}#}
+{% extends 'base.html' %}
+{% block conteudo %}
+    <div class="cabecalho-pagina">
+        <div class="barra-titulo-linha">
+            <p class="subtitulo">
+                <span class="identificador-os identificador-os-detalhes">
+                    <strong>{{ equipamento.nome }}</strong>
+                </span>
+            </p>
+        </div>
+        <div class="container-botao-direita">
+            <a href="{{ url_for('listar_equipamentos_excluidos' if not equipamento.status_delete else 'equipamentos') }}" class="design-btn-direita">
+                VOLTAR PARA EQUIPAMENTOS
+            </a>
+            {% if equipamento.status_delete and current_user.papel in ['admin', 'tecnico'] %}
+                <a href="{{ url_for('editar_equipamento', equipamento_id=equipamento.id) }}" class="design-btn-direita">EDITAR</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <section class="container-perfil detalhes-os detalhes-equipamento">
+        <h2>DETALHES DO EQUIPAMENTO</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Informação</th>
+                    <th scope="col">Detalhe</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">Nome</th>
+                    <td>{{ equipamento.nome }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Modelo</th>
+                    <td>{{ equipamento.modelo or '-' }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Quantidade em estoque</th>
+                    <td>{{ equipamento.quantidade if equipamento.quantidade is not none else 0 }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Custo unitário</th>
+                    <td>R$ {{ equipamento.custo_equipamento if equipamento.custo_equipamento is not none else 0 }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Status</th>
+                    <td>{{ 'Ativo' if equipamento.status_delete else 'Excluído' }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="container-perfil historico-os">
+        <h2>ORDENS DE SERVIÇO VINCULADAS</h2>
+        {% if associacoes %}
+            <div class="tabela-historico-os">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ordem de serviço</th>
+                            <th>Status</th>
+                            <th>Técnico responsável</th>
+                            <th>Setor</th>
+                            <th>Quantidade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for associacao in associacoes %}
+                            {% set ordem = associacao.ordem_servico %}
+                            <tr>
+                                <td>
+                                    <a class="identificador-os" href="{{ url_for('detalhes_ordem_servico', ordem_id=ordem.id) }}">
+                                        {{ ordem.identificacao }}
+                                    </a>
+                                </td>
+                                <td>{{ ordem.status_os }}</td>
+                                <td>{{ ordem.tecnico_responsavel.nome if ordem.tecnico_responsavel else 'Não atribuído' }}</td>
+                                <td>{{ ordem.setor.nome if ordem.setor else '-' }}</td>
+                                <td>{{ associacao.quantidade or 1 }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="historico-os-vazio">Nenhuma ordem de serviço vinculada.</p>
+        {% endif %}
+    </section>
+
+    <section class="container-perfil historico-os">
+        <h2>CONSUMO EM ORDENS DE SERVIÇO</h2>
+        {% if materiais_consumidos %}
+            <div class="tabela-historico-os">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ordem de serviço</th>
+                            <th>Quantidade consumida</th>
+                            <th>Registrado por</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for material in materiais_consumidos %}
+                            <tr>
+                                <td>
+                                    {% set ordem_material = ordens_consumo.get(material.ordem_servico_id) %}
+                                    {% if ordem_material %}
+                                        <a class="identificador-os" href="{{ url_for('detalhes_ordem_servico', ordem_id=ordem_material.id) }}">{{ ordem_material.identificacao }}</a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ material.quantidade }}</td>
+                                <td>{{ material.usuario_nome }}</td>
+                                <td>{{ material.criado_em.strftime('%d/%m/%Y às %H:%M') if material.criado_em else '-' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="historico-os-vazio">Nenhum consumo registrado.</p>
+        {% endif %}
+    </section>
+
+    <section class="container-perfil historico-os">
+        <h2>HISTÓRICO DE MOVIMENTAÇÕES</h2>
+        {% if historico %}
+            <div class="tabela-historico-os">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data e hora</th>
+                            <th>Responsável</th>
+                            <th>Alteração</th>
+                            <th>Antes</th>
+                            <th>Depois</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for movimentacao in historico %}
+                            <tr>
+                                <td>{{ movimentacao.criado_em.strftime('%d/%m/%Y às %H:%M') if movimentacao.criado_em else '-' }}</td>
+                                <td>
+                                    {{ movimentacao.usuario_nome }}
+                                    <span class="os-dado-secundario">{{ 'Administrador' if movimentacao.usuario_papel == 'admin' else 'Técnico' if movimentacao.usuario_papel == 'tecnico' else 'Funcionário' }}</span>
+                                </td>
+                                <th scope="row">{{ movimentacao.campo }}</th>
+                                <td>{{ movimentacao.valor_anterior or '-' }}</td>
+                                <td>{{ movimentacao.valor_novo or '-' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="historico-os-vazio">Ainda não há movimentações registradas para este equipamento.</p>
+        {% endif %}
+    </section>
+{% endblock %}

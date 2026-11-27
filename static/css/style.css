@@ -1360,6 +1360,17 @@ body.tela-listas .container-perfil.fluxo-os {
     vertical-align: middle;
 }
 
+.equipamento-detalhes-link {
+    color: #0f172a;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.equipamento-detalhes-link:hover {
+    color: #0369a1;
+    text-decoration: underline;
+}
+
 .tabela-os-scroll {
     width: 100%;
     overflow-x: auto;

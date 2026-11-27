@@ -30,6 +30,14 @@ CREATE TABLE IF NOT EXISTS usuarios (
         ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS tentativas_login (
+    chave CHAR(64) PRIMARY KEY,
+    tentativas INT NOT NULL DEFAULT 0,
+    inicio_janela DATETIME NOT NULL,
+    bloqueado_ate DATETIME,
+    INDEX ix_tentativas_login_janela (inicio_janela)
+);
+
 CREATE TABLE IF NOT EXISTS equipamentos (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 

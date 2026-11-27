@@ -139,6 +139,18 @@ class Usuario(Base, UserMixin):
         return check_password_hash(self.senha_hash, password)
 
 
+class TentativaLogin(Base):
+    __tablename__ = "tentativas_login"
+    __table_args__ = (
+        Index("ix_tentativas_login_janela", "inicio_janela"),
+    )
+
+    chave = Column(String(64), primary_key=True)
+    tentativas = Column(Integer, nullable=False, default=0)
+    inicio_janela = Column(DateTime, nullable=False)
+    bloqueado_ate = Column(DateTime)
+
+
 class HistoricoOrdemServico(Base):
     __tablename__ = "historico_ordens_servico"
     __table_args__ = (
